@@ -1,0 +1,49 @@
+import express from "express";
+
+// CONTROLLER's
+import GenerationController from "./controllers/GenerationController";
+import DevicesControlle from "./controllers/DevicesController";
+import InvestmentController from "./controllers/InvestmentController";
+import IrradiationCoefficientController from "./controllers/IrradiationCoefficientController";
+import UsersController from "./controllers/UsersController";
+
+// SERVICE's
+import checkToken from "./service/token";
+import multer from "multer";
+const upload = multer({ dest: "uploads/" }); // Define a pasta onde os arquivos serão armazenados
+
+// STADOS DE CONTROLLER
+const apiVersion = "/v1";
+const routes = express.Router();
+
+// ----------------------------------------------------------------------------
+// ROTAS SEM AUTENTICAÇÃO
+routes.post(`${apiVersion}/login`, UsersController.login);
+routes.get(`${apiVersion}/generationReport`, UsersController.generationReport);
+routes.get(`${apiVersion}/investment`, InvestmentController.index);
+routes.get(`${apiVersion}/kanban`, UsersController.kanban);
+routes.get(`${apiVersion}/irrcoef/:ic_city`, UsersController.saulo);
+routes.get(`${apiVersion}/irradiationCoefficient`,IrradiationCoefficientController.index);
+
+// ----------------------------------------------------------------------------
+// ROTAS COM AUTENTICAÇÃO
+routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
+routes.get(`${apiVersion}/userBrands/:uuid`, checkToken, UsersController.userBrands);
+routes.get(`${apiVersion}/user/:uuid`, UsersController.show);
+routes.post(`${apiVersion}/register`,
+  upload.fields([
+    { name: "image1", maxCount: 1 },
+    { name: "image2", maxCount: 1 },
+  ]),
+  UsersController.store
+);
+routes.get(`${apiVersion}/generationandtemperature`, checkToken, GenerationController.deviceDataAndLatestTemperature); 
+routes.get(`${apiVersion}/alerts`, checkToken, GenerationController.recentAlerts); 
+routes.get(`${apiVersion}/projection`,checkToken,GenerationController.projection);
+routes.patch(`${apiVersion}/projection`,  checkToken,GenerationController.projectionPatch); // NAO TA SENDO USADA
+routes.get(`${apiVersion}/devices/:bl_uuid`, checkToken,  DevicesControlle.index);
+routes.patch(`${apiVersion}/alertFrequency`,  UsersController.patchAlertFrequency);
+routes.get(`${apiVersion}/alertFrequency/:uuid`,  UsersController.alertFrequency);
+routes.get(`${apiVersion}/dashboard/:uuid`, checkToken, UsersController.dashboard);
+
+export default routes;
