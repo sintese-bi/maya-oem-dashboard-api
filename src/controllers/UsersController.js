@@ -467,9 +467,7 @@ class UsersController {
     try {
       return res.status(200).json(result);
     } catch (error) {
-      return res
-        .status(400)
-        .json({ message: "Erro ao restornar os dados!" });
+      return res.status(400).json({ message: "Erro ao restornar os dados!" });
     }
   }
 
@@ -477,7 +475,8 @@ class UsersController {
     try {
       const use = req.params.uuid;
 
-      const daysPassed = moment().diff(moment().startOf("month"), "days") + 1;
+      const startOfMonth = moment().startOf("month").toDate();
+      const endOfMonth = moment().endOf("month").toDate();
 
       const result = await Users.findByPk(use, {
         attributes: ["use_name"],
@@ -495,27 +494,14 @@ class UsersController {
                     attributes: ["gen_real", "gen_estimated", "gen_date"],
                     where: {
                       gen_date: {
-                        [Op.between]: [
-                          moment().subtract(daysPassed, "day").toDate(),
-                          moment().toDate(),
-                        ],
+                        [Op.between]: [startOfMonth, endOfMonth],
                       },
                     },
-                    order: [["gen_updated_at", "DESC"]],
+                    order: [["gen_date", "DESC"]],
                   },
                   {
                     association: "alerts",
                     attributes: ["al_alerts", "al_inv"],
-                    // where: {
-                    //   alert_created_at: {
-                    //     [Op.between]: [
-                    //       moment().subtract(24, "hour").toDate(),
-                    //       moment().toDate(),
-                    //     ],
-                    //   },
-                    // },
-                    order: [["alert_created_at", "DESC"]],
-                    // limit: 1,
                   },
                   {
                     association: "status",
@@ -535,7 +521,6 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-//saulo mudar tambem
   async saulo(req, res) {
     try {
       const { ic_city } = req.params;
