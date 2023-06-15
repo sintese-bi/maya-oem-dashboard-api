@@ -11,9 +11,13 @@ class GenerationController {
   async deviceDataAndLatestTemperature(req, res) {
     const { date, blUuid, type, devUuid } = req.query;
     const dataNow = moment(date).format("YYYY-MM-DD");
-    const month = moment(date).get("month") + 1;
-    const year = moment(date).get("year");
 
+    const currentDate = new Date();
+    const firstDayOfMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth(),
+      1
+    );
     const deviceFilterOptions = devUuid
       ? {
           dev_uuid: devUuid,
@@ -36,15 +40,11 @@ class GenerationController {
             model: Generation,
             as: "generation",
             where: {
-              [Op.and]:
-                type === "month"
-                  ? [
-                      Sequelize.fn('EXTRACT(MONTH from "gen_date") =', month),
-                      Sequelize.fn('EXTRACT(YEAR from "gen_date") =', year),
-                    ]
-                  : [Sequelize.fn('EXTRACT(YEAR from "gen_date") =', year)],
+              gen_date: {
+                [Op.between]: [firstDayOfMonth, currentDate], // Intervalo de datas: do primeiro dia do mês até a data atual
+              },
             },
-            order: ["gen_date"],
+            order: [["gen_date", "ASC"]], 
           },
         ],
       });
