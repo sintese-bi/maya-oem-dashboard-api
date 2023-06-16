@@ -24,6 +24,7 @@ class DevicesControlle {
         result.forEach((r) => {
 
           const generation = r.dataValues.generation.find((gen) => gen.gen_date === dateNow);
+          console.log("generation  ",generation)
           const gen_estimated = r.dataValues.generation[0]?.gen_estimated
 
           r.dataValues.generation = generation
@@ -42,7 +43,7 @@ class DevicesControlle {
 
       return res.json(data);
     } catch (error) {
-      res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
+      return res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
 

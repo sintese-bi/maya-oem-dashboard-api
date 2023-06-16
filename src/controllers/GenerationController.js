@@ -9,7 +9,9 @@ import Temperature from "../models/Temperature";
 class GenerationController {
   // retorna dados para gráfico de registro
   async deviceDataAndLatestTemperature(req, res) {
-    const { date, blUuid, type, devUuid } = req.query;
+
+    const { date
+      , type, devUuid } = req.query;
     const dataNow = moment(date).format("YYYY-MM-DD");
 
     const currentDate = new Date();
@@ -18,21 +20,11 @@ class GenerationController {
       currentDate.getMonth(),
       1
     );
-    const deviceFilterOptions = devUuid
-      ? {
-          dev_uuid: devUuid,
-        }
-      : {};
-    const brandFilterOptions = blUuid
-      ? {
-          bl_uuid: blUuid,
-        }
-      : {};
-
+  
     try {
       const deviceData = await Devices.findAll({
         where: {
-          ...deviceFilterOptions,
+          dev_uuid: devUuid,
         },
         attributes: ["dev_name"],
         include: [
@@ -51,16 +43,10 @@ class GenerationController {
 
       const latestTemp = await Devices.findAll({
         where: {
-          ...deviceFilterOptions,
-          ...brandFilterOptions,
+          dev_uuid: devUuid,
         },
         attributes: ["dev_name"],
         include: [
-          {
-            model: Brand,
-            as: "brand",
-            attributes: [],
-          },
           {
             model: Temperature,
             as: "temperature",
@@ -99,33 +85,20 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  async recentAlerts(req, res) {
-    const { blUuid } = req.query;
 
-    const brandFilterOptions = blUuid
-      ? {
-          bl_uuid: blUuid,
-        }
-      : {};
+  async recentAlerts(req, res) {
+    const { devUuid } = req.query;
 
     try {
       const recentAlerts = await Devices.findAll({
         where: {
-          ...brandFilterOptions,
+          dev_uuid: devUuid,
         },
         attributes: ["dev_name"],
-
         include: [
           {
-            model: Brand,
-            as: "brand", // incluir a associação com a tabela Brand
-            attributes: [],
-          },
-          {
-            model: Alerts,
-            as: "alerts",
+            association: "alerts",
             attributes: ["al_alerts", "al_inv"],
-            order: [["alert_created_at", "DESC"]],
             where: {
               alert_created_at: {
                 [Op.between]: [
@@ -136,12 +109,13 @@ class GenerationController {
             },
           },
         ],
+     
       });
 
-      res.json({ recentAlerts });
+      return res.json(recentAlerts);
     } catch (error) {
       console.error(error);
-      res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
+      return res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
 

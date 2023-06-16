@@ -339,8 +339,6 @@ class UsersController {
                         ],
                       },
                     },
-                    order: [["alert_created_at", "DESC"]],
-                    limit: 1,
                   },
                 ],
               },
