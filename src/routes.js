@@ -6,7 +6,7 @@ import DevicesControlle from "./controllers/DevicesController";
 import InvestmentController from "./controllers/InvestmentController";
 import IrradiationCoefficientController from "./controllers/IrradiationCoefficientController";
 import UsersController from "./controllers/UsersController";
-
+import PandaDocController from "./controllers/PandaDocController";
 // SERVICE's
 import checkToken from "./service/token";
 import multer from "multer";
@@ -24,7 +24,7 @@ routes.get(`${apiVersion}/investment`, InvestmentController.index);
 routes.get(`${apiVersion}/kanban`, UsersController.kanban);
 routes.get(`${apiVersion}/irrcoef/:ic_city`, UsersController.saulo);
 routes.get(`${apiVersion}/irradiationCoefficient`,IrradiationCoefficientController.index);
-
+routes.post(`${apiVersion}/pandadoc`, PandaDocController.handler);
 // ----------------------------------------------------------------------------
 // ROTAS COM AUTENTICAÇÃO
 routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
