@@ -1,9 +1,9 @@
 const axios = require("axios");
 
-const CLIENT_GEN_W_MAYA = "1";
-const CLIENT_GEN_WO_MAYA = "2";
-const EFF_VALUE = "3";
-const EFF_PERC = "4";
+// const CLIENT_GEN_W_MAYA = "1";
+// const CLIENT_GEN_WO_MAYA = "2";
+// const EFF_VALUE = "3";
+const EFF_PERC = "30";
 
 
 class PandaDocController {
@@ -15,6 +15,9 @@ class PandaDocController {
         clientFirstName,
         clientCity,
         clientModNum,
+        clientGenWMaya,
+        clientGenWOMaya,
+        EffValue
       } = req.body;
 
       console.log(clientPot, clientEstimated);
@@ -57,15 +60,15 @@ class PandaDocController {
           },
           {
             name: "Client.GenWMaya",
-            value: CLIENT_GEN_W_MAYA,
+            value: clientGenWMaya,
           },
           {
             name: "Client.GenWOMaya",
-            value: CLIENT_GEN_WO_MAYA,
+            value: clientGenWOMaya,
           },
           {
             name: "EffValue",
-            value: EFF_VALUE,
+            value: EffValue,
           },
           {
             name: "EffPerc",
