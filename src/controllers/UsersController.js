@@ -1,19 +1,17 @@
 //Pensar em uma maneira de criptografar as requests
 
-import { Sequelize, Op } from "sequelize";
-import Users from "../models/Users";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import Brand from "../models/Brand";
-import ProfileLevel from "../models/ProfileLevel";
-import TypePlans from "../models/TypePlans";
-require("dotenv").config();
 import fs from "fs";
-import IrradiationCoefficient from "../models/IrradiationCoefficient";
-import { google, GoogleApis } from "googleapis";
-import { GoogleAuth } from "google-auth-library";
-const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
+import { google } from "googleapis";
+import jwt from "jsonwebtoken";
 import moment from "moment-timezone";
+import { Op } from "sequelize";
+import Brand from "../models/Brand";
+import IrradiationCoefficient from "../models/IrradiationCoefficient";
+import ProfileLevel from "../models/ProfileLevel";
+import Users from "../models/Users";
+require("dotenv").config();
+const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 class UsersController {
   //API para mostrar nome e usuário
   async show(req, res) {
@@ -499,7 +497,7 @@ class UsersController {
                   },
                   {
                     association: "alerts",
-                    attributes: ["al_alerts", "al_inv"],
+                    attributes: ["al_alerts", "al_inv", "alert_created_at"],
                   },
                   {
                     association: "status",
