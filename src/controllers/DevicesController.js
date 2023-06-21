@@ -1,6 +1,5 @@
-import { Sequelize, Op } from "sequelize";
-import Devices from "../models/Devices";
 import moment from "moment-timezone";
+import Devices from "../models/Devices";
 
 class DevicesControlle {
   // retorna dados para grafico de registro
@@ -11,6 +10,7 @@ class DevicesControlle {
 
     const date = new Date()
     const dateNow = moment(date).format('YYYY-MM-DD');
+    console.log("dateNow ", dateNow)
 
     try {
       
