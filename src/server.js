@@ -4,7 +4,7 @@ import cors from "cors";
 import routes from "./routes";
 import "moment/locale/pt-br";
 require("./database");
-
+//teste
 
 const PORT = 8080;
 // const HOST = "localhost";
