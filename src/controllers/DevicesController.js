@@ -24,7 +24,7 @@ class DevicesControlle {
         result.forEach((r) => {
 
           const generation = r.dataValues.generation.find((gen) => gen.gen_date === dateNow);
-          console.log("generation  ",generation)
+          console.log("generation  ",r.dataValues.generation)
           const gen_estimated = r.dataValues.generation[0]?.gen_estimated
 
           r.dataValues.generation = generation
