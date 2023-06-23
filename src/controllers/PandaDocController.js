@@ -1,11 +1,13 @@
-const axios = require("axios");
+// const axios = require("axios");
+
+import axios from "axios";
+import sleep from "../helpers/utils";
 
 // const CLIENT_GEN_W_MAYA = "1";
 // const CLIENT_GEN_WO_MAYA = "2";
 // const EFF_VALUE = "3";
 const EFF_PERC = "30";
-const a="teste";
-
+const a = "teste";
 
 class PandaDocController {
   async handler(req, res) {
@@ -18,7 +20,7 @@ class PandaDocController {
         clientModNum,
         clientGenWMaya,
         clientGenWOMaya,
-        EffValue
+        EffValue,
       } = req.body;
 
       console.log(clientPot, clientEstimated);
@@ -27,7 +29,11 @@ class PandaDocController {
       const apiKey = "597c4ce7e2bce349973d60f3a1c440c38975d956";
 
       const url = "https://api.pandadoc.com/public/v1/documents";
-
+      const header = {
+        Authorization: `API-Key ${apiKey}`,
+        accept: "application/json",
+        "content-type": "application/json",
+      };
       const data = {
         name: "Simple API Sample Document from PandaDoc Template",
         template_uuid: "tEYU2ZLQYgscFLaL7p8U5N",
@@ -75,25 +81,51 @@ class PandaDocController {
             name: "EffPerc",
             value: EFF_PERC,
           },
-          
         ],
       };
 
-      const response = await axios.post(
-        `https://api.pandadoc.com/public/v1/documents`,
-        data,
-        {
+      const response = await axios.post(url, data, {
+        headers: header,
+      });
+
+      if (response.status >= 200 && response.status < 300) {
+        console.log("chegou");
+        const { uuid } = response.data;
+        console.log(response.data);
+        await sleep(3000);
+        //Obter o documento gerado
+        // const documentResponse = await axios.post(`${url}/${uuid}/send`, {
+        //   headers: header,
+        // });
+        const options = {
+          method: "POST",
           headers: {
             Authorization: `API-Key ${apiKey}`,
             accept: "application/json",
             "content-type": "application/json",
           },
-        }
-      );
+        };
+        let responseDoc = [];
+        await fetch(
+          `https://api.pandadoc.com/public/v1/documents/${uuid}/send`,
+          options
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+            responseDoc = data;
+          })
+          .catch((error) => {
+            const { response: err } = error;
+            const message =
+              err && err.data ? err.data.message : "Erro desconhecido";
+            return res
+              .status(400)
+              .json({ message: `Erro ao retornar os dados. ${error}` });
+          });
+        console.log("Documento gerado:");
 
-      if (response.status >= 200 && response.status < 300) {
-        console.log("chegou");
-        return res.status(200).json({ message: `Documento criado` });
+        return res.status(200).json(responseDoc);
       } else {
         return res.status(200).json({ message: `sucesso` });
       }
