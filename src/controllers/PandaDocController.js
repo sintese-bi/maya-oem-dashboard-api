@@ -25,7 +25,7 @@ class PandaDocController {
 
       console.log(clientPot, clientEstimated);
 
-      const documentId = "tEYU2ZLQYgscFLaL7p8U5N";
+      const documentId = "fpEKX8rH8WtTwiW83VmnPK";
       const apiKey = "597c4ce7e2bce349973d60f3a1c440c38975d956";
 
       const url = "https://api.pandadoc.com/public/v1/documents";
@@ -36,7 +36,7 @@ class PandaDocController {
       };
       const data = {
         name: "Simple API Sample Document from PandaDoc Template",
-        template_uuid: "tEYU2ZLQYgscFLaL7p8U5N",
+        template_uuid: "fpEKX8rH8WtTwiW83VmnPK",
         recipients: [
           {
             email: "test@gmail.com",
