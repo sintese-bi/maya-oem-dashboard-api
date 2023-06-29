@@ -1,5 +1,3 @@
-// const axios = require("axios");
-
 import axios from "axios";
 import sleep from "../helpers/utils";
 
@@ -7,7 +5,9 @@ import sleep from "../helpers/utils";
 // const CLIENT_GEN_WO_MAYA = "2";
 // const EFF_VALUE = "3";
 const EFF_PERC = "30";
-const a = "teste";
+// const clientMega = "teste";
+// const clientGiga = "a";
+// const clientKilo = "b";
 
 class PandaDocController {
   async handler(req, res) {
@@ -21,11 +21,15 @@ class PandaDocController {
         clientGenWMaya,
         clientGenWOMaya,
         EffValue,
+        clientData,
+        clientKilo,
+        clientMega,
+        clientGiga,
       } = req.body;
 
       console.log(clientPot, clientEstimated);
 
-      const documentId = "fpEKX8rH8WtTwiW83VmnPK";
+      const documentId = "dp5ijnNx74o4PBk7c4myb8";
       const apiKey = "597c4ce7e2bce349973d60f3a1c440c38975d956";
 
       const url = "https://api.pandadoc.com/public/v1/documents";
@@ -36,7 +40,7 @@ class PandaDocController {
       };
       const data = {
         name: "Simple API Sample Document from PandaDoc Template",
-        template_uuid: "fpEKX8rH8WtTwiW83VmnPK",
+        template_uuid: "dp5ijnNx74o4PBk7c4myb8",
         recipients: [
           {
             email: "test@gmail.com",
@@ -50,11 +54,11 @@ class PandaDocController {
             value: clientPot,
           },
           {
-            name: "Client.ModNum",
+            name: "Client.Modulos",
             value: clientModNum,
           },
           {
-            name: "Client.Estimated",
+            name: "Client.Est",
             value: clientEstimated,
           },
           {
@@ -66,20 +70,33 @@ class PandaDocController {
             value: clientCity,
           },
           {
-            name: "Client.GenWMaya",
+            name: "Client.estimada",
             value: clientGenWMaya,
           },
           {
-            name: "Client.GenWOMaya",
+            name: "Client.estimadaSS",
             value: clientGenWOMaya,
           },
           {
-            name: "EffValue",
+            name: "Client.Eff",
             value: EffValue,
           },
           {
-            name: "EffPerc",
-            value: EFF_PERC,
+            name: "Client.kilo",
+            value: clientKilo,
+          },
+          {
+            name: "Client.mega",
+            value: clientMega,
+          },
+          {
+            name: "Client.giga",
+            value: clientGiga,
+          },
+          
+          {
+            name: "Client.data",
+            value: clientData,
           },
         ],
       };
