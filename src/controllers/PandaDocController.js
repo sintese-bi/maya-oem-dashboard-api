@@ -4,7 +4,7 @@ import sleep from "../helpers/utils";
 // const CLIENT_GEN_W_MAYA = "1";
 // const CLIENT_GEN_WO_MAYA = "2";
 // const EFF_VALUE = "3";
-const EFF_PERC = "30";
+// const EFF_PERC = "30";
 // const clientMega = "teste";
 // const clientGiga = "a";
 // const clientKilo = "b";
@@ -25,11 +25,12 @@ class PandaDocController {
         clientKilo,
         clientMega,
         clientGiga,
+        clientPercentage,
       } = req.body;
 
       console.log(clientPot, clientEstimated);
 
-      const documentId = "dp5ijnNx74o4PBk7c4myb8";
+      const documentId = "LEkGyq3TYHTXAowrP96CEU";
       const apiKey = "597c4ce7e2bce349973d60f3a1c440c38975d956";
 
       const url = "https://api.pandadoc.com/public/v1/documents";
@@ -93,10 +94,14 @@ class PandaDocController {
             name: "Client.giga",
             value: clientGiga,
           },
-          
+
           {
             name: "Client.data",
             value: clientData,
+          },
+          {
+            name: "Client.Percent",
+            value: clientPercentage,
           },
         ],
       };
@@ -107,6 +112,7 @@ class PandaDocController {
 
       if (response.status >= 200 && response.status < 300) {
         console.log("chegou");
+        console.log(clientGenWOMaya)
         const { uuid } = response.data;
         console.log(response.data);
         await sleep(3000);
