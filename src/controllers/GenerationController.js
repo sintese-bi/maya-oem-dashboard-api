@@ -9,10 +9,8 @@ import Temperature from "../models/Temperature";
 class GenerationController {
   // retorna dados para gráfico de registro
   async deviceDataAndLatestTemperature(req, res) {
-
-    const { date
-      , type, devUuid } = req.query;
-    const dataNow = moment(date).format("YYYY-MM-DD");
+    const { date, type, devUuid } = req.query;
+    const dataNow = moment(date).format("YYYY-MM");
 
     const currentDate = new Date();
     const firstDayOfMonth = new Date(
@@ -20,27 +18,57 @@ class GenerationController {
       currentDate.getMonth(),
       1
     );
-  
-    try {
-      const deviceData = await Devices.findAll({
-        where: {
-          dev_uuid: devUuid,
-        },
-        attributes: ["dev_name"],
-        include: [
-          {
-            model: Generation,
-            as: "generation",
-            where: {
-              gen_date: {
-                [Op.between]: [firstDayOfMonth, currentDate], // Intervalo de datas: do primeiro dia do mês até a data atual
-              },
-            },
-            order: [["gen_date", "ASC"]], 
-          },
-        ],
-      });
+    const firstDayOfMonth1 = moment(dataNow).startOf("month").toDate();
+    const lastDayOfMonth1 = moment(dataNow)
+      .startOf("month")
+      .add(1, "month")
+      .subtract(1, "millisecond")
+      .toDate();
 
+    console.log(firstDayOfMonth1, lastDayOfMonth1, firstDayOfMonth);
+    try {
+      let deviceData;
+      if (dataNow !== moment(currentDate).format("YYYY-MM")) {
+        // Busca de primeiro ao último dia do mês
+        deviceData = await Devices.findAll({
+          where: {
+            dev_uuid: devUuid,
+          },
+          attributes: ["dev_name"],
+          include: [
+            {
+              model: Generation,
+              as: "generation",
+              where: {
+                gen_date: {
+                  [Op.between]: [firstDayOfMonth1, lastDayOfMonth1],
+                },
+              },
+              order: [["gen_date", "ASC"]],
+            },
+          ],
+        });
+      } else {
+        // Busca do primeiro dia do mês até a data atual
+        deviceData = await Devices.findAll({
+          where: {
+            dev_uuid: devUuid,
+          },
+          attributes: ["dev_name"],
+          include: [
+            {
+              model: Generation,
+              as: "generation",
+              where: {
+                gen_date: {
+                  [Op.between]: [firstDayOfMonth, currentDate],
+                },
+              },
+              order: [["gen_date", "ASC"]],
+            },
+          ],
+        });
+      }
       const latestTemp = await Devices.findAll({
         where: {
           dev_uuid: devUuid,
@@ -80,6 +108,7 @@ class GenerationController {
       });
 
       res.json({ deviceData, latestTemp });
+      console.log(dataNow);
     } catch (error) {
       console.error(error);
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
@@ -109,13 +138,14 @@ class GenerationController {
             },
           },
         ],
-     
       });
 
       return res.json(recentAlerts);
     } catch (error) {
       console.error(error);
-      return res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
 
