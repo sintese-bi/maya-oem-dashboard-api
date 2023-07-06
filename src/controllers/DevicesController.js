@@ -1,39 +1,33 @@
 import moment from "moment-timezone";
 import Devices from "../models/Devices";
 
-class DevicesControlle {
-  // retorna dados para grafico de registro
-
+class DevicesController {
   async index(req, res) {
     const { brand } = req.query;
     const blUuid = req.params.bl_uuid;
 
-    const date = new Date()
-    const dateNow = moment(date).format('YYYY-MM-DD');
-    console.log("dateNow ", dateNow)
+    const date = new Date();
+    const currentDate = moment(date).format("YYYY-MM-DD");
+    const previousDate = moment(date).subtract(1, "days").format("YYYY-MM-DD");
 
     try {
-      
       const data = await Devices.findAll({
         include: { association: "generation", order: ['gen_date'] },
         where: { bl_uuid: blUuid },
         order: ['dev_name'],
-
       }).then(async (result) => {
-
         result.forEach((r) => {
+          const generation = r.dataValues.generation.find((gen) => gen.gen_date === currentDate);
+          const previousGeneration = r.dataValues.generation.find((gen) => gen.gen_date === previousDate);
 
-          const generation = r.dataValues.generation.find((gen) => gen.gen_date === dateNow);
-          console.log("generation  ",r.dataValues.generation)
-          const gen_estimated = r.dataValues.generation[0]?.gen_estimated
+          const gen_estimated = r.dataValues.generation[0]?.gen_estimated;
 
-          r.dataValues.generation = generation
+          r.dataValues.generation = generation;
 
-          // VERIFICANDO SE TEM GERAÇÃO HOJE 
           if (!generation) {
             r.dataValues.generation = {
               gen_estimated: gen_estimated ? gen_estimated : 0,
-              gen_real: 0,
+              gen_real: previousGeneration ? previousGeneration.gen_real : 0,
             };
           }
         });
@@ -46,7 +40,6 @@ class DevicesControlle {
       return res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-
 }
 
-export default new DevicesControlle();
+export default new DevicesController();
