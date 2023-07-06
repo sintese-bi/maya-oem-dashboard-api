@@ -18,13 +18,11 @@ class GenerationController {
       currentDate.getMonth(),
       1
     );
-    const firstDayOfMonth1 = moment(dataNow).startOf("month").toDate();
-    const lastDayOfMonth1 = moment(dataNow)
-      .startOf("month")
-      .add(1, "month")
-      .subtract(1, "millisecond")
+    const firstDayOfMonth1 = moment(`${date}-01`).toDate();
+    const lastDayOfMonth1 = moment(date, "YYYY-MM")
+      .endOf("month")
+      .subtract(1, "day")
       .toDate();
-
     console.log(firstDayOfMonth1, lastDayOfMonth1, firstDayOfMonth);
     try {
       let deviceData;
@@ -69,6 +67,7 @@ class GenerationController {
           ],
         });
       }
+
       const latestTemp = await Devices.findAll({
         where: {
           dev_uuid: devUuid,
@@ -108,7 +107,7 @@ class GenerationController {
       });
 
       res.json({ deviceData, latestTemp });
-      console.log(dataNow);
+      console.log(deviceData, latestTemp)
     } catch (error) {
       console.error(error);
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
