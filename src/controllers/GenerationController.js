@@ -18,7 +18,7 @@ class GenerationController {
       currentDate.getMonth(),
       1
     );
-    const firstDayOfMonth1 = moment(`${date}-01`).toDate();
+    const firstDayOfMonth1 = moment(`${dataNow}-01`).toDate();
     const lastDayOfMonth1 = moment(date, "YYYY-MM")
       .endOf("month")
       .subtract(1, "day")
