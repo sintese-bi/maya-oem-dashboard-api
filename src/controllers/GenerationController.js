@@ -88,7 +88,7 @@ class GenerationController {
         const generation = dev.generation.find(
           (gen) => gen.gen_date === dataNow
         );
-
+        
         dev.alert = {
           msg: "Geração diária dentro da faixa estimada",
           type: "success",
@@ -107,7 +107,7 @@ class GenerationController {
       });
 
       res.json({ deviceData, latestTemp });
-      console.log(deviceData, latestTemp)
+      console.log(deviceData, latestTemp);
     } catch (error) {
       console.error(error);
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
