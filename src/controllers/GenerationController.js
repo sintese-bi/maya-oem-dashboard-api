@@ -9,14 +9,14 @@ import Temperature from "../models/Temperature";
 class GenerationController {
   // retorna dados para gráfico de registro
   async deviceDataAndLatestTemperature(req, res) {
-    const { date1, date2, type, devUuid } = req.query;
-    const dataNow = new Date();
-    const now = dataNow.getDate();
-    const data = moment(now).format("YYYY-MM");
-    const firstDay = moment(date1).format("YYYY-MM-DD");
-    const lastDay = moment(date2).format("YYYY-MM-DD");
+    const { startDate, endDate, type, devUuid } = req.query;
+    const dataNow = moment().format("YYYY-MM-DD");
+    // const now = dataNow.getDate();
+    // const data = moment(now).format("YYYY-MM");
+    const firstDay = moment(startDate).format("YYYY-MM-DD");
+    const lastDay = moment(endDate).format("YYYY-MM-DD");
 
-    console.log(firstDay, lastDay);
+    console.log(firstDay, lastDay,dataNow);
     try {
       let deviceData;
 
@@ -56,7 +56,7 @@ class GenerationController {
       });
 
       deviceData.forEach((dev) => {
-        const generation = dev.generation.find((gen) => gen.gen_date === data);
+        const generation = dev.generation.find((gen) => gen.gen_date === dataNow);
 
         dev.alert = {
           msg: "Geração diária dentro da faixa estimada",
