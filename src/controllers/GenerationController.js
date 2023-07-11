@@ -9,65 +9,36 @@ import Temperature from "../models/Temperature";
 class GenerationController {
   // retorna dados para gráfico de registro
   async deviceDataAndLatestTemperature(req, res) {
-    const { date, type, devUuid } = req.query;
-    const dataNow = moment(date).format("YYYY-MM");
+    const { date1, date2, type, devUuid } = req.query;
+    const dataNow = new Date();
+    const now = dataNow.getDate();
+    const data = moment(now).format("YYYY-MM");
+    const firstDay = moment(date1).format("YYYY-MM-DD");
+    const lastDay = moment(date2).format("YYYY-MM-DD");
 
-    const currentDate = new Date();
-    const firstDayOfMonth = new Date(
-      currentDate.getFullYear(),
-      currentDate.getMonth(),
-      1
-    );
-    const firstDayOfMonth1 = moment(`${dataNow}-01`).toDate();
-    const lastDayOfMonth1 = moment(date, "YYYY-MM")
-      .endOf("month")
-      .subtract(1, "day")
-      .toDate();
-    console.log(firstDayOfMonth1, lastDayOfMonth1, firstDayOfMonth);
+    console.log(firstDay, lastDay);
     try {
       let deviceData;
-      if (dataNow !== moment(currentDate).format("YYYY-MM")) {
-        // Busca de primeiro ao último dia do mês
-        deviceData = await Devices.findAll({
-          where: {
-            dev_uuid: devUuid,
-          },
-          attributes: ["dev_name"],
-          include: [
-            {
-              model: Generation,
-              as: "generation",
-              where: {
-                gen_date: {
-                  [Op.between]: [firstDayOfMonth1, lastDayOfMonth1],
-                },
-              },
-              order: [["gen_date", "ASC"]],
-            },
-          ],
-        });
-      } else {
-        // Busca do primeiro dia do mês até a data atual
-        deviceData = await Devices.findAll({
-          where: {
-            dev_uuid: devUuid,
-          },
-          attributes: ["dev_name"],
-          include: [
-            {
-              model: Generation,
-              as: "generation",
-              where: {
-                gen_date: {
-                  [Op.between]: [firstDayOfMonth, currentDate],
-                },
-              },
-              order: [["gen_date", "ASC"]],
-            },
-          ],
-        });
-      }
 
+      // Busca de primeiro ao último dia do mês
+      deviceData = await Devices.findAll({
+        where: {
+          dev_uuid: devUuid,
+        },
+        attributes: ["dev_name"],
+        include: [
+          {
+            model: Generation,
+            as: "generation",
+            where: {
+              gen_date: {
+                [Op.between]: [firstDay, lastDay],
+              },
+            },
+            order: [["gen_date", "ASC"]],
+          },
+        ],
+      });
       const latestTemp = await Devices.findAll({
         where: {
           dev_uuid: devUuid,
@@ -85,10 +56,8 @@ class GenerationController {
       });
 
       deviceData.forEach((dev) => {
-        const generation = dev.generation.find(
-          (gen) => gen.gen_date === dataNow
-        );
-        
+        const generation = dev.generation.find((gen) => gen.gen_date === data);
+
         dev.alert = {
           msg: "Geração diária dentro da faixa estimada",
           type: "success",
