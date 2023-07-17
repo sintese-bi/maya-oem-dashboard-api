@@ -83,15 +83,15 @@ class PandaDocController {
             value: EffValue,
           },
           {
-            name: "Client.kilo",
+            name: "Client.Kilo",
             value: clientKilo,
           },
           {
-            name: "Client.mega",
+            name: "Client.Mega",
             value: clientMega,
           },
           {
-            name: "Client.giga",
+            name: "Client.Giga",
             value: clientGiga,
           },
 
