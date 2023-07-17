@@ -227,7 +227,7 @@ class UsersController {
   }
 
   async login(req, res) {
-    //O cliente logará com email e senha nessa API de login
+    //O cliente logará com email e senha nessa API de login.
     try {
       const { use_email, use_password } = req.body;
       console.log("req ", req);
