@@ -41,7 +41,7 @@ class PandaDocController {
       };
       const data = {
         name: "Simple API Sample Document from PandaDoc Template",
-        template_uuid: "dp5ijnNx74o4PBk7c4myb8",
+        template_uuid: "Lc3Rt3wytWTfbPMESLHswF",
         recipients: [
           {
             email: "test@gmail.com",
@@ -55,7 +55,7 @@ class PandaDocController {
             value: clientPot,
           },
           {
-            name: "Client.Modulos",
+            name: "Client.Mod",
             value: clientModNum,
           },
           {
@@ -71,11 +71,11 @@ class PandaDocController {
             value: clientCity,
           },
           {
-            name: "Client.estimada",
+            name: "Client.Real",
             value: clientGenWMaya,
           },
           {
-            name: "Client.estimadaSS",
+            name: "Client.RealSem",
             value: clientGenWOMaya,
           },
           {
@@ -96,11 +96,11 @@ class PandaDocController {
           },
 
           {
-            name: "Client.data",
+            name: "Client.Date",
             value: clientData,
           },
           {
-            name: "Client.Percent",
+            name: "Client.Perc",
             value: clientPercentage,
           },
         ],
