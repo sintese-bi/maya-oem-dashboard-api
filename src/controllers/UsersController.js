@@ -517,7 +517,7 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  async saulo(req, res) {
+  async irradiation(req, res) {
     try {
       const { ic_city } = req.params;
       const resulta = await IrradiationCoefficient.findOne({
