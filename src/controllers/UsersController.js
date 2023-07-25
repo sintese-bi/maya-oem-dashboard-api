@@ -10,6 +10,7 @@ import Brand from "../models/Brand";
 import IrradiationCoefficient from "../models/IrradiationCoefficient";
 import ProfileLevel from "../models/ProfileLevel";
 import Users from "../models/Users";
+import Generation from "../models/Generation";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 class UsersController {
@@ -233,7 +234,7 @@ class UsersController {
       console.log("req ", req);
 
       const result = await Users.findOne({
-        attributes: ["use_uuid","use_name", "use_password"],
+        attributes: ["use_uuid", "use_name", "use_password"],
         where: { use_email: use_email },
         include: [
           {
@@ -517,20 +518,61 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  //localhost:8080/v1/irrcoef/SERGIPE/Areia%20Branca?potSistema=30
   async irradiation(req, res) {
     try {
-      const { ic_city } = req.params;
-      const resulta = await IrradiationCoefficient.findOne({
-        where: { ic_city },
-        attributes: ["ic_yearly"],
-      });
-      return res.status(200).json(resulta);
+      const { ic_states, ic_city, devUuid } = req.params;
+      const potSistema = parseFloat(req.query.potSistema);
+      const meses = [
+        "january",
+        "february",
+        "march",
+        "april",
+        "may",
+        "june",
+        "july",
+        "august",
+        "september",
+        "october",
+        "november",
+        "december",
+      ];
+  
+      const irradiationData = {};
+  
+      for (const mes of meses) {
+        const attribute = `ic_${mes}`;
+  
+        const result = await IrradiationCoefficient.findOne({
+          where: { ic_states, ic_city },
+          attributes: [attribute],
+        });
+  
+        if (!result) {
+          return res.status(404).json({ message: "Não encontrado!" });
+        }
+  
+        const irr = result.get(attribute);
+        const gen_estimated = irr * potSistema * 0.85;
+        const gen_estimated_2 = gen_estimated.toFixed(2);
+        console.log(gen_estimated_2)
+        irradiationData[mes] = parseFloat(gen_estimated_2);
+      }
+  
+      // Busque todos os registros associados ao devUuid na tabela "generation"
+      const generationsToUpdate = await Generation.findAll({ where: { dev_uuid: devUuid } });
+  
+      // Atualize o valor da coluna "gen_estimated" para cada dia do mês correspondente
+      for (const generation of generationsToUpdate) {
+        const month = meses[new Date(generation.gen_date).getMonth()];
+        generation.gen_estimated = irradiationData[month];
+        await generation.save();
+      }
+  
+      return res.status(200).json({ message: "Registros atualizados com sucesso!" });
     } catch (error) {
-      return res
-        .status(400)
-        .json({ message: `Erro ao retornar os dados. ${error}` });
+      return res.status(400).json({ message: `Erro. ${error.message}` });
     }
   }
 }
-
 export default new UsersController();
