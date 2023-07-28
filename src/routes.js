@@ -23,7 +23,7 @@ routes.get(`${apiVersion}/generationReport`, UsersController.generationReport);
 routes.get(`${apiVersion}/investment`, InvestmentController.index);
 routes.get(`${apiVersion}/kanban`, UsersController.kanban);
 routes.get(`${apiVersion}/irrcoef/:ic_city`, UsersController.irradiation);
-routes.get(`${apiVersion}/irradiationCoefficient`,IrradiationCoefficientController.index);
+routes.get(`${apiVersion}/irradiationCoefficient`, IrradiationCoefficientController.index);
 routes.post(`${apiVersion}/pandadoc`, PandaDocController.handler);
 // ----------------------------------------------------------------------------
 // ROTAS COM AUTENTICAÇÃO
@@ -37,13 +37,13 @@ routes.post(`${apiVersion}/register`,
   ]),
   UsersController.store
 );
-routes.get(`${apiVersion}/generationandtemperature`, checkToken, GenerationController.deviceDataAndLatestTemperature); 
-routes.get(`${apiVersion}/alerts`, checkToken, GenerationController.recentAlerts); 
-routes.get(`${apiVersion}/projection`,checkToken,GenerationController.projection);
-routes.patch(`${apiVersion}/projection`,  checkToken,GenerationController.projectionPatch); // NAO TA SENDO USADA
-routes.get(`${apiVersion}/devices/:bl_uuid`, checkToken,  DevicesControlle.index);
-routes.patch(`${apiVersion}/alertFrequency`,  UsersController.patchAlertFrequency);
-routes.get(`${apiVersion}/alertFrequency/:uuid`,  UsersController.alertFrequency);
+routes.get(`${apiVersion}/generationandtemperature`, checkToken, GenerationController.deviceDataAndLatestTemperature);
+routes.get(`${apiVersion}/alerts`, checkToken, GenerationController.recentAlerts);
+routes.get(`${apiVersion}/projection`, checkToken, GenerationController.projection);
+routes.patch(`${apiVersion}/projection`, checkToken, GenerationController.projectionPatch); // NAO TA SENDO USADA
+routes.get(`${apiVersion}/devices/:bl_uuid`, checkToken, DevicesControlle.index);
+routes.patch(`${apiVersion}/alertFrequency`, UsersController.patchAlertFrequency);
+routes.get(`${apiVersion}/alertFrequency/:uuid`, UsersController.alertFrequency);
 routes.get(`${apiVersion}/dashboard/:uuid`, checkToken, UsersController.dashboard);
 
 export default routes;

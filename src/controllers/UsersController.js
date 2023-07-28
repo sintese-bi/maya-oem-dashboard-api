@@ -233,7 +233,7 @@ class UsersController {
       console.log("req ", req);
 
       const result = await Users.findOne({
-        attributes: ["use_uuid","use_name", "use_password"],
+        attributes: ["use_uuid", "use_name", "use_password"],
         where: { use_email: use_email },
         include: [
           {
