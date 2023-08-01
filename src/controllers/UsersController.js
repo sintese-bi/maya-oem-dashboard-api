@@ -21,7 +21,7 @@ class UsersController {
       const use_uuid = req.params.uuid;
 
       const user = await Users.findByPk(use_uuid, {
-        attributes: ["use_name", "use_email"],
+        attributes: ["use_name", "use_email", "use_code_pagar_me"],
       });
 
       if (!user) {
