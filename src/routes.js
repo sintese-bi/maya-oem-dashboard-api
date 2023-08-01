@@ -24,7 +24,7 @@ routes.get(`${apiVersion}/investment`, InvestmentController.index);
 routes.get(`${apiVersion}/kanban`, UsersController.kanban);
 
 routes.get(`${apiVersion}/irrcoef/:devUuid/:ic_states/:ic_city`, UsersController.irradiation);
-routes.get(`${apiVersion}/irrcoef_2/:ic_city`, UsersController.irradiation_2);
+routes.get(`${apiVersion}/irrcoef_2/:ic_states/:ic_city`, UsersController.irradiation_2);
 routes.get(`${apiVersion}/irradiationCoefficient`,IrradiationCoefficientController.index);
 routes.post(`${apiVersion}/pandadoc`, PandaDocController.handler);
 routes.get(`${apiVersion}/report/:blUuid`, UsersController.report);
