@@ -22,9 +22,12 @@ routes.post(`${apiVersion}/login`, UsersController.login);
 routes.get(`${apiVersion}/generationReport`, UsersController.generationReport);
 routes.get(`${apiVersion}/investment`, InvestmentController.index);
 routes.get(`${apiVersion}/kanban`, UsersController.kanban);
+
 routes.get(`${apiVersion}/irrcoef/:devUuid/:ic_states/:ic_city`, UsersController.irradiation);
 routes.get(`${apiVersion}/irradiationCoefficient`, IrradiationCoefficientController.index);
 routes.post(`${apiVersion}/pandadoc`, PandaDocController.handler);
+routes.get(`${apiVersion}/report/:blUuid`, UsersController.report);
+routes.get(`${apiVersion}/reportclient/:devUuid`, UsersController.reportClient);
 // ----------------------------------------------------------------------------
 // ROTAS COM AUTENTICAÇÃO
 routes.get(`${apiVersion}/users`, checkToken, UsersController.users);

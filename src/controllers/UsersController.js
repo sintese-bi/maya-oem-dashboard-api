@@ -524,8 +524,8 @@ class UsersController {
     try {
       const { ic_states, ic_city, devUuid } = req.params;
       const potSistema = parseFloat(req.query.potSistema);
-      const name=req.query.name
-      
+      const name = req.query.name;
+
       const meses = [
         "january",
         "february",
@@ -576,7 +576,7 @@ class UsersController {
         generation.gen_estimated = irradiationData[month];
         await generation.save();
       }
-      
+
       deviceToUpdate.dev_contract_name = name;
       deviceToUpdate.dev_capacity = potSistema;
       deviceToUpdate.dev_address = ic_city;
@@ -584,6 +584,47 @@ class UsersController {
       return res
         .status(200)
         .json({ message: "Registros atualizados com sucesso!" });
+    } catch (error) {
+      return res.status(400).json({ message: `Erro. ${error.message}` });
+    }
+  }
+  async report(req, res) {
+    try {
+      const { blUuid } = req.params;
+      const result = await Devices.findAll({
+        where: { bl_uuid: blUuid },
+        // include: [
+        //   {
+        //     model: Generation,
+        //     attributes: ["coluna1", "coluna2"],
+        //   },
+        // ],
+        attributes: ["dev_capacity"],
+      });
+      const sumOfDevCapacities = result.reduce(
+        (accumulator, device) => accumulator + device.dev_capacity,
+        0
+      );
+      return res.status(200).json({ sumOfDevCapacities });
+    } catch (error) {
+      return res.status(400).json({ message: `Erro. ${error.message}` });
+    }
+  }
+  async reportClient(req, res) {
+    try {
+      const { devUuid } = req.params;
+      const result = await Devices.findOne({
+        where: { dev_uuid: devUuid },
+        // include: [
+        //   {
+        //     model: Generation,
+        //     attributes: ["coluna1", "coluna2"],
+        //   },
+        // ],
+        attributes: ["dev_capacity"],
+      });
+
+      return res.status(200).json(result);
     } catch (error) {
       return res.status(400).json({ message: `Erro. ${error.message}` });
     }
