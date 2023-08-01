@@ -629,5 +629,19 @@ class UsersController {
       return res.status(400).json({ message: `Erro. ${error.message}` });
     }
   }
+  async irradiation_2(req, res) {
+    try {
+      const { ic_city } = req.params;
+      const resulta = await IrradiationCoefficient.findOne({
+        where: { ic_city },
+        attributes: ["ic_yearly"],
+      });
+      return res.status(200).json(resulta);
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
 }
 export default new UsersController();
