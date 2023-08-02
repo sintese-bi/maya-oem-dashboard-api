@@ -631,11 +631,14 @@ class UsersController {
   }
   async irradiation_2(req, res) {
     try {
-      const { ic_city, ic_states } = req.params;
+      let { ic_city, ic_states } = req.params;
+      ic_states = ic_states.toUpperCase();
+
       const resulta = await IrradiationCoefficient.findOne({
         where: { ic_city, ic_states },
         attributes: ["ic_yearly"],
       });
+      console.log(resulta);
       return res.status(200).json(resulta);
     } catch (error) {
       return res
