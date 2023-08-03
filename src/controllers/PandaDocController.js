@@ -41,7 +41,7 @@ class PandaDocController {
       };
       const data = {
         name: "Simple API Sample Document from PandaDoc Template",
-        template_uuid: "Lc3Rt3wytWTfbPMESLHswF",
+        template_uuid: "GhYizEPrVBpLqpe8J6wYD2",
         recipients: [
           {
             email: "test@gmail.com",
