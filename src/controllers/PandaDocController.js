@@ -30,7 +30,7 @@ class PandaDocController {
 
       console.log(clientPot, clientEstimated);
 
-      const documentId = "LEkGyq3TYHTXAowrP96CEU";
+      const documentId = "s6Y3LxKEiqKSGo9LJvMK2o";
       const apiKey = "597c4ce7e2bce349973d60f3a1c440c38975d956";
 
       const url = "https://api.pandadoc.com/public/v1/documents";
@@ -55,7 +55,7 @@ class PandaDocController {
             value: clientPot,
           },
           {
-            name: "Client.Mod",
+            name: "Client.Modulos",
             value: clientModNum,
           },
           {
@@ -71,11 +71,11 @@ class PandaDocController {
             value: clientCity,
           },
           {
-            name: "Client.Real",
+            name: "Client.estimada",
             value: clientGenWMaya,
           },
           {
-            name: "Client.RealSem",
+            name: "Client.estimadaSS",
             value: clientGenWOMaya,
           },
           {
@@ -83,24 +83,24 @@ class PandaDocController {
             value: EffValue,
           },
           {
-            name: "Client.Kilo",
+            name: "Client.kilo",
             value: clientKilo,
           },
           {
-            name: "Client.Mega",
+            name: "Client.mega",
             value: clientMega,
           },
           {
-            name: "Client.Giga",
+            name: "Client.giga",
             value: clientGiga,
           },
 
           {
-            name: "Client.Date",
+            name: "Client.data",
             value: clientData,
           },
           {
-            name: "Client.Perc",
+            name: "Client.Percent",
             value: clientPercentage,
           },
         ],
