@@ -28,7 +28,7 @@ class PandaDocController {
         clientPercentage,
       } = req.body;
 
-      console.log(clientPot, clientEstimated);
+      console.log({'resultados':[clientPot, clientEstimated,clientGenWOMaya]});
 
       const documentId = "GhYizEPrVBpLqpe8J6wYD2";
       const apiKey = "597c4ce7e2bce349973d60f3a1c440c38975d956";
@@ -41,7 +41,7 @@ class PandaDocController {
       };
       const data = {
         name: "Simple API Sample Document from PandaDoc Template",
-        template_uuid: "7qGrVu3uiG8PL777DTxYve",
+        template_uuid: "fjswHDzWxipJin9exETDha",
         recipients: [
           {
             email: "test@gmail.com",
@@ -75,7 +75,7 @@ class PandaDocController {
             value: clientGenWMaya,
           },
           {
-            name: "Client.estimadaSS",
+            name: "Client.estimadaS",
             value: clientGenWOMaya,
           },
           {
@@ -114,7 +114,7 @@ class PandaDocController {
         console.log("chegou");
         console.log(clientGenWOMaya)
         const { uuid } = response.data;
-        console.log(response.data);
+        console.log(uuid);
         await sleep(3000);
         //Obter o documento gerado
         // const documentResponse = await axios.post(`${url}/${uuid}/send`, {
