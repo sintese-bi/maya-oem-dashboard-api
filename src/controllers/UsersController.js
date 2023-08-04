@@ -244,7 +244,8 @@ class UsersController {
           },
         ],
       });
-      if (use_email == "darcio@jdsi.com.br" && use_password == "123456") {
+      //Teste para admin/cliente
+      if (use_email == "darcio@jdsi.com.br" && use_password == "showdebola123") {
         const secret = process.env.SECRET;
         const token = jwt.sign(
           {
