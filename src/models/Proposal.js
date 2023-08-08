@@ -19,7 +19,7 @@ class Proposal extends Model {
         schema: "public",
         freezeTableName: true,
         tableName: "proposal",
-        timestamps: true,
+        timestamps: false,
         underscored: true,
       }
     );

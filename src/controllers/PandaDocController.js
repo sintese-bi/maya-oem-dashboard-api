@@ -1,6 +1,7 @@
 import axios from "axios";
 import sleep from "../helpers/utils";
-
+import Proposal from "../models/Proposal";
+import { v4 as uuidv4 } from "uuid";
 // const CLIENT_GEN_W_MAYA = "1";
 // const CLIENT_GEN_WO_MAYA = "2";
 // const EFF_VALUE = "3";
@@ -28,7 +29,9 @@ class PandaDocController {
         clientPercentage,
       } = req.body;
 
-      console.log({'resultados':[clientPot, clientEstimated,clientGenWOMaya]});
+      console.log({
+        resultados: [clientPot, clientEstimated, clientGenWOMaya],
+      });
 
       const documentId = "GhYizEPrVBpLqpe8J6wYD2";
       const apiKey = "597c4ce7e2bce349973d60f3a1c440c38975d956";
@@ -39,6 +42,22 @@ class PandaDocController {
         accept: "application/json",
         "content-type": "application/json",
       };
+      const lastProposal = await Proposal.findOne({
+        attributes: ["prop_number"],
+        order: [["prop_number", "DESC"]],
+      });
+
+      let nextProposalNumber = 1;
+      if (lastProposal) {
+        const lastNumber = parseInt(lastProposal.prop_number.split("/")[0]);
+        nextProposalNumber = lastNumber + 1;
+      }
+
+      await Proposal.create({
+        prop_uuid: uuidv4(),
+        prop_number: `${nextProposalNumber}/${new Date().getFullYear()}`,
+      });
+
       const data = {
         name: "Simple API Sample Document from PandaDoc Template",
         template_uuid: "fjswHDzWxipJin9exETDha",
@@ -103,6 +122,10 @@ class PandaDocController {
             name: "Client.Percent",
             value: clientPercentage,
           },
+          {
+            name: "Client.propNumber",
+            value: `Número da proposta: ${nextProposalNumber}/${new Date().getFullYear()}`,
+          },
         ],
       };
 
@@ -112,7 +135,7 @@ class PandaDocController {
 
       if (response.status >= 200 && response.status < 300) {
         console.log("chegou");
-        console.log(clientGenWOMaya)
+        console.log(clientGenWOMaya);
         const { uuid } = response.data;
         console.log(uuid);
         await sleep(3000);
