@@ -21,12 +21,12 @@ module.exports = {
         },
         
         // Timestamps
-        pl_created_at: {
+        prop_created_at: {
           type: Sequelize.DATE,
           allowNull: false,
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
         },
-        pl_updated_at: {
+        prop_updated_at: {
           type: Sequelize.DATE,
           allowNull: false,
           defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
