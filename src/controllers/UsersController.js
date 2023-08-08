@@ -36,197 +36,37 @@ class UsersController {
     }
   }
 
-  async store(req, res) {
+  async  store(req, res) {
     try {
-      const {
-        use_uuid,
-        use_wifi,
-        use_module_numbers,
-        use_password,
-        confirmPassword,
-        brand_login,
-      } = req.body;
-
-      const credentials = fs.readFileSync("googlekey.json");
-      const { client_email, private_key } = JSON.parse(credentials);
-
-      const client = new google.auth.JWT(
-        client_email,
-        null,
-        private_key,
-        ["https://www.googleapis.com/auth/drive.file"],
-        null
-      );
-
-      await client.authorize();
-      const drive = google.drive({ version: "v3", auth: client });
-
-      const folderName = use_uuid;
-      const fileMetadataFolder = {
-        name: folderName,
-        mimeType: "application/vnd.google-apps.folder",
-        parents: ["1QjNkaXimF0GOltEMktJ0kq5vLCMGWerB"],
-      };
-      const driveFolder = await drive.files.create({
-        resource: fileMetadataFolder,
-        fields: "id",
-      });
-      const folderId = driveFolder.data.id;
-      // Salvando imagens no Google Drive
-      const image1 = req.files["image1"][0];
-      const image2 = req.files["image2"][0];
-
-      client.authorize(async function (err, token) {
-        if (err) {
-          console.log(err);
-          return res.status(401).json({ message: "Falha na autorização" });
-        } else {
-          const drive = google.drive({ version: "v3", auth: client });
-
-          const fileMetadata1 = {
-            name: image1.originalname,
-            parents: [folderId],
-          };
-          const media1 = {
-            mimeType: image1.mimetype,
-            body: fs.createReadStream(image1.path),
-          };
-          const uploadedFiles = await Promise.all([
-            new Promise((resolve, reject) => {
-              drive.files.create(
-                {
-                  resource: fileMetadata1,
-                  media: media1,
-                  fields: "id, webViewLink",
-                },
-                function (err, uploadedFile1) {
-                  if (err) {
-                    console.error(err);
-                    return res
-                      .status(400)
-                      .json({ message: "Erro ao salvar imagem 1" });
-                  } else {
-                    console.log("Imagem 1 salva com sucesso!");
-
-                    console.log(
-                      `Link da imagem 1: ${uploadedFile1.data.webViewLink}`
-                    );
-                    Users.update(
-                      { use_cnhrg: uploadedFile1.data.webViewLink },
-                      { where: { use_uuid: use_uuid } }
-                    )
-                      .then(() => {
-                        resolve();
-                      })
-                      .catch((err) => {
-                        console.error(err);
-                        return res.status(400).json({
-                          message: "Erro ao salvar o link da imagem 1",
-                        });
-                      });
-                  }
-                }
-              );
-
-              const fileMetadata2 = {
-                name: image2.originalname,
-                parents: [folderId],
-              };
-              const media2 = {
-                mimeType: image2.mimetype,
-                body: fs.createReadStream(image2.path),
-              };
-              drive.files.create(
-                {
-                  resource: fileMetadata2,
-                  media: media2,
-                  fields: "id, webViewLink",
-                },
-                function (err, uploadedFile2) {
-                  if (err) {
-                    console.error(err);
-                    return res
-                      .status(400)
-                      .json({ message: "Erro ao salvar imagem 2" });
-                  } else {
-                    console.log("Imagem 2 salva com sucesso!");
-
-                    console.log(
-                      `Link da imagem 2: ${uploadedFile2.data.webViewLink}`
-                    );
-                    Users.update(
-                      { use_proof: uploadedFile2.data.webViewLink },
-                      { where: { use_uuid: use_uuid } }
-                    )
-                      .then(() => {
-                        resolve();
-                      })
-                      .catch((err) => {
-                        console.error(err);
-                        return res.status(400).json({
-                          message: "Erro ao salvar o link da imagem 2",
-                        });
-                      });
-                  }
-                }
-              );
-
-              resolve();
-            }),
-          ]);
-
-          return res.status(200).json({
-            message: "Dados atualizados com sucesso!",
-          });
-        }
-      });
-      //API para registrar o restante de dados do cliente
-
-      const profile = await ProfileLevel.findOne({
-        where: { pl_cod: "client" },
-      });
-      const pl_uuid = profile.pl_uuid;
-
-      // Definir qual valor mínimo e máximo de caracteres da senha do cliente
-      if (use_password.length < 4 || use_password.length > 8) {
-        return res
-          .status(401)
-          .json({ message: "A senha precisa conter entre 4 e 8 dígitos!" });
-      }
-      if (use_password.includes(" ")) {
-        return res
-          .status(401)
-          .json({ message: "A senha não pode conter espaços" });
-      }
+      const { use_name, use_email, use_password, confirmPassword,pl_uuid } = req.body;
+  
       if (use_password !== confirmPassword) {
-        return res
-          .status(401)
-          .json({ message: "A senha e a confirmação precisam ser iguais!" });
+        return res.status(400).json({ message: 'A senha e a confirmação precisam ser iguais.' });
       }
-
-      //Criando um hash para a senha
-      const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(use_password, salt);
-
-      // Atualizando os dados restantes do cliente
-      await Users.update(
-        {
-          use_password: passwordHash,
-          use_wifi,
-          use_module_numbers,
-          pl_uuid: pl_uuid,
-        },
-        { where: { use_uuid: use_uuid } }
-      );
-      // Criando as entradas de marcação de login da marca
-      const brandLoginArray = JSON.parse(brand_login);
-      await Brand.bulkCreate(brandLoginArray);
+  
+      if (use_password.length < 4 || use_password.length > 8) {
+        return res.status(400).json({ message: 'A senha precisa ter entre 4 e 8 caracteres.' });
+      }
+  
+      const saltRounds = 10;
+      const passwordHash = await bcrypt.hash(use_password, saltRounds);
+  
+      // Criação do novo usuário na tabela Users
+      await Users.create({
+        use_name,
+        pl_uuid,
+        use_email,
+        use_password: passwordHash
+      });
+  
+      return res.status(201).json({ message: 'Usuário criado com sucesso!' });
     } catch (error) {
-      return res
-        .status(401)
-        .json({ message: `Erro ao retornar os dados. ${error}` });
+      console.error(error);
+      return res.status(500).json({ message: `Erro ao criar o usuário: ${error.message}` });
     }
   }
+  
+  
 
   async login(req, res) {
     //O cliente logará com email e senha nessa API de login.
@@ -244,22 +84,7 @@ class UsersController {
           },
         ],
       });
-      //Teste para admin/cliente
-      if (use_email == "darcio@jdsi.com.br" && use_password == "showdebola123") {
-        const secret = process.env.SECRET;
-        const token = jwt.sign(
-          {
-            id: result._id,
-          },
-          secret
-        );
-        return res.status(200).json({ message: "Autenticado!", token });
-      }
-
-      if (!result) {
-        return res.status(404).json({ message: "Este email não existe!" });
-      }
-
+      
       const checkPassword = await bcrypt.compare(
         use_password,
         result.use_password
