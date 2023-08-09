@@ -49,7 +49,7 @@ class PandaDocController {
 
       let nextProposalNumber = 1; // Começando em 1
       if (lastProposal) {
-        const lastNumber = parseInt(lastProposal.prop_number.split("/")[0]);
+        const lastNumber = parseInt(lastProposal.prop_number.split("-")[0]);
         nextProposalNumber = lastNumber + 1;
       }
 
@@ -60,7 +60,7 @@ class PandaDocController {
 
       await Proposal.create({
         prop_uuid: uuidv4(),
-        prop_number: `${formattedProposalNumber}/${new Date().getFullYear()}`,
+        prop_number: `${formattedProposalNumber}-${new Date().getFullYear()}`,
       });
       const data = {
         name: "Simple API Sample Document from PandaDoc Template",
@@ -128,7 +128,7 @@ class PandaDocController {
           },
           {
             name: "Client.propNumber",
-            value: `${formattedProposalNumber}/${new Date().getFullYear()}`,
+            value: `${formattedProposalNumber}-${new Date().getFullYear()}`,
           },
         ],
       };
