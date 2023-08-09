@@ -47,17 +47,21 @@ class PandaDocController {
         order: [["prop_number", "DESC"]],
       });
 
-      let nextProposalNumber = 1;
+      let nextProposalNumber = 1; // Começando em 1
       if (lastProposal) {
         const lastNumber = parseInt(lastProposal.prop_number.split("/")[0]);
         nextProposalNumber = lastNumber + 1;
       }
 
+      // Formatar o próximo número da proposta com zeros à esquerda
+      const formattedProposalNumber = nextProposalNumber
+        .toString()
+        .padStart(3, "0");
+
       await Proposal.create({
         prop_uuid: uuidv4(),
-        prop_number: `${nextProposalNumber}/${new Date().getFullYear()}`,
+        prop_number: `${formattedProposalNumber}/${new Date().getFullYear()}`,
       });
-
       const data = {
         name: "Simple API Sample Document from PandaDoc Template",
         template_uuid: "fjswHDzWxipJin9exETDha",
@@ -124,7 +128,7 @@ class PandaDocController {
           },
           {
             name: "Client.propNumber",
-            value: `Número da proposta: ${nextProposalNumber}/${new Date().getFullYear()}`,
+            value: `${formattedProposalNumber}/${new Date().getFullYear()}`,
           },
         ],
       };
