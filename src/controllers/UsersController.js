@@ -450,6 +450,7 @@ class UsersController {
   async reportClient(req, res) {
     try {
       const { devUuid } = req.params;
+      //teste
       const result = await Devices.findOne({
         where: { dev_uuid: devUuid },
         // include: [
