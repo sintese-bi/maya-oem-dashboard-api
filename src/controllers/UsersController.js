@@ -12,6 +12,7 @@ import ProfileLevel from "../models/ProfileLevel";
 import Users from "../models/Users";
 import Generation from "../models/Generation";
 import Devices from "../models/Devices";
+import Proposal from "../models/Proposal"
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 class UsersController {
@@ -453,11 +454,11 @@ class UsersController {
         where: { dev_uuid: devUuid },
         // include: [
         //   {
-        //     model: Generation,
-        //     attributes: ["coluna1", "coluna2"],
+        //     model: Users,
+        //     attributes: ["use_email"],
         //   },
         // ],
-        attributes: ["dev_capacity"],
+        attributes: ["dev_capacity","dev_contract_name","dev_brand","dev_address"],
       });
 
       return res.status(200).json(result);
