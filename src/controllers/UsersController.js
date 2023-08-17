@@ -101,7 +101,7 @@ class UsersController {
       for (const item of brandUuids) {
         await Devices.create({
           bl_uuid: item.bl_uuid,
-          dev_brand: item.marca,
+          dev_brand: item.marca.toLowerCase(),
         });
       }
 
