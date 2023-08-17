@@ -81,18 +81,30 @@ class UsersController {
         use_email: email,
         use_password: passwordHash,
       });
-      let newBrand;
+      let brandUuids = []; // Array para armazenar os bl_uuids
+
       for (const inversor of inversores) {
-        newBrand = await Brand.create({
+        const newBrand = await Brand.create({
           use_uuid: newUser.use_uuid,
           bl_name: "teste",
           bl_login: inversor.login,
           bl_password: inversor.senha,
         });
+
+        brandUuids.push({
+          bl_uuid: newBrand.bl_uuid,
+          marca: inversor.marca,
+        }); // Armazena cada bl_uuid e marca no array
       }
-      await Devices.create({
-        bl_uuid: newBrand.bl_uuid,
-      });
+
+      // Agora, criar os registros na tabela "devices" com os bl_uuids e marcas armazenados
+      for (const item of brandUuids) {
+        await Devices.create({
+          bl_uuid: item.bl_uuid,
+          dev_brand: item.marca,
+        });
+      }
+
       return res.status(201).json({ message: "Usuário criado com sucesso!" });
     } catch (error) {
       console.error(error);
