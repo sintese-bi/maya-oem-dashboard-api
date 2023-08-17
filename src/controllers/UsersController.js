@@ -12,7 +12,7 @@ import ProfileLevel from "../models/ProfileLevel";
 import Users from "../models/Users";
 import Generation from "../models/Generation";
 import Devices from "../models/Devices";
-import Proposal from "../models/Proposal"
+import Proposal from "../models/Proposal";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 class UsersController {
@@ -37,37 +37,70 @@ class UsersController {
     }
   }
 
-  async  store(req, res) {
+  async store(req, res) {
     try {
-      const { use_name, use_email, use_password, confirmPassword,pl_uuid } = req.body;
-  
-      if (use_password !== confirmPassword) {
-        return res.status(400).json({ message: 'A senha e a confirmação precisam ser iguais.' });
-      }
-  
-      if (use_password.length < 4 || use_password.length > 8) {
-        return res.status(400).json({ message: 'A senha precisa ter entre 4 e 8 caracteres.' });
-      }
-  
-      const saltRounds = 10;
-      const passwordHash = await bcrypt.hash(use_password, saltRounds);
-  
-      // Criação do novo usuário na tabela Users
-      await Users.create({
-        use_name,
-        pl_uuid,
-        use_email,
-        use_password: passwordHash
+      const {
+        nome_completo,
+        email,
+        password,
+        confirmPassword,
+        quantidade_inversores,
+        inversores,
+      } = req.body;
+      const existingEmail = await Users.findOne({
+        attributes: ["use_email"],
+        where: { use_email: email },
       });
-  
-      return res.status(201).json({ message: 'Usuário criado com sucesso!' });
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "O email não é válido." });
+      }
+      if (existingEmail) {
+        return res.status(400).json({ message: "O email já está em uso." });
+      }
+      if (password.length < 4) {
+        return res
+          .status(400)
+          .json({ message: "A senha precisa ter 4 ou mais caracteres!" });
+      }
+      if (password !== confirmPassword) {
+        return res
+          .status(400)
+          .json({ message: "A senha e a confirmação precisam ser iguais." });
+      }
+
+      const saltRounds = 10;
+      const passwordHash = await bcrypt.hash(password, saltRounds);
+
+      // Criação do novo usuário na tabela Users
+      const newUser = await Users.create({
+        use_name: nome_completo,
+        pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
+        use_module_numbers: quantidade_inversores,
+        use_email: email,
+        use_password: passwordHash,
+      });
+      let newBrand;
+      for (const inversor of inversores) {
+        newBrand = await Brand.create({
+          use_uuid: newUser.use_uuid,
+          bl_name: "teste",
+          bl_login: inversor.login,
+          bl_password: inversor.senha,
+        });
+      }
+      await Devices.create({
+        bl_uuid: newBrand.bl_uuid,
+      });
+      return res.status(201).json({ message: "Usuário criado com sucesso!" });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: `Erro ao criar o usuário: ${error.message}` });
+      return res
+        .status(500)
+        .json({ message: `Erro ao criar o usuário: ${error.message}` });
     }
   }
-  
-  
 
   async login(req, res) {
     //O cliente logará com email e senha nessa API de login.
@@ -85,7 +118,7 @@ class UsersController {
           },
         ],
       });
-      
+
       const checkPassword = await bcrypt.compare(
         use_password,
         result.use_password
@@ -459,7 +492,12 @@ class UsersController {
         //     attributes: ["use_email"],
         //   },
         // ],
-        attributes: ["dev_capacity","dev_contract_name","dev_brand","dev_address"],
+        attributes: [
+          "dev_capacity",
+          "dev_contract_name",
+          "dev_brand",
+          "dev_address",
+        ],
       });
 
       return res.status(200).json(result);
