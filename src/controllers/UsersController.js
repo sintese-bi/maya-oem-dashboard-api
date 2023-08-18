@@ -534,5 +534,36 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  async newDevice(req, res) {
+    try {
+      const { use_uuid, bl_login, bl_name, bl_password } = req.body;
+      const search = await Brand.findOne({
+        where: { use_uuid: use_uuid, bl_name: bl_name },
+      });
+      if (search) {
+        return res
+          .status(400)
+          .json({ message: "Você já inseriu esse device!" });
+      }
+      const device = await Brand.create({
+        use_uuid: use_uuid,
+        bl_login: bl_login,
+        bl_password: bl_password,
+        bl_name: bl_name,
+      });
+      await Devices.create({
+        bl_uuid: device.bl_uuid,
+      });
+      return res
+        .status(201)
+        .json({ message: "Login/device criado com sucesso!" });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ message: `Erro ao criar o Login/device: ${error.message}` });
+    }
+  }
 }
+
 export default new UsersController();

@@ -36,6 +36,7 @@ routes.get(
   IrradiationCoefficientController.index
 );
 routes.post(`${apiVersion}/pandadoc`, PandaDocController.handler);
+
 routes.get(`${apiVersion}/report/:blUuid`, UsersController.report);
 routes.get(`${apiVersion}/reportclient/:devUuid`, UsersController.reportClient);
 // ----------------------------------------------------------------------------
@@ -57,6 +58,7 @@ routes.get(
   checkToken,
   GenerationController.deviceDataAndLatestTemperature
 );
+routes.post(`${apiVersion}/deviceLogin`,  UsersController.newDevice);
 routes.get(
   `${apiVersion}/alerts`,
   checkToken,
