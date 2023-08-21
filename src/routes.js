@@ -58,7 +58,7 @@ routes.get(
   checkToken,
   GenerationController.deviceDataAndLatestTemperature
 );
-routes.post(`${apiVersion}/deviceLogin`,  UsersController.newDevice);
+routes.post(`${apiVersion}/deviceLogin`, checkToken, UsersController.newDevice);
 routes.get(
   `${apiVersion}/alerts`,
   checkToken,
