@@ -603,12 +603,12 @@ class UsersController {
       });
 
       const mailOptions = {
-        from: "mayarecover@outlook.com", 
+        from: "mayarecover@outlook.com",
         to: use_email,
         subject: "Recuperação de Senha",
         html: `
         <p>Clique no link abaixo para recuperar sua senha:</p>
-        <a href="https://seusite.com/recuperar-senha?token=${use_token}">Recuperar Senha</a>
+        <a href="https://seusite.com/recuperar-senha?token=${use_token}&email=${use_email}">Recuperar Senha</a>
       `,
       };
 
