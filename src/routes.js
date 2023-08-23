@@ -58,6 +58,7 @@ routes.get(
   checkToken,
   GenerationController.deviceDataAndLatestTemperature
 );
+routes.post(`${apiVersion}/passRecover`, UsersController.passwordRecover);
 routes.post(`${apiVersion}/deviceLogin`, checkToken, UsersController.newDevice);
 routes.get(
   `${apiVersion}/alerts`,
