@@ -608,7 +608,7 @@ class UsersController {
         subject: "Recuperação de Senha",
         html: `
         <p>Clique no link abaixo para recuperar sua senha:</p>
-        <a href="https://seusite.com/recuperar-senha?token=${use_token}&email=${use_email}">Recuperar Senha</a>
+        <a href="https://seusite.com/recuperar-senha?use_token=${use_token}&use_email=${use_email}">Recuperar Senha</a>
       `,
       };
 
@@ -631,11 +631,59 @@ class UsersController {
         .json({ message: "Erro ao criar ou atualizar o token." });
     }
   }
-  async passwordRecover(req,res){
 
+  async passwordRecover(req, res) {
+    try {
+      const { use_email, use_token } = req.query;
+      const { use_password } = req.body;
 
+      const user = await Users.findOne({
+        where: {
+          use_email: use_email,
+          use_token: use_token,
+        },
+      });
 
+      if (!user) {
+        return res.status(400).json({ message: "Token ou email inválido." });
+      }
 
+      try {
+        const secret = process.env.SECRET;
+        const decoded = jwt.verify(use_token, secret);
+        const currentTime = Date.now() / 1000;
+        if (decoded.exp < currentTime) {
+          return res.status(401).json({ message: "Token expirado." });
+        }
+      } catch (err) {
+        return res.status(401).json({ message: "Token inválido." });
+      }
+
+      if (use_password.length < 4) {
+        return res
+          .status(400)
+          .json({ message: "A senha precisa ter 4 ou mais caracteres!" });
+      }
+
+      const saltRounds = 10;
+      const passwordHash = await bcrypt.hash(use_password, saltRounds);
+
+      await Users.update(
+        { use_password: passwordHash },
+        {
+          where: {
+            use_email: use_email,
+          },
+        }
+      );
+
+      return res.status(200).json({
+        message: "Senha atualizada com sucesso!",
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Erro ao criar nova senha!" });
+    }
   }
 }
 
