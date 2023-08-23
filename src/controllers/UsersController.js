@@ -12,7 +12,7 @@ import ProfileLevel from "../models/ProfileLevel";
 import Users from "../models/Users";
 import Generation from "../models/Generation";
 import Devices from "../models/Devices";
-import Proposal from "../models/Proposal";
+import nodemailer from "nodemailer";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 class UsersController {
@@ -562,6 +562,73 @@ class UsersController {
       return res
         .status(500)
         .json({ message: `Erro ao criar o Login/device: ${error.message}` });
+    }
+  }
+  async passwordRecover(req, res) {
+    try {
+      const { use_email } = req.body;
+      const search = await Users.findOne({ where: { use_email } });
+      if (!search) {
+        return res.status(400).json({ message: "Esse email não existe!" });
+      }
+      const secret = process.env.SECRET;
+      const use_token = jwt.sign(
+        {
+          id: search._id,
+        },
+        secret,
+        {
+          expiresIn: "1h", // O token expirará em uma hora
+        }
+      );
+
+      await Users.update(
+        {
+          use_token: use_token,
+        },
+        {
+          where: { use_email: use_email },
+        }
+      );
+      // Configurar o Nodemailer
+      const transporter = nodemailer.createTransport({
+        service: "outlook",
+        auth: {
+          user: "mayarecover@outlook.com",
+          pass: "maya0075#",
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
+
+      const mailOptions = {
+        from: "mayarecover@outlook.com", 
+        to: use_email,
+        subject: "Recuperação de Senha",
+        html: `
+        <p>Clique no link abaixo para recuperar sua senha:</p>
+        <a href="https://seusite.com/recuperar-senha?token=${use_token}">Recuperar Senha</a>
+      `,
+      };
+
+      // Enviar o email
+      transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+          console.error(error);
+          return res.status(500).json({ message: "Erro ao enviar o email." });
+        } else {
+          return res.status(200).json({
+            token: use_token,
+            message: "Token enviado para o email inserido!",
+          });
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ message: "Erro ao criar ou atualizar o token." });
     }
   }
 }

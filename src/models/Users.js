@@ -43,6 +43,7 @@ class Users extends Model {
         sta_uuid: { type: DataTypes.UUIDV4 },
         use_cnhrg: { type: DataTypes.TEXT, allowNull: true },
         use_proof: { type: DataTypes.TEXT, allowNull: true },
+        use_token: { type: DataTypes.TEXT, allowNull: true },
       },
       {
         sequelize,
