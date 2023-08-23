@@ -564,7 +564,7 @@ class UsersController {
         .json({ message: `Erro ao criar o Login/device: ${error.message}` });
     }
   }
-  async passwordRecover(req, res) {
+  async sendEmail(req, res) {
     try {
       const { use_email } = req.body;
       const search = await Users.findOne({ where: { use_email } });
@@ -630,6 +630,12 @@ class UsersController {
         .status(500)
         .json({ message: "Erro ao criar ou atualizar o token." });
     }
+  }
+  async passwordRecover(req,res){
+
+
+
+
   }
 }
 
