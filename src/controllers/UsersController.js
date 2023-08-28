@@ -608,7 +608,7 @@ class UsersController {
         subject: "Recuperação de Senha",
         html: `
         <p>Clique no link abaixo para recuperar sua senha:</p>
-        <a href="https://seusite.com/recuperar-senha?use_token=${use_token}&use_email=${use_email}">Recuperar Senha</a>
+        <a href="https://dashboard.mayaoem.com.br/passwordaRecovery?use_token=${use_token}&use_email=${use_email}">Recuperar Senha</a>
       `,
       };
 
