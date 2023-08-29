@@ -1,6 +1,7 @@
 import axios from "axios";
 import sleep from "../helpers/utils";
-
+import Proposal from "../models/Proposal";
+import { v4 as uuidv4 } from "uuid";
 // const CLIENT_GEN_W_MAYA = "1";
 // const CLIENT_GEN_WO_MAYA = "2";
 // const EFF_VALUE = "3";
@@ -28,9 +29,11 @@ class PandaDocController {
         clientPercentage,
       } = req.body;
 
-      console.log(clientPot, clientEstimated);
+      console.log({
+        resultados: [clientPot, clientEstimated, clientGenWOMaya],
+      });
 
-      const documentId = "LEkGyq3TYHTXAowrP96CEU";
+      const documentId = "GhYizEPrVBpLqpe8J6wYD2";
       const apiKey = "597c4ce7e2bce349973d60f3a1c440c38975d956";
 
       const url = "https://api.pandadoc.com/public/v1/documents";
@@ -39,9 +42,29 @@ class PandaDocController {
         accept: "application/json",
         "content-type": "application/json",
       };
+      const lastProposal = await Proposal.findOne({
+        attributes: ["prop_number"],
+        order: [["prop_number", "DESC"]],
+      });
+
+      let nextProposalNumber = 1; // Começando em 1
+      if (lastProposal) {
+        const lastNumber = parseInt(lastProposal.prop_number.split("-")[0]);
+        nextProposalNumber = lastNumber + 1;
+      }
+
+      // Formatar o próximo número da proposta com zeros à esquerda
+      const formattedProposalNumber = nextProposalNumber
+        .toString()
+        .padStart(3, "0");
+
+      await Proposal.create({
+        prop_uuid: uuidv4(),
+        prop_number: `${formattedProposalNumber}-${new Date().getFullYear()}`,
+      });
       const data = {
         name: "Simple API Sample Document from PandaDoc Template",
-        template_uuid: "Lc3Rt3wytWTfbPMESLHswF",
+        template_uuid: "fjswHDzWxipJin9exETDha",
         recipients: [
           {
             email: "test@gmail.com",
@@ -55,7 +78,7 @@ class PandaDocController {
             value: clientPot,
           },
           {
-            name: "Client.Mod",
+            name: "Client.Modulos",
             value: clientModNum,
           },
           {
@@ -71,11 +94,11 @@ class PandaDocController {
             value: clientCity,
           },
           {
-            name: "Client.Real",
+            name: "Client.estimada",
             value: clientGenWMaya,
           },
           {
-            name: "Client.RealSem",
+            name: "Client.estimadaS",
             value: clientGenWOMaya,
           },
           {
@@ -83,25 +106,29 @@ class PandaDocController {
             value: EffValue,
           },
           {
-            name: "Client.Kilo",
+            name: "Client.kilo",
             value: clientKilo,
           },
           {
-            name: "Client.Mega",
+            name: "Client.mega",
             value: clientMega,
           },
           {
-            name: "Client.Giga",
+            name: "Client.giga",
             value: clientGiga,
           },
 
           {
-            name: "Client.Date",
+            name: "Client.data",
             value: clientData,
           },
           {
-            name: "Client.Perc",
+            name: "Client.Percent",
             value: clientPercentage,
+          },
+          {
+            name: "Client.propNumber",
+            value: `${formattedProposalNumber}-${new Date().getFullYear()}`,
           },
         ],
       };
@@ -112,9 +139,9 @@ class PandaDocController {
 
       if (response.status >= 200 && response.status < 300) {
         console.log("chegou");
-        console.log(clientGenWOMaya)
+        console.log(clientGenWOMaya);
         const { uuid } = response.data;
-        console.log(response.data);
+        console.log(uuid);
         await sleep(3000);
         //Obter o documento gerado
         // const documentResponse = await axios.post(`${url}/${uuid}/send`, {

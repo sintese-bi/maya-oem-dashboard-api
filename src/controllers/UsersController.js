@@ -12,6 +12,7 @@ import ProfileLevel from "../models/ProfileLevel";
 import Users from "../models/Users";
 import Generation from "../models/Generation";
 import Devices from "../models/Devices";
+import nodemailer from "nodemailer";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 class UsersController {
@@ -39,192 +40,77 @@ class UsersController {
   async store(req, res) {
     try {
       const {
-        use_uuid,
-        use_wifi,
-        use_module_numbers,
-        use_password,
+        nome_completo,
+        email,
+        password,
         confirmPassword,
-        brand_login,
+        quantidade_inversores,
+        inversores,
       } = req.body;
-
-      const credentials = fs.readFileSync("googlekey.json");
-      const { client_email, private_key } = JSON.parse(credentials);
-
-      const client = new google.auth.JWT(
-        client_email,
-        null,
-        private_key,
-        ["https://www.googleapis.com/auth/drive.file"],
-        null
-      );
-
-      await client.authorize();
-      const drive = google.drive({ version: "v3", auth: client });
-
-      const folderName = use_uuid;
-      const fileMetadataFolder = {
-        name: folderName,
-        mimeType: "application/vnd.google-apps.folder",
-        parents: ["1QjNkaXimF0GOltEMktJ0kq5vLCMGWerB"],
-      };
-      const driveFolder = await drive.files.create({
-        resource: fileMetadataFolder,
-        fields: "id",
+      const existingEmail = await Users.findOne({
+        attributes: ["use_email"],
+        where: { use_email: email },
       });
-      const folderId = driveFolder.data.id;
-      // Salvando imagens no Google Drive
-      const image1 = req.files["image1"][0];
-      const image2 = req.files["image2"][0];
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 
-      client.authorize(async function (err, token) {
-        if (err) {
-          console.log(err);
-          return res.status(401).json({ message: "Falha na autorização" });
-        } else {
-          const drive = google.drive({ version: "v3", auth: client });
-
-          const fileMetadata1 = {
-            name: image1.originalname,
-            parents: [folderId],
-          };
-          const media1 = {
-            mimeType: image1.mimetype,
-            body: fs.createReadStream(image1.path),
-          };
-          const uploadedFiles = await Promise.all([
-            new Promise((resolve, reject) => {
-              drive.files.create(
-                {
-                  resource: fileMetadata1,
-                  media: media1,
-                  fields: "id, webViewLink",
-                },
-                function (err, uploadedFile1) {
-                  if (err) {
-                    console.error(err);
-                    return res
-                      .status(400)
-                      .json({ message: "Erro ao salvar imagem 1" });
-                  } else {
-                    console.log("Imagem 1 salva com sucesso!");
-
-                    console.log(
-                      `Link da imagem 1: ${uploadedFile1.data.webViewLink}`
-                    );
-                    Users.update(
-                      { use_cnhrg: uploadedFile1.data.webViewLink },
-                      { where: { use_uuid: use_uuid } }
-                    )
-                      .then(() => {
-                        resolve();
-                      })
-                      .catch((err) => {
-                        console.error(err);
-                        return res.status(400).json({
-                          message: "Erro ao salvar o link da imagem 1",
-                        });
-                      });
-                  }
-                }
-              );
-
-              const fileMetadata2 = {
-                name: image2.originalname,
-                parents: [folderId],
-              };
-              const media2 = {
-                mimeType: image2.mimetype,
-                body: fs.createReadStream(image2.path),
-              };
-              drive.files.create(
-                {
-                  resource: fileMetadata2,
-                  media: media2,
-                  fields: "id, webViewLink",
-                },
-                function (err, uploadedFile2) {
-                  if (err) {
-                    console.error(err);
-                    return res
-                      .status(400)
-                      .json({ message: "Erro ao salvar imagem 2" });
-                  } else {
-                    console.log("Imagem 2 salva com sucesso!");
-
-                    console.log(
-                      `Link da imagem 2: ${uploadedFile2.data.webViewLink}`
-                    );
-                    Users.update(
-                      { use_proof: uploadedFile2.data.webViewLink },
-                      { where: { use_uuid: use_uuid } }
-                    )
-                      .then(() => {
-                        resolve();
-                      })
-                      .catch((err) => {
-                        console.error(err);
-                        return res.status(400).json({
-                          message: "Erro ao salvar o link da imagem 2",
-                        });
-                      });
-                  }
-                }
-              );
-
-              resolve();
-            }),
-          ]);
-
-          return res.status(200).json({
-            message: "Dados atualizados com sucesso!",
-          });
-        }
-      });
-      //API para registrar o restante de dados do cliente
-
-      const profile = await ProfileLevel.findOne({
-        where: { pl_cod: "client" },
-      });
-      const pl_uuid = profile.pl_uuid;
-
-      // Definir qual valor mínimo e máximo de caracteres da senha do cliente
-      if (use_password.length < 4 || use_password.length > 8) {
-        return res
-          .status(401)
-          .json({ message: "A senha precisa conter entre 4 e 8 dígitos!" });
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "O email não é válido." });
       }
-      if (use_password.includes(" ")) {
-        return res
-          .status(401)
-          .json({ message: "A senha não pode conter espaços" });
+      if (existingEmail) {
+        return res.status(400).json({ message: "O email já está em uso." });
       }
-      if (use_password !== confirmPassword) {
+      if (password.length < 4) {
         return res
-          .status(401)
-          .json({ message: "A senha e a confirmação precisam ser iguais!" });
+          .status(400)
+          .json({ message: "A senha precisa ter 4 ou mais caracteres!" });
+      }
+      if (password !== confirmPassword) {
+        return res
+          .status(400)
+          .json({ message: "A senha e a confirmação precisam ser iguais." });
       }
 
-      //Criando um hash para a senha
-      const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(use_password, salt);
+      const saltRounds = 10;
+      const passwordHash = await bcrypt.hash(password, saltRounds);
 
-      // Atualizando os dados restantes do cliente
-      await Users.update(
-        {
-          use_password: passwordHash,
-          use_wifi,
-          use_module_numbers,
-          pl_uuid: pl_uuid,
-        },
-        { where: { use_uuid: use_uuid } }
-      );
-      // Criando as entradas de marcação de login da marca
-      const brandLoginArray = JSON.parse(brand_login);
-      await Brand.bulkCreate(brandLoginArray);
+      // Criação do novo usuário na tabela Users
+      const newUser = await Users.create({
+        use_name: nome_completo,
+        pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
+        use_module_numbers: quantidade_inversores,
+        use_email: email,
+        use_password: passwordHash,
+      });
+      let brandUuids = []; // Array para armazenar os bl_uuids
+
+      for (const inversor of inversores) {
+        const newBrand = await Brand.create({
+          use_uuid: newUser.use_uuid,
+          bl_name: "teste",
+          bl_login: inversor.login,
+          bl_password: inversor.senha,
+        });
+
+        brandUuids.push({
+          bl_uuid: newBrand.bl_uuid,
+          marca: inversor.marca,
+        }); // Armazena cada bl_uuid e marca no array
+      }
+
+      // Agora, criar os registros na tabela "devices" com os bl_uuids e marcas armazenados
+      for (const item of brandUuids) {
+        await Devices.create({
+          bl_uuid: item.bl_uuid,
+          dev_brand: item.marca.toLowerCase(),
+        });
+      }
+
+      return res.status(201).json({ message: "Usuário criado com sucesso!" });
     } catch (error) {
+      console.error(error);
       return res
-        .status(401)
-        .json({ message: `Erro ao retornar os dados. ${error}` });
+        .status(500)
+        .json({ message: `Erro ao criar o usuário: ${error.message}` });
     }
   }
 
@@ -244,10 +130,6 @@ class UsersController {
           },
         ],
       });
-
-      if (!result) {
-        return res.status(404).json({ message: "Este email não existe!" });
-      }
 
       const checkPassword = await bcrypt.compare(
         use_password,
@@ -613,15 +495,21 @@ class UsersController {
   async reportClient(req, res) {
     try {
       const { devUuid } = req.params;
+      //teste
       const result = await Devices.findOne({
         where: { dev_uuid: devUuid },
         // include: [
         //   {
-        //     model: Generation,
-        //     attributes: ["coluna1", "coluna2"],
+        //     model: Users,
+        //     attributes: ["use_email"],
         //   },
         // ],
-        attributes: ["dev_capacity"],
+        attributes: [
+          "dev_capacity",
+          "dev_contract_name",
+          "dev_brand",
+          "dev_address",
+        ],
       });
 
       return res.status(200).json(result);
@@ -629,5 +517,174 @@ class UsersController {
       return res.status(400).json({ message: `Erro. ${error.message}` });
     }
   }
+  async irradiation_2(req, res) {
+    try {
+      let { ic_city, ic_states } = req.params;
+      ic_states = ic_states.toUpperCase();
+
+      const resulta = await IrradiationCoefficient.findOne({
+        where: { ic_city, ic_states },
+        attributes: ["ic_yearly"],
+      });
+      console.log(resulta);
+      return res.status(200).json(resulta);
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  async newDevice(req, res) {
+    try {
+      const { use_uuid, bl_login, bl_name, bl_password } = req.body;
+      const search = await Brand.findOne({
+        where: { use_uuid: use_uuid, bl_name: bl_name },
+      });
+      if (search) {
+        return res
+          .status(400)
+          .json({ message: "Você já inseriu esse device!" });
+      }
+      const device = await Brand.create({
+        use_uuid: use_uuid,
+        bl_login: bl_login,
+        bl_password: bl_password,
+        bl_name: bl_name,
+      });
+      await Devices.create({
+        bl_uuid: device.bl_uuid,
+      });
+      return res
+        .status(201)
+        .json({ message: "Login/device criado com sucesso!" });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ message: `Erro ao criar o Login/device: ${error.message}` });
+    }
+  }
+  async sendEmail(req, res) {
+    try {
+      const { use_email } = req.body;
+      const search = await Users.findOne({ where: { use_email } });
+      if (!search) {
+        return res.status(400).json({ message: "Esse email não existe!" });
+      }
+      const secret = process.env.SECRET;
+      const use_token = jwt.sign(
+        {
+          id: search._id,
+        },
+        secret,
+        {
+          expiresIn: "1h", // O token expirará em uma hora
+        }
+      );
+
+      await Users.update(
+        {
+          use_token: use_token,
+        },
+        {
+          where: { use_email: use_email },
+        }
+      );
+      // Configurar o Nodemailer
+      const transporter = nodemailer.createTransport({
+        service: "outlook",
+        auth: {
+          user: "mayarecover@outlook.com",
+          pass: "maya0075#",
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
+      });
+
+      const mailOptions = {
+        from: "mayarecover@outlook.com",
+        to: use_email,
+        subject: "Recuperação de Senha",
+        html: `
+        <p>Clique no link abaixo para recuperar sua senha:</p>
+        <a href="https://dashboard.mayaoem.com.br/passwordaRecovery?use_token=${use_token}&use_email=${use_email}">Recuperar Senha</a>
+      `,
+      };
+
+      // Enviar o email
+      transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+          console.error(error);
+          return res.status(500).json({ message: "Erro ao enviar o email." });
+        } else {
+          return res.status(200).json({
+            token: use_token,
+            message: "Token enviado para o email inserido!",
+          });
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ message: "Erro ao criar ou atualizar o token." });
+    }
+  }
+
+  async passwordRecover(req, res) {
+    try {
+      const { use_email, use_token } = req.query;
+      const { use_password } = req.body;
+
+      const user = await Users.findOne({
+        where: {
+          use_email: use_email,
+          use_token: use_token,
+        },
+      });
+
+      if (!user) {
+        return res.status(400).json({ message: "Token ou email inválido." });
+      }
+
+      try {
+        const secret = process.env.SECRET;
+        const decoded = jwt.verify(use_token, secret);
+        const currentTime = Date.now() / 1000;
+        if (decoded.exp < currentTime) {
+          return res.status(401).json({ message: "Token expirado." });
+        }
+      } catch (err) {
+        return res.status(401).json({ message: "Token inválido." });
+      }
+
+      if (use_password.length < 4) {
+        return res
+          .status(400)
+          .json({ message: "A senha precisa ter 4 ou mais caracteres!" });
+      }
+
+      const saltRounds = 10;
+      const passwordHash = await bcrypt.hash(use_password, saltRounds);
+
+      await Users.update(
+        { use_password: passwordHash },
+        {
+          where: {
+            use_email: use_email,
+          },
+        }
+      );
+
+      return res.status(200).json({
+        message: "Senha atualizada com sucesso!",
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Erro ao criar nova senha!" });
+    }
+  }
 }
+
 export default new UsersController();
