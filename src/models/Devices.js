@@ -25,6 +25,7 @@ class Devices extends Model {
           type: DataTypes.FLOAT,
         },
         sta_uuid: { type: DataTypes.UUIDV4 },
+        bl_uuid: { type: DataTypes.UUIDV4 },
       },
       {
         sequelize,
@@ -45,10 +46,6 @@ class Devices extends Model {
     this.hasMany(models.Alerts, {
       foreignKey: "dev_uuid",
       as: "alerts",
-    });
-    this.hasMany(models.Brand, {
-      foreignKey: "bl_uuid",
-      as: "brand",
     });
     this.hasMany(models.Temperature, {
       foreignKey: "dev_uuid",

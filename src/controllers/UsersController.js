@@ -232,7 +232,7 @@ class UsersController {
     //O cliente logará com email e senha nessa API de login.
     try {
       const { use_email, use_password } = req.body;
-      console.log("req ", req);
+      console.log("req", req);
 
       const result = await Users.findOne({
         attributes: ["use_uuid", "use_name", "use_password"],
