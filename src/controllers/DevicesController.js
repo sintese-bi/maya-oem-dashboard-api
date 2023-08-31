@@ -46,7 +46,7 @@ class DevicesController {
         .status(400)
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
-  }
+  },
 }
 
 export default new DevicesController();

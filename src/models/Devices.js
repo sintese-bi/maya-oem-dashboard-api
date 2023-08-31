@@ -24,6 +24,9 @@ class Devices extends Model {
         dev_capacity: {
           type: DataTypes.FLOAT,
         },
+        dev_deleted: {
+          type: DataTypes.BOOLEAN,
+        },
         sta_uuid: { type: DataTypes.UUIDV4 },
         bl_uuid: { type: DataTypes.UUIDV4 },
       },

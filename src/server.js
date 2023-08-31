@@ -6,7 +6,7 @@ import "moment/locale/pt-br";
 require("./database");
 //teste
 
-const PORT = 3003;
+const PORT = 8080;
 const HOST = "localhost";
 //const HOST = "0.0.0.0";
 // const HOST = "104.131.163.240";
