@@ -21,6 +21,9 @@ class Devices extends Model {
         dev_address: {
           type: DataTypes.STRING,
         },
+        dev_deleted: {
+          type: DataTypes.BOOLEAN,
+        },
         dev_capacity: {
           type: DataTypes.FLOAT,
         },

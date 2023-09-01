@@ -22,7 +22,7 @@ routes.post(`${apiVersion}/login`, UsersController.login);
 routes.get(`${apiVersion}/generationReport`, UsersController.generationReport);
 routes.get(`${apiVersion}/investment`, InvestmentController.index);
 routes.get(`${apiVersion}/kanban`, UsersController.kanban);
-
+routes.post(`${apiVersion}/deleteDevice`, checkToken, UsersController.deleteDevice)
 routes.get(
   `${apiVersion}/irrcoef/:devUuid/:ic_states/:ic_city`,
   UsersController.irradiation

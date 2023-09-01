@@ -367,7 +367,7 @@ class UsersController {
             include: [
               {
                 association: "devices",
-                attributes: ["dev_uuid", "dev_name", "dev_brand"],
+                attributes: ["dev_uuid", "dev_name", "dev_brand","dev_deleted"],
                 include: [
                   {
                     association: "generation",
@@ -562,6 +562,24 @@ class UsersController {
       return res
         .status(500)
         .json({ message: `Erro ao criar o Login/device: ${error.message}` });
+    }
+  }
+  async deleteDevice(req, res) {
+    try{
+      const { devUuid } = req.body
+      await Devices.update(
+        {
+          dev_deleted: true,
+        },
+        {
+          where: {dev_uuid: devUuid}
+        }
+      )
+      return res.status(201).json({ message: "Device deletado com sucesso!" });
+    } catch(error){
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
   async sendEmail(req, res) {
