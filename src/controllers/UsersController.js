@@ -1,5 +1,4 @@
 //Pensar em uma maneira de criptografar as requests
-
 import bcrypt from "bcrypt";
 import fs from "fs";
 import { google } from "googleapis";
@@ -7,6 +6,7 @@ import jwt from "jsonwebtoken";
 import moment from "moment-timezone";
 import { Op } from "sequelize";
 import Brand from "../models/Brand";
+import DeletedDevices from '../models/DeletedDevices';
 import IrradiationCoefficient from "../models/IrradiationCoefficient";
 import ProfileLevel from "../models/ProfileLevel";
 import Users from "../models/Users";
@@ -15,6 +15,7 @@ import Devices from "../models/Devices";
 import nodemailer from "nodemailer";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
+
 class UsersController {
   //API para mostrar nome e usuário
   async show(req, res) {
@@ -22,7 +23,7 @@ class UsersController {
       const use_uuid = req.params.uuid;
 
       const user = await Users.findByPk(use_uuid, {
-        attributes: ["use_name", "use_email"],
+        attributes: ["use_name", "use_email", "use_code_pagar_me"],
       });
 
       if (!user) {
@@ -118,7 +119,7 @@ class UsersController {
     //O cliente logará com email e senha nessa API de login.
     try {
       const { use_email, use_password } = req.body;
-      console.log("req ", req);
+      console.log("req", req);
 
       const result = await Users.findOne({
         attributes: ["use_uuid", "use_name", "use_password"],
@@ -367,7 +368,7 @@ class UsersController {
             include: [
               {
                 association: "devices",
-                attributes: ["dev_uuid", "dev_name", "dev_brand"],
+                attributes: ["dev_uuid", "dev_name", "dev_brand", "dev_deleted"],
                 include: [
                   {
                     association: "generation",
@@ -562,6 +563,24 @@ class UsersController {
       return res
         .status(500)
         .json({ message: `Erro ao criar o Login/device: ${error.message}` });
+    }
+  }
+  async deleteDevice(req, res) {
+    try{
+      const { devUuid } = req.body
+      await Devices.update(
+        {
+          dev_deleted: true,
+        },
+        {
+          where: {dev_uuid: devUuid}
+        }
+      )
+      return res.status(201).json({ message: "Device deletado com sucesso!" });
+    } catch(error){
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
   async sendEmail(req, res) {

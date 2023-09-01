@@ -12,6 +12,7 @@ import Temperature from "../models/Temperature";
 import Status from "../models/Status";
 import Address from "../models/Address";
 import Proposal from "../models/Proposal";
+import DeletedDevices from "../models/DeletedDevices";
 
 const modelsDbMayaEnergy = [
   Temperature,
@@ -26,6 +27,7 @@ const modelsDbMayaEnergy = [
   Devices,
   Generation,
   IrradiationCoefficient,
+  DeletedDevices,
 ];
 
 class Database {
