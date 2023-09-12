@@ -7,6 +7,7 @@ import InvestmentController from "./controllers/InvestmentController";
 import IrradiationCoefficientController from "./controllers/IrradiationCoefficientController";
 import UsersController from "./controllers/UsersController";
 import PandaDocController from "./controllers/PandaDocController";
+import StripeController from "./controllers/StripeController";
 // SERVICE's
 import checkToken from "./service/token";
 import multer from "multer";
@@ -19,6 +20,7 @@ const routes = express.Router();
 // ----------------------------------------------------------------------------
 // ROTAS SEM AUTENTICAÇÃO
 routes.post(`${apiVersion}/login`, UsersController.login);
+routes.post(`${apiVersion}/stripe-webhook`,StripeController.handleStripeWebhook);
 routes.get(`${apiVersion}/generationReport`, UsersController.generationReport);
 routes.get(`${apiVersion}/investment`, InvestmentController.index);
 routes.get(`${apiVersion}/kanban`, UsersController.kanban);
