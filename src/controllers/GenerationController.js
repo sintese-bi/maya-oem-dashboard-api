@@ -16,7 +16,7 @@ class GenerationController {
     const firstDay = moment(startDate).format("YYYY-MM-DD");
     const lastDay = moment(endDate).format("YYYY-MM-DD");
 
-    console.log(firstDay, lastDay,dataNow);
+    console.log(firstDay, lastDay, dataNow);
     try {
       let deviceData;
 
@@ -56,7 +56,9 @@ class GenerationController {
       });
 
       deviceData.forEach((dev) => {
-        const generation = dev.generation.find((gen) => gen.gen_date === dataNow);
+        const generation = dev.generation.find(
+          (gen) => gen.gen_date === dataNow
+        );
 
         dev.alert = {
           msg: "Geração diária dentro da faixa estimada",
@@ -198,6 +200,20 @@ class GenerationController {
       });
 
       return res.json(data);
+    } catch (error) {
+      res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  async reportPDF(req, res) {
+    try {
+      const { email, dev } = req.params;
+      const result =await Generation.findOne({
+        attributes:["dev_uuid"],
+        where:{dev_uuid:dev}
+
+
+      })
+
     } catch (error) {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }

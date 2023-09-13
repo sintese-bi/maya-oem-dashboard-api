@@ -9,7 +9,7 @@ const stripe = new Stripe(
     apiVersion: "2020-08-27",
   }
 );
-// const endpointSecret = "whsec_mwlESrCsoejpTKVW4xjkjKOAhHplrmaZ";
+const endpointSecret = "whsec_mwlESrCsoejpTKVW4xjkjKOAhHplrmaZ";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -29,8 +29,8 @@ const transporter = nodemailer.createTransport({
 class StripeController {
   async handleStripeWebhook(req, res) {
     const signature = req.headers["stripe-signature"];
-    const endpointSecret =
-      "whsec_0ccb03f631e449edeb33ee5f277b665a47fadb48612dd0080dd31143e8b2dd64";
+    // const endpointSecret =
+    //   "whsec_0ccb03f631e449edeb33ee5f277b665a47fadb48612dd0080dd31143e8b2dd64";
     let event;
 
     try {
@@ -50,18 +50,19 @@ class StripeController {
       //     break;
       case "payment_intent.succeeded":
         const paymentIntentSucceeded = event.data.object;
-        try {
-          await Users.update(
-            {
-              use_telephone: "123456789",
-            },
-            {
-              where: { use_email: "eloymjunior00@gmail.com" },
-            }
-          );
-        } catch (error) {
-          console.error("Error updating phone_number:", error);
-        }
+        const customerEmail=paymentIntentSucceeded.receipt_email
+        // try {
+        //   await Users.update(
+        //     {
+        //       use_telephone: "123456789",
+        //     },
+        //     {
+        //       where: { use_email: "eloymjunior00@gmail.com" },
+        //     }
+        //   );
+        // } catch (error) {
+        //   console.error("Error updating phone_number:", error);
+        // }
         const emailBody = `
         <p>Olá,</p>
                 
@@ -82,7 +83,7 @@ class StripeController {
         await new Promise((resolve) => setTimeout(resolve, 3000));
         const mailOptions = {
           from: '"noreplymayawatch@gmail.com',
-          to: "eloymjunior00@gmail.com",
+          to: customerEmail,
           subject: "Confirmação de Compra",
           text: "Corpo de email em desenvolvimento",
           html: emailBody,
