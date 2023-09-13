@@ -32,8 +32,7 @@ class StripeController {
     const endpointSecret =
       "whsec_0ccb03f631e449edeb33ee5f277b665a47fadb48612dd0080dd31143e8b2dd64";
     let event;
-    console.log(req.body);
-    
+
     try {
       event = stripe.webhooks.constructEvent(
         req.body,
@@ -63,13 +62,30 @@ class StripeController {
         } catch (error) {
           console.error("Error updating phone_number:", error);
         }
+        const emailBody = `
+        <p>Olá,</p>
+                
+        <p>Estamos animados em tê-lo conosco na MAYA WATCH! Seu pagamento foi efetuado com sucesso!</p>
+                        
+        <p>Você pode conferir todas as funcionalidades e aprender a utilizar nosso dashboard através do contato (31) 9 8234-1415.</p>
+                            
+        <p>A Nota Fiscal de sua compra será emitida e enviada para o e-mail informado no cadastro. Se houver qualquer necessidade de alteração nos dados informados, por favor, não hesite em nos contactar para atualização pelo e-mail suportemayawatch@gmail.com.</p>
+                        
+        <p>Se você tiver alguma dúvida ou precisar de suporte adicional, estamos à sua disposição. Sua satisfação e sucesso são nossas principais prioridades!</p>
+                        
+        <p>Agradecemos pela confiança em nossos serviços.</p>
+                        
+        <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
+        <p><img src="" alt="Logo da MAYA WATCH"></p>
+        
+                    `;
         await new Promise((resolve) => setTimeout(resolve, 3000));
         const mailOptions = {
           from: '"noreplymayawatch@gmail.com',
           to: "eloymjunior00@gmail.com",
-          subject: "Hello ✔",
-          text: "Hello world?",
-          html: "<b>Hello world?</b>",
+          subject: "Confirmação de Compra",
+          text: "Corpo de email em desenvolvimento",
+          html: emailBody,
         };
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {

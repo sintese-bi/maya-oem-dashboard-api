@@ -12,7 +12,7 @@ const HOST = "0.0.0.0";
 // const HOST = "104.131.163.240";
   
 const app = express();
-app.use(express.raw({ type: 'application/json' }));
+app.use(express.raw({ type: 'application/json' }));//Json
 app.use(cors());
 app.use(express.json());
 app.use(routes);
