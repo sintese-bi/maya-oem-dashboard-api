@@ -39,7 +39,7 @@ class Users extends Model {
         use_kwp: { type: DataTypes.FLOAT },
         use_wifi: { type: DataTypes.INTEGER },
         use_type_system: { type: DataTypes.STRING },
-        // use_type_member:{type:DataTypes.BOOLEAN},
+        use_type_member:{type:DataTypes.BOOLEAN},
         tp_uuid: { type: DataTypes.UUIDV4 },
         sta_uuid: { type: DataTypes.UUIDV4 },
         use_cnhrg: { type: DataTypes.TEXT, allowNull: true },
