@@ -47,7 +47,7 @@ class UsersController {
         quantidade_inversores,
         inversores,
       } = req.body;
-      console.log(email,nome_completo)
+      console.log(email, nome_completo);
       const existingEmail = await Users.findOne({
         attributes: ["use_email"],
         where: { use_email: email },
@@ -77,7 +77,7 @@ class UsersController {
       // Criação do novo usuário na tabela Users
       const newUser = await Users.create({
         use_name: nome_completo,
-        use_type_member:false,
+        use_type_member: false,
         pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
         use_module_numbers: quantidade_inversores,
         use_email: email,
@@ -123,7 +123,13 @@ class UsersController {
       console.log("req ", req);
 
       const result = await Users.findOne({
-        attributes: ["use_uuid", "use_name", "use_password"],
+        attributes: [
+          "use_uuid",
+          "use_name",
+          "use_password",
+          "use_type_plan",
+          "use_type_member",
+        ],
         where: { use_email: use_email },
         include: [
           {
@@ -369,7 +375,12 @@ class UsersController {
             include: [
               {
                 association: "devices",
-                attributes: ["dev_uuid", "dev_name", "dev_brand","dev_deleted"],
+                attributes: [
+                  "dev_uuid",
+                  "dev_name",
+                  "dev_brand",
+                  "dev_deleted",
+                ],
                 include: [
                   {
                     association: "generation",
@@ -567,18 +578,18 @@ class UsersController {
     }
   }
   async deleteDevice(req, res) {
-    try{
-      const { devUuid } = req.body
+    try {
+      const { devUuid } = req.body;
       await Devices.update(
         {
           dev_deleted: true,
         },
         {
-          where: {dev_uuid: devUuid}
+          where: { dev_uuid: devUuid },
         }
-      )
+      );
       return res.status(201).json({ message: "Device deletado com sucesso!" });
-    } catch(error){
+    } catch (error) {
       return res
         .status(400)
         .json({ message: `Erro ao retornar os dados. ${error}` });

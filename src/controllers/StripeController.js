@@ -50,19 +50,30 @@ class StripeController {
       //     break;
       case "payment_intent.succeeded":
         const paymentIntentSucceeded = event.data.object;
-        const customerEmail=paymentIntentSucceeded.receipt_email
-        // try {
-        //   await Users.update(
-        //     {
-        //       use_telephone: "123456789",
-        //     },
-        //     {
-        //       where: { use_email: "eloymjunior00@gmail.com" },
-        //     }
-        //   );
-        // } catch (error) {
-        //   console.error("Error updating phone_number:", error);
-        // }
+        const customerEmail = paymentIntentSucceeded.receipt_email;
+        const amount = paymentIntentSucceeded.amount / 100;
+        let type_plan;
+        if (amount == 239.0) {
+          type_plan = "1";
+        } else if (amount == 459.0) {
+          type_plan = "2";
+        } else if (amount == 629.0) {
+          type_plan = "3";
+        } else {
+          type_plan = "0";
+        }
+        try {
+          await Users.update(
+            {
+              use_type_plan: type_plan,
+            },
+            {
+              where: { use_email: customerEmail },
+            }
+          );
+        } catch (error) {
+          console.error("Error updating phone_number:", error);
+        }
         const emailBody = `
         <p>Olá,</p>
                 
@@ -83,7 +94,7 @@ class StripeController {
         await new Promise((resolve) => setTimeout(resolve, 3000));
         const mailOptions = {
           from: '"noreplymayawatch@gmail.com',
-          to: "eloymjunior00@gmail.com",
+          to: customerEmail,
           subject: "Confirmação de Compra",
           text: "Corpo de email em desenvolvimento",
           html: emailBody,

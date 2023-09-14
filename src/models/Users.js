@@ -35,6 +35,7 @@ class Users extends Model {
         use_code_pagar_me: { type: DataTypes.STRING },
         use_code_panda_doc: { type: DataTypes.STRING },
         use_city_state: { type: DataTypes.STRING },
+        use_type_plan: { type: DataTypes.STRING },
         use_module_numbers: { type: DataTypes.INTEGER },
         use_kwp: { type: DataTypes.FLOAT },
         use_wifi: { type: DataTypes.INTEGER },
