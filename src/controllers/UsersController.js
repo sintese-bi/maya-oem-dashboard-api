@@ -47,6 +47,7 @@ class UsersController {
         quantidade_inversores,
         inversores,
       } = req.body;
+      console.log(email,nome_completo)
       const existingEmail = await Users.findOne({
         attributes: ["use_email"],
         where: { use_email: email },
@@ -76,6 +77,7 @@ class UsersController {
       // Criação do novo usuário na tabela Users
       const newUser = await Users.create({
         use_name: nome_completo,
+        // use_type_member:false,
         pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
         use_module_numbers: quantidade_inversores,
         use_email: email,
