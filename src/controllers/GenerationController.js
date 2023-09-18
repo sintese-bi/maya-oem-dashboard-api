@@ -210,7 +210,7 @@ class GenerationController {
       const result =await Generation.findOne({
         attributes:["dev_uuid"],
         where:{dev_uuid:dev}
-
+        
 
       })
 
