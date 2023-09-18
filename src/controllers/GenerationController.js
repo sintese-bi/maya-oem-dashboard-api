@@ -206,7 +206,7 @@ class GenerationController {
   }
   async reportPDF(req, res) {
     try {
-      const { email, dev } = req.params;
+      const { email, dev } = req.query;
       const result =await Generation.findOne({
         attributes:["dev_uuid"],
         where:{dev_uuid:dev}

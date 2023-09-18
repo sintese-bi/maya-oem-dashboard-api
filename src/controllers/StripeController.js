@@ -9,7 +9,7 @@ const stripe = new Stripe(
     apiVersion: "2020-08-27",
   }
 );
-// const endpointSecret = "whsec_mwlESrCsoejpTKVW4xjkjKOAhHplrmaZ";
+const endpointSecret = "whsec_mwlESrCsoejpTKVW4xjkjKOAhHplrmaZ";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -29,8 +29,8 @@ const transporter = nodemailer.createTransport({
 class StripeController {
   async handleStripeWebhook(req, res) {
     const signature = req.headers["stripe-signature"];
-    const endpointSecret =
-      "whsec_0ccb03f631e449edeb33ee5f277b665a47fadb48612dd0080dd31143e8b2dd64";
+    // const endpointSecret =
+    //   "whsec_0ccb03f631e449edeb33ee5f277b665a47fadb48612dd0080dd31143e8b2dd64";
     let event;
 
     try {
