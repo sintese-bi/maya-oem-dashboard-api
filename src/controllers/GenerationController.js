@@ -10,14 +10,14 @@ const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
 
-  secure: false, //alterar
+  // secure: false, //alterar
   auth: {
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
-  tls: {
-    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
-  },
+  // tls: {
+  //   rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
+  // },
 });
 class GenerationController {
   // retorna dados para gráfico de registro
@@ -230,7 +230,7 @@ class GenerationController {
       const { dev_uuid } = req.query;
       const searchDevice_email = await Devices.findOne({
         where: { dev_uuid: dev_uuid },
-        attributes: ['dev_email'],
+        attributes: ["dev_email"],
       });
       console.log(searchDevice_email.dev_email);
       const emailBody = `
@@ -245,6 +245,8 @@ class GenerationController {
           <li><strong>Dados de Geração Estimativa Mensal:</strong> ${gen_est_month}</li>
           <li><strong>Dados de Geração Real Mensal:</strong> ${gen_real_month}</li>
         </ul>
+        <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
+        <p><img src="" alt="Logo da MAYA WATCH"></p>
         `;
 
       const mailOptions = {
