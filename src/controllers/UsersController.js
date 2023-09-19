@@ -475,7 +475,8 @@ class UsersController {
 
       deviceToUpdate.dev_contract_name = name;
       deviceToUpdate.dev_capacity = potSistema;
-      deviceToUpdate.dev_address = ic_city;
+      deviceToUpdate.dev_address = `${ic_city}-${ic_states}`;
+
       await deviceToUpdate.save();
       return res
         .status(200)
