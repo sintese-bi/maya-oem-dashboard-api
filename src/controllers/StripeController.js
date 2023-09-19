@@ -66,6 +66,7 @@ class StripeController {
           await Users.update(
             {
               use_type_plan: type_plan,
+              use_type_member:true,
             },
             {
               where: { use_email: customerEmail },

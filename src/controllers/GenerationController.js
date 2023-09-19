@@ -206,14 +206,16 @@ class GenerationController {
   }
   async reportPDF(req, res) {
     try {
-      const { email, dev } = req.query;
-      const result =await Generation.findOne({
-        attributes:["dev_uuid"],
-        where:{dev_uuid:dev}
-        
-
-      })
-
+      const {
+        email,
+        gen_est_day,
+        gen_real_day,
+        gen_est_week,
+        gen_real_week,
+        gen_est_month,
+        gen_real_month,
+      } = req.body;
+      
     } catch (error) {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }

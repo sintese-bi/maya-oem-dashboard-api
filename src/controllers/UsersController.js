@@ -129,7 +129,7 @@ class UsersController {
           "use_password",
           "use_type_plan",
           "use_type_member",
-          "use_email"
+          "use_email",
         ],
         where: { use_email: use_email },
         include: [
