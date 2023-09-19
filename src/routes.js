@@ -19,12 +19,20 @@ const routes = express.Router();
 
 // ----------------------------------------------------------------------------
 // ROTAS SEM AUTENTICAÇÃO
+
 routes.post(`${apiVersion}/login`, UsersController.login);
-routes.post(`${apiVersion}/stripe-webhook`,StripeController.handleStripeWebhook);
+routes.post(
+  `${apiVersion}/stripe-webhook`,
+  StripeController.handleStripeWebhook
+);
 routes.get(`${apiVersion}/generationReport`, UsersController.generationReport);
 routes.get(`${apiVersion}/investment`, InvestmentController.index);
 routes.get(`${apiVersion}/kanban`, UsersController.kanban);
-routes.post(`${apiVersion}/deleteDevice`, checkToken, UsersController.deleteDevice)
+routes.post(
+  `${apiVersion}/deleteDevice`,
+  checkToken,
+  UsersController.deleteDevice
+);
 routes.get(
   `${apiVersion}/irrcoef/:devUuid/:ic_states/:ic_city`,
   UsersController.irradiation
@@ -43,6 +51,10 @@ routes.get(`${apiVersion}/report/:blUuid`, UsersController.report);
 routes.get(`${apiVersion}/reportclient/:devUuid`, UsersController.reportClient);
 // ----------------------------------------------------------------------------
 // ROTAS COM AUTENTICAÇÃO
+routes.post(
+  `${apiVersion}/sendgenerationemail`,checkToken,
+  GenerationController.reportgenerationEmail
+);
 routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
 routes.get(
   `${apiVersion}/userBrands/:uuid`,

@@ -2,10 +2,23 @@ import { Sequelize, Op } from "sequelize";
 import Devices from "../models/Devices";
 import Generation from "../models/Generation";
 import moment from "moment-timezone";
-import Alerts from "../models/Alerts";
-import Brand from "../models/Brand";
-import Temperature from "../models/Temperature";
+import nodemailer from "nodemailer";
 
+import Temperature from "../models/Temperature";
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+
+  secure: false, //alterar
+  auth: {
+    user: "noreplymayawatch@gmail.com",
+    pass: "xbox ejjd wokp ystv",
+  },
+  tls: {
+    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
+  },
+});
 class GenerationController {
   // retorna dados para gráfico de registro
   async deviceDataAndLatestTemperature(req, res) {
@@ -204,10 +217,9 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  async reportPDF(req, res) {
+  async reportgenerationEmail(req, res) {
     try {
       const {
-        email,
         gen_est_day,
         gen_real_day,
         gen_est_week,
@@ -215,7 +227,40 @@ class GenerationController {
         gen_est_month,
         gen_real_month,
       } = req.body;
-      
+      const { dev_uuid } = req.query;
+      const searchDevice_email = await Devices.findOne({
+        where: { dev_uuid: dev_uuid },
+        attributes: ['dev_email'],
+      });
+      console.log(searchDevice_email.dev_email);
+      const emailBody = `
+        <p>Olá,</p>       
+        <p>Aqui estão os seus dados de geração:</p>
+
+        <ul>
+          <li><strong>Dados de Estimativa Diária:</strong> ${gen_est_day}</li>
+          <li><strong>Dados de Geração Real Diária:</strong> ${gen_real_day}</li>
+          <li><strong>Dados de Geração Estimativa Semanal:</strong> ${gen_est_week}</li>
+          <li><strong>Dados de Geração Real Semanal:</strong> ${gen_real_week}</li>
+          <li><strong>Dados de Geração Estimativa Mensal:</strong> ${gen_est_month}</li>
+          <li><strong>Dados de Geração Real Mensal:</strong> ${gen_real_month}</li>
+        </ul>
+        `;
+
+      const mailOptions = {
+        from: '"noreplymayawatch@gmail.com',
+        to: searchDevice_email.dev_email,
+        subject: "Dados de Geração ",
+        text: "",
+        html: emailBody,
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Erro ao enviar o e-mail:", error);
+        } else {
+          console.log("E-mail enviado:", info.res);
+        }
+      });
     } catch (error) {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
