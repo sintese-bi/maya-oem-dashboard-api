@@ -52,7 +52,7 @@ routes.get(`${apiVersion}/reportclient/:devUuid`, UsersController.reportClient);
 // ----------------------------------------------------------------------------
 // ROTAS COM AUTENTICAÇÃO
 routes.post(
-  `${apiVersion}/sendgenerationemail`,checkToken,
+  `${apiVersion}/sendgenerationemail`, checkToken,
   GenerationController.reportgenerationEmail
 );
 routes.get(`${apiVersion}/users`, checkToken, UsersController.users);

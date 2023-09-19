@@ -232,7 +232,7 @@ class GenerationController {
         where: { dev_uuid: dev_uuid },
         attributes: ["dev_email"],
       });
-      console.log(searchDevice_email.dev_email);
+      
       const emailBody = `
         <p>Olá,</p>       
         <p>Aqui estão os seus dados de geração:</p>
