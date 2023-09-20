@@ -15,6 +15,7 @@ class DevicesController {
       const data = await Devices.findAll({
         include: { association: "generation", order: ["gen_date"] },
         where: { bl_uuid: blUuid },
+        attributes: ['dev_capacity'],
         order: ["dev_name"],
       }).then(async (result) => {
         result.forEach((r) => {
