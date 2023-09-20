@@ -19,7 +19,7 @@ const routes = express.Router();
 
 // ----------------------------------------------------------------------------
 // ROTAS SEM AUTENTICAÇÃO
-
+routes.post(`${apiVersion}/genrealday`, DevicesControlle.sumGeneration);
 routes.post(`${apiVersion}/login`, UsersController.login);
 routes.post(
   `${apiVersion}/stripe-webhook`,

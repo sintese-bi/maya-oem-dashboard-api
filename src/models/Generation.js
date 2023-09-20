@@ -19,7 +19,7 @@ class Generation extends Model {
           type: DataTypes.FLOAT,
         },
         gen_date: {
-          type: DataTypes.DATE,
+          type: DataTypes.STRING,
         },
         dev_uuid: {
           type: DataTypes.UUID,
