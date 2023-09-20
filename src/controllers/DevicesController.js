@@ -49,43 +49,44 @@ class DevicesController {
   }
   async sumGeneration(req, res) {
     try {
-        const { startDate, endDate } = req.body;
-        let currentDate = new Date(startDate);
-        const end = new Date(endDate);
-        let somaGenRealDia = {};
+      const { startDate, endDate } = req.body;
+      let currentDate = new Date(startDate);
+      const end = new Date(endDate);
+      let somaGenRealDia = {};
 
-        while (currentDate <= end) {
-            const result = await Generation.findAll({
-                where: { gen_date: currentDate },
-                attributes: ["gen_real"],
-            });
-
-            const somaGenReal = result.reduce((acumulador, item) => {
-                return acumulador + item.gen_real;
-            }, 0);
-
-            somaGenRealDia[currentDate.toISOString().split("T")[0]] = parseFloat(somaGenReal.toFixed(2));
-
-            console.log(
-                `Soma de gen_real para ${
-                currentDate.toISOString().split("T")[0]
-                }: ${somaGenRealDia[currentDate.toISOString().split("T")[0]]}`
-            );
-
-            currentDate.setDate(currentDate.getDate() + 1);
-        }
-
-        return res.status(200).json({
-            message: "Somas calculadas com sucesso!",
-            somaPorDia: somaGenRealDia,
+      while (currentDate <= end) {
+        const result = await Generation.findAll({
+          where: { gen_date: currentDate },
+          attributes: ["gen_real"],
         });
-    } catch (error) {
-        return res
-            .status(400)
-            .json({ message: `Erro ao retornar os dados. ${error}` });
-    }
-}
 
+        const somaGenReal = result.reduce((acumulador, item) => {
+          return acumulador + item.gen_real;
+        }, 0);
+
+        somaGenRealDia[currentDate.toISOString().split("T")[0]] = parseFloat(
+          somaGenReal.toFixed(2)
+        );
+
+        console.log(
+          `Soma de gen_real para ${currentDate.toISOString().split("T")[0]}: ${
+            somaGenRealDia[currentDate.toISOString().split("T")[0]]
+          }`
+        );
+
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      return res.status(200).json({
+        message: "Somas calculadas com sucesso!",
+        somaPorDia: somaGenRealDia,
+      });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
 }
 
 export default new DevicesController();

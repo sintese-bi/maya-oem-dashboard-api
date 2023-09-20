@@ -19,6 +19,7 @@ const routes = express.Router();
 
 // ----------------------------------------------------------------------------
 // ROTAS SEM AUTENTICAÇÃO
+
 routes.post(`${apiVersion}/genrealday`, DevicesControlle.sumGeneration);
 routes.post(`${apiVersion}/login`, UsersController.login);
 routes.post(
@@ -52,7 +53,8 @@ routes.get(`${apiVersion}/reportclient/:devUuid`, UsersController.reportClient);
 // ----------------------------------------------------------------------------
 // ROTAS COM AUTENTICAÇÃO
 routes.post(
-  `${apiVersion}/sendgenerationemail`, checkToken,
+  `${apiVersion}/sendgenerationemail`,
+  checkToken,
   GenerationController.reportgenerationEmail
 );
 routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
