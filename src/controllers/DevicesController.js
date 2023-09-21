@@ -15,7 +15,7 @@ class DevicesController {
       const data = await Devices.findAll({
         include: { association: "generation", order: ["gen_date"] },
         where: { bl_uuid: blUuid },
-        attributes: ['dev_capacity'],
+        attributes: ["dev_capacity"],
         order: ["dev_name"],
       }).then(async (result) => {
         result.forEach((r) => {
@@ -54,13 +54,13 @@ class DevicesController {
       let currentDate = new Date(startDate);
       const end = new Date(endDate);
       let somaGenRealDia = {};
-
+      let somaGenEstimadaDia = {};
       while (currentDate <= end) {
         const result = await Generation.findAll({
           where: { gen_date: currentDate },
-          attributes: ["gen_real"],
+          attributes: ["gen_real", "gen_estimated"],
         });
-
+        //Soma da geração real diaria de todas usinas
         const somaGenReal = result.reduce((acumulador, item) => {
           return acumulador + item.gen_real;
         }, 0);
@@ -68,11 +68,18 @@ class DevicesController {
         somaGenRealDia[currentDate.toISOString().split("T")[0]] = parseFloat(
           somaGenReal.toFixed(2)
         );
+        //Soma da geração estimada diaria de todas usinas
+        const somaGenEstimated = result.reduce((acumulador, item) => {
+          return acumulador + item.gen_estimated;
+        }, 0);
+
+        somaGenEstimadaDia[currentDate.toISOString().split("T")[0]] =
+          parseFloat(somaGenEstimated.toFixed(2));
 
         console.log(
-          `Soma de gen_real para ${currentDate.toISOString().split("T")[0]}: ${
-            somaGenRealDia[currentDate.toISOString().split("T")[0]]
-          }`
+          `Soma de gen_estimated para ${
+            currentDate.toISOString().split("T")[0]
+          }: ${somaGenEstimadaDia[currentDate.toISOString().split("T")[0]]}`
         );
 
         currentDate.setDate(currentDate.getDate() + 1);
@@ -80,7 +87,8 @@ class DevicesController {
 
       return res.status(200).json({
         message: "Somas calculadas com sucesso!",
-        somaPorDia: somaGenRealDia,
+        somaPorDiaReal: somaGenRealDia,
+        somaPorDiaEstimada: somaGenEstimadaDia,
       });
     } catch (error) {
       return res
