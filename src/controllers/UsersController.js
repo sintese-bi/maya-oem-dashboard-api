@@ -381,6 +381,7 @@ class UsersController {
                   "dev_name",
                   "dev_brand",
                   "dev_deleted",
+                  "dev_capacity"
                 ],
                 include: [
                   {
