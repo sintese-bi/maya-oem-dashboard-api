@@ -8,6 +8,11 @@ import IrradiationCoefficientController from "./controllers/IrradiationCoefficie
 import UsersController from "./controllers/UsersController";
 import PandaDocController from "./controllers/PandaDocController";
 import StripeController from "./controllers/StripeController";
+
+//Esse script importa controladores que lidam com diversas funcionalidades, como geração de energia, dispositivos, usuários, entre outros.
+//Além disso, inclui middleware para autenticação via token JWT e configurações para upload de arquivos.
+//As rotas são organizadas em versões (v1) e algumas exigem autenticação, enquanto outras não.
+
 // SERVICE's
 import checkToken from "./service/token";
 import multer from "multer";

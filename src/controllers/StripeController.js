@@ -10,7 +10,7 @@ const stripe = new Stripe(
   }
 );
 const endpointSecret = "whsec_mJOG3hsIF1Q0kqLzEXthOxxfzXXvQH9C";
-
+//Configuração das credenciais do email de envio
 const transporter = nodemailer.createTransport({
   service: "gmail",
   host: "smtp.gmail.com",
@@ -27,6 +27,8 @@ const transporter = nodemailer.createTransport({
 });
 
 class StripeController {
+  //Esta API trata webhooks do Stripe para processar pagamentos bem-sucedidos. Ao receber um evento de pagamento confirmado, ela atualiza o tipo de plano e status de membro de um usuário no banco de dados. 
+  //Em seguida, envia um e-mail de confirmação de compra ao cliente, com informações relevantes sobre a transação.
   async handleStripeWebhook(req, res) {
     const signature = req.headers["stripe-signature"];
     // const endpointSecret =

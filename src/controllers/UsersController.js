@@ -16,7 +16,7 @@ import nodemailer from "nodemailer";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 class UsersController {
-  //API para mostrar nome e usuário
+  //Esta API exibe os detalhes de um usuário com base no UUID fornecido, incluindo nome e e-mail. Se o usuário não for encontrado, retorna uma mensagem de erro.
   async show(req, res) {
     try {
       const use_uuid = req.params.uuid;
@@ -36,7 +36,8 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-
+  //Esta API assíncrona processa a criação de um novo usuário com base nos dados fornecidos.
+  //Ela verifica a validade do e-mail, se o e-mail já está em uso, a força da senha e se a confirmação de senha coincide. Em seguida, cria o novo usuário no banco de dados, incluindo informações sobre inversores associados a ele.
   async store(req, res) {
     try {
       const {
@@ -117,7 +118,7 @@ class UsersController {
   }
 
   async login(req, res) {
-    //O cliente logará com email e senha nessa API de login.
+    //API  para cliente logar na plataforma(Dashboard)
     try {
       const { use_email, use_password } = req.body;
       console.log("req ", req);
@@ -168,7 +169,8 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-
+  //Esta API assíncrona retorna uma lista de usuários cadastrados no sistema, incluindo seus nomes, e-mails e UUIDs. Além disso, ela também inclui informações sobre as marcas associadas a cada usuário e seus níveis de perfil.
+  //Em caso de sucesso, a API retorna os dados em formato JSON com um status 200. Se ocorrer algum erro durante o processo, ela retorna uma mensagem de erro no formato JSON com um status 400.
   async users(req, res) {
     try {
       const result = await Users.findAll({
@@ -191,7 +193,8 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-
+  //Esta API assíncrona retorna detalhes específicos sobre as marcas associadas a um usuário, incluindo os nomes e UUIDs das marcas, bem como informações sobre os dispositivos vinculados a cada marca.
+  //Também inclui os dados de geração, temperatura e alertas dos dispositivos.
   async userBrands(req, res) {
     try {
       const use = req.params.uuid;
@@ -244,7 +247,8 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-
+  //Esta API assíncrona retorna informações detalhadas sobre usuários, incluindo nome, e-mail, cidade, endereço de instalação, CEP, capacidade do sistema, tipo de sistema, quantidade de módulos, entre outros dados.
+  //Além disso, ela inclui informações sobre os planos de tipo associados a cada usuário.
   async kanban(req, res) {
     try {
       const result = await Users.findAll({
@@ -277,7 +281,8 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-
+  //Esta API assíncrona gera um relatório de dados relacionados à geração de energia de usuários.
+  //Ela inclui informações sobre o nome e e-mail do usuário, bem como detalhes das marcas associadas, dispositivos, geração real e estimada, temperatura e alertas. A busca é limitada ao último mês.
   async generationReport(req, res) {
     try {
       const result = await Users.findAll({
@@ -330,7 +335,8 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-
+  //Esta API permite que o usuário atualize a frequência e a porcentagem de alertas associados ao seu perfil.
+  //Ela recebe os novos valores, como a porcentagem e o nome da frequência, e os aplica ao usuário identificado pelo UUID fornecido.
   async patchAlertFrequency(req, res) {
     const { useUuid, values } = req.body;
     const { percentage, frequencyName } = values;
@@ -346,7 +352,7 @@ class UsersController {
       return res.status(400).json({ message: "Erro ao salvar os dados!" });
     }
   }
-
+  //Esta API assíncrona retorna a porcentagem e o nome da frequência de alertas associados a um usuário específico identificado pelo UUID fornecido.
   async alertFrequency(req, res) {
     const use = req.params.uuid;
     const result = await Users.findByPk(use, {
@@ -359,7 +365,9 @@ class UsersController {
       return res.status(400).json({ message: "Erro ao restornar os dados!" });
     }
   }
-
+  //
+  //Esta API assíncrona retorna dados detalhados relacionados ao dashboard de um usuário específico, identificado pelo UUID fornecido.
+  //Ela inclui informações sobre o nome do usuário e suas marcas associadas. Cada marca possui detalhes sobre os dispositivos, incluindo UUID, nome, marca, capacidade, geração real e estimada, alertas e status. A busca é limitada ao mês atual.
   async dashboard(req, res) {
     try {
       const use = req.params.uuid;
@@ -381,7 +389,7 @@ class UsersController {
                   "dev_name",
                   "dev_brand",
                   "dev_deleted",
-                  "dev_capacity"
+                  "dev_capacity",
                 ],
                 include: [
                   {
@@ -417,6 +425,8 @@ class UsersController {
     }
   }
   //localhost:8080/v1/irrcoef/SERGIPE/Areia%20Branca?potSistema=30
+  //Esta API assíncrona calcula e atualiza estimativas de geração de energia para um dispositivo específico, com base em dados de irradiação solar fornecidos. Ela recebe informações sobre o estado, cidade, UUID do dispositivo, potência do sistema e nome do contrato. Em seguida, calcula a geração estimada para cada mês do ano, utilizando coeficientes de irradiação solar.
+  //Em seguida, atualiza os registros na tabela "generation" com as novas estimativas. Além disso, também atualiza informações do dispositivo, como nome do contrato, capacidade e endereço.
   async irradiation(req, res) {
     try {
       const { ic_states, ic_city, devUuid } = req.params;
@@ -486,6 +496,8 @@ class UsersController {
       return res.status(400).json({ message: `Erro. ${error.message}` });
     }
   }
+  //Esta API retorna a soma das capacidades de dispositivos associados a uma marca específica, identificada pelo UUID fornecido. Ela busca os dispositivos com base no UUID da marca e extrai suas capacidades.
+  //Em seguida, calcula a soma dessas capacidades e a retorna como sumOfDevCapacities em formato JSON.
   async report(req, res) {
     try {
       const { blUuid } = req.params;
@@ -508,6 +520,8 @@ class UsersController {
       return res.status(400).json({ message: `Erro. ${error.message}` });
     }
   }
+  //Esta API retorna informações detalhadas sobre um dispositivo específico, identificado pelo UUID fornecido.
+  //Ela busca o dispositivo com base no UUID e extrai informações como capacidade, nome do contrato, marca e endereço associados a esse dispositivo. Em seguida, retorna essas informações em formato JSON.
   async reportClient(req, res) {
     try {
       const { devUuid } = req.params;
@@ -533,6 +547,8 @@ class UsersController {
       return res.status(400).json({ message: `Erro. ${error.message}` });
     }
   }
+  //Esta API retorna o valor anual de irradiação solar associado a uma cidade e estado específicos.
+  //Ela recebe como parâmetros os nomes da cidade e estado, converte o estado para maiúsculas e busca na base de dados o coeficiente de irradiação correspondente. Em seguida, retorna o valor anual de irradiação em formato JSON.
   async irradiation_2(req, res) {
     try {
       let { ic_city, ic_states } = req.params;
@@ -550,6 +566,8 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  //Esta API cria um novo dispositivo de marca (Brand) associado a um usuário específico. Ela recebe como entrada o UUID do usuário (use_uuid), o login (bl_login), o nome (bl_name) e a senha (bl_password) do dispositivo.
+  //A API verifica se o dispositivo já está associado ao usuário, e se não estiver, cria um novo dispositivo na tabela Brand e associa a ele um novo registro na tabela Devices.
   async newDevice(req, res) {
     try {
       const { use_uuid, bl_login, bl_name, bl_password } = req.body;
@@ -580,6 +598,8 @@ class UsersController {
         .json({ message: `Erro ao criar o Login/device: ${error.message}` });
     }
   }
+  //Essa API cria um novo dispositivo de marca associado a um usuário específico. Ela recebe informações como o UUID do usuário, login, nome e senha do dispositivo.
+  //A API verifica se o dispositivo já está associado ao usuário e, se não estiver, cria um novo dispositivo na tabela Brand e associa a ele um novo registro na tabela Devices.
   async deleteDevice(req, res) {
     try {
       const { devUuid } = req.body;
@@ -598,6 +618,8 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  //Esta API chamada sendEmail, trata da recuperação de senhas.
+  //Ela gera um token JWT para a recuperação de senha, envia um e-mail com o token e atualiza o registro do usuário.
   async sendEmail(req, res) {
     try {
       const { use_email } = req.body;
@@ -665,7 +687,8 @@ class UsersController {
         .json({ message: "Erro ao criar ou atualizar o token." });
     }
   }
-
+  //Esta API trata da recuperação de senha.
+  //Verifica a validade do token JWT e, se válido, atualiza a senha do usuário com a nova fornecida. Retorna mensagens apropriadas em caso de sucesso ou erro.
   async passwordRecover(req, res) {
     try {
       const { use_email, use_token } = req.query;

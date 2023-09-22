@@ -12,7 +12,7 @@ import Temperature from "../models/Temperature";
 import Status from "../models/Status";
 import Address from "../models/Address";
 import Proposal from "../models/Proposal";
-
+//Este código configura uma conexão com o banco de dados usando o Sequelize, um ORM.
 const modelsDbMayaEnergy = [
   Temperature,
   Alerts,

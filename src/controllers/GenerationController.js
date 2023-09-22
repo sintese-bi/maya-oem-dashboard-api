@@ -20,7 +20,8 @@ const transporter = nodemailer.createTransport({
   // },
 });
 class GenerationController {
-  // retorna dados para gráfico de registro
+  //Esta função recupera dados de dispositivos e a temperatura mais recente, dentro de um intervalo de datas especificado. 
+  //Em seguida, ela calcula alertas com base na geração de energia diária em relação à estimada e retorna os resultados em formato JSON.
   async deviceDataAndLatestTemperature(req, res) {
     const { startDate, endDate, type, devUuid } = req.query;
     const dataNow = moment().format("YYYY-MM-DD");
@@ -97,7 +98,8 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-
+//Esta recupera alertas recentes de um dispositivo específico dentro da última hora. 
+//Ela retorna os dados em formato JSON, incluindo o nome do dispositivo e os detalhes dos alertas (como o tipo de alerta e o inversor associado, se houver). Se houver um erro durante o processo, a função retorna uma mensagem de erro no formato JSON.
   async recentAlerts(req, res) {
     const { devUuid } = req.query;
 
@@ -182,7 +184,8 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao definir projeção!` });
     }
   }
-
+//Esta função recebe uma requisição com informações sobre projeção da geração de energia.
+// Ela processa os dados, atualiza as projeções de geração no banco de dados e retorna uma mensagem de sucesso. Se ocorrer um erro durante o processo, ela retorna uma mensagem de erro no formato JSON.
   async projection(req, res) {
     const { date, devUuid } = req.query;
 
@@ -217,6 +220,9 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  //É enviado um e-mail contendo dados de geração de energia para um endereço específico associado a um dispositivo. 
+  //Ela compõe o corpo do e-mail com os valores fornecidos e utiliza um serviço de transporte de e-mail para enviar a mensagem. 
+  //Em caso de erro, a função retorna uma mensagem no formato JSON.
   async reportgenerationEmail(req, res) {
     try {
       const {

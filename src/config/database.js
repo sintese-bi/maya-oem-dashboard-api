@@ -1,3 +1,5 @@
+//Configuração das credenciais do Banco de Dados
+
 require("dotenv/config");
 
 module.exports = {

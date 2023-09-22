@@ -11,6 +11,8 @@ import { v4 as uuidv4 } from "uuid";
 // const clientKilo = "b";
 
 class PandaDocController {
+  //Esta API processa dados de propostas de geração de energia e os envia para a plataforma PandaDoc para geração de documentos.
+  //Os dados são utilizados para preencher um modelo de documento, que é então enviado para o cliente via e-mail. A API também registra e gerencia os números de proposta.
   async handler(req, res) {
     try {
       const {

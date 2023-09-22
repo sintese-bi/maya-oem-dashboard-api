@@ -1,6 +1,7 @@
 require("dotenv").config();
 import jwt from "jsonwebtoken";
-
+//O código exporta um middleware de autenticação chamado checkToken. Ele verifica a presença e validade de um token JWT no cabeçalho de autorização da requisição. 
+//Se o token for válido, permite o acesso à rota protegida; caso contrário, retorna um erro 401.
 export const checkToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
