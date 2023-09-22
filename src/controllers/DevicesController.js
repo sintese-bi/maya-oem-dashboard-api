@@ -3,7 +3,7 @@ import Devices from "../models/Devices";
 import Generation from "../models/Generation";
 import { Op } from "sequelize";
 class DevicesController {
-  //Esta função index processa dados de dispositivos, recuperando informações de gerações associadas a eles. 
+  //Esta função index processa dados de dispositivos, recuperando informações de gerações associadas a eles.
   //Ela inclui a ordenação por data e trata casos onde a geração atual não está disponível, utilizando dados da geração anterior.
   async index(req, res) {
     // const { brand } = req.query;
@@ -50,50 +50,54 @@ class DevicesController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  //Esta função calcula a soma da geração real e estimada em um intervalo de datas especificado. 
+  //Esta função calcula a soma da geração real e estimada em um intervalo de datas especificado.
   //Para cada dia dentro do intervalo, ela busca e soma as gerações correspondentes de todas as usinas. Os resultados são retornados em formato JSON, incluindo as somas por dia tanto para a geração real quanto para a estimada. Em caso de erro, uma mensagem de erro é retornada com o status 400.
   async sumGeneration(req, res) {
     try {
       const { startDate, endDate } = req.body;
       const start = new Date(startDate);
       const end = new Date(endDate);
-      
+
       const result = await Generation.findAll({
-        where: { 
-          gen_date: { 
-            [Op.between]: [start, end]
-          }
+        where: {
+          gen_date: {
+            [Op.between]: [start, end],
+          },
         },
-        attributes: ["gen_date", "gen_real", "gen_estimated"],
+        attributes: ["gen_date", "gen_real"],
       });
-  
+
       const somaGenRealDia = {};
-      const somaGenEstimadaDia = {};
-  
-      result.forEach(item => {
+      
+
+      result.forEach((item) => {
         const dateKey = item.gen_date.split("T")[0];
-        
-        somaGenRealDia[dateKey] = (somaGenRealDia[dateKey] || 0) + item.gen_real;
-        somaGenEstimadaDia[dateKey] = (somaGenEstimadaDia[dateKey] || 0) + item.gen_estimated;
+
+        somaGenRealDia[dateKey] =
+          (somaGenRealDia[dateKey] || 0) + item.gen_real;
       });
-  
-      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+
+      for (
+        let date = new Date(start);
+        date <= end;
+        date.setDate(date.getDate() + 1)
+      ) {
         const dateKey = date.toISOString().split("T")[0];
-        somaGenRealDia[dateKey] = parseFloat((somaGenRealDia[dateKey] || 0).toFixed(2));
-        somaGenEstimadaDia[dateKey] = parseFloat((somaGenEstimadaDia[dateKey] || 0).toFixed(2));
+        somaGenRealDia[dateKey] = parseFloat(
+          (somaGenRealDia[dateKey] || 0).toFixed(2)
+        );
       }
-  
+
       return res.status(200).json({
         message: "Somas calculadas com sucesso!",
         somaPorDiaReal: somaGenRealDia,
-        somaPorDiaEstimada: somaGenEstimadaDia,
       });
     } catch (error) {
-      return res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
 }
 
 export default new DevicesController();
-
-
