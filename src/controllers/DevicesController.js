@@ -57,45 +57,39 @@ class DevicesController {
       const { startDate, endDate } = req.body;
       const start = new Date(startDate);
       const end = new Date(endDate);
-
-      const result = await Generation.findAll({
-        where: {
-          gen_date: {
-            [Op.between]: [start, end],
-          },
-        },
-        attributes: ["gen_date", "gen_real"],
-      });
-
-      const somaGenRealDia = {};
       
-
-      result.forEach((item) => {
-        const dateKey = item.gen_date.split("T")[0];
-
-        somaGenRealDia[dateKey] =
-          (somaGenRealDia[dateKey] || 0) + item.gen_real;
+      const result = await Generation.findAll({
+        where: { 
+          gen_date: { 
+            [Op.between]: [start, end]
+          }
+        },
+        attributes: ["gen_date", "gen_real", "gen_estimated"],
       });
-
-      for (
-        let date = new Date(start);
-        date <= end;
-        date.setDate(date.getDate() + 1)
-      ) {
+  
+      const somaGenRealDia = {};
+      const somaGenEstimadaDia = {};
+  
+      result.forEach(item => {
+        const dateKey = item.gen_date.split("T")[0];
+        
+        somaGenRealDia[dateKey] = (somaGenRealDia[dateKey] || 0) + item.gen_real;
+        somaGenEstimadaDia[dateKey] = (somaGenEstimadaDia[dateKey] || 0) + item.gen_estimated;
+      });
+  
+      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
         const dateKey = date.toISOString().split("T")[0];
-        somaGenRealDia[dateKey] = parseFloat(
-          (somaGenRealDia[dateKey] || 0).toFixed(2)
-        );
+        somaGenRealDia[dateKey] = parseFloat((somaGenRealDia[dateKey] || 0).toFixed(2));
+        somaGenEstimadaDia[dateKey] = parseFloat((somaGenEstimadaDia[dateKey] || 0).toFixed(2));
       }
-
+  
       return res.status(200).json({
         message: "Somas calculadas com sucesso!",
         somaPorDiaReal: somaGenRealDia,
+        somaPorDiaEstimada: somaGenEstimadaDia,
       });
     } catch (error) {
-      return res
-        .status(400)
-        .json({ message: `Erro ao retornar os dados. ${error}` });
+      return res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
 }
