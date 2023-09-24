@@ -122,7 +122,11 @@ class UsersController {
     try {
       const { use_email, use_password } = req.body;
       console.log("req ", req);
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 
+      if (!emailRegex.test(use_email)) {
+        return res.status(400).json({ message: "O email não é válido." });
+      }
       const result = await Users.findOne({
         attributes: [
           "use_uuid",
