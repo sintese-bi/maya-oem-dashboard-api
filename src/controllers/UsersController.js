@@ -127,6 +127,13 @@ class UsersController {
       if (!emailRegex.test(use_email)) {
         return res.status(400).json({ message: "O email não é válido." });
       }
+      const existingEmail = await Users.findOne({
+        attributes: ["use_email"],
+        where: { use_email: use_email },
+      });
+      if (!existingEmail) {
+        return res.status(400).json({ message: "O email não existe!" });
+      }
       const result = await Users.findOne({
         attributes: [
           "use_uuid",
@@ -393,7 +400,7 @@ class UsersController {
                   "dev_name",
                   "dev_brand",
                   "dev_deleted",
-                  "dev_capacity"
+                  "dev_capacity",
                 ],
                 include: [
                   {
