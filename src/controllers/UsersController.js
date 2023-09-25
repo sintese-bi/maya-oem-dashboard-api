@@ -266,12 +266,9 @@ class UsersController {
         attributes: [
           "use_name",
           "use_email",
-          "use_city",
-          "use_city",
-          "use_installation_address",
-          "use_cep",
+
           "use_kwp",
-          "use_type_system",
+
           "use_type_system",
           "use_module_numbers",
           "tp_uuid",
@@ -282,6 +279,26 @@ class UsersController {
           {
             attributes: ["tp_name"],
             association: "type_plans",
+          },
+        ],
+      });
+      return res.status(200).json(result);
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  async deviceReturn(req, res) {
+    try {
+      const { use } = req.query;
+      const result = await Brand.findAll({
+        where: { use_uuid: use },
+        attributes: [],
+        include: [
+          {
+            association: "devices",
+            attributes: ["dev_name","dev_brand","dev_capacity"],
           },
         ],
       });
