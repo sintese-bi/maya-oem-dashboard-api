@@ -241,7 +241,7 @@ class GenerationController {
 
       const emailBody = `
         <p>Olá,</p>       
-        <p>Aqui estão os seus dados de geração:</p>
+        <p>Aqui estão os dados de geração da usina:</p>
 
         <ul>
           <li><strong>Dados de Estimativa Diária:</strong> ${gen_est_day}</li>
@@ -258,7 +258,7 @@ class GenerationController {
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
         to: searchDevice_email.dev_email,
-        subject: "Dados de Geração ",
+        subject: "Dados de Geração da Usina ",
         text: "",
         html: emailBody,
       };
