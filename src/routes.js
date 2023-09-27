@@ -16,6 +16,7 @@ import StripeController from "./controllers/StripeController";
 // SERVICE's
 import checkToken from "./service/token";
 import multer from "multer";
+import DevicesController from "./controllers/DevicesController";
 const upload = multer({ dest: "uploads/" }); // Define a pasta onde os arquivos serão armazenados
 
 // STADOS DE CONTROLLER
@@ -62,6 +63,10 @@ routes.post(
   `${apiVersion}/sendgenerationemail`,
   checkToken,
   GenerationController.reportgenerationEmail
+);
+routes.post(
+  `${apiVersion}/generalreport`,
+  GenerationController.generalreportEmail
 );
 routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
 routes.get(
