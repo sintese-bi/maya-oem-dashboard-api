@@ -57,30 +57,44 @@ class DevicesController {
       const { startDate, endDate } = req.body;
       const start = new Date(startDate);
       const end = new Date(endDate);
-      
+  
       const result = await Generation.findAll({
         where: { 
           gen_date: { 
             [Op.between]: [start, end]
           }
         },
-        attributes: ["gen_date", "gen_real", "gen_estimated"],
+        attributes: ["gen_date", "gen_real", "gen_estimated", "dev_uuid"],
       });
   
       const somaGenRealDia = {};
       const somaGenEstimadaDia = {};
   
+      const devUuidsWithZeroGenReal = {}; // Para rastrear os dev_uuids com 10 ou mais dias de gen_real = 0
+  
       result.forEach(item => {
-        const dateKey = item.gen_date.split("T")[0];
-        
-        somaGenRealDia[dateKey] = (somaGenRealDia[dateKey] || 0) + item.gen_real;
-        somaGenEstimadaDia[dateKey] = (somaGenEstimadaDia[dateKey] || 0) + item.gen_estimated;
+        const dateKey = new Date(item.gen_date).toISOString().split("T")[0];
+  
+        if (item.gen_real === 0) {
+          devUuidsWithZeroGenReal[item.dev_uuid] = (devUuidsWithZeroGenReal[item.dev_uuid] || 0) + 1;
+          if (devUuidsWithZeroGenReal[item.dev_uuid] >= 10) {
+            delete somaGenRealDia[dateKey];
+            delete somaGenEstimadaDia[dateKey];
+          }
+        } else {
+          devUuidsWithZeroGenReal[item.dev_uuid] = 0;
+          somaGenRealDia[dateKey] = (somaGenRealDia[dateKey] || 0) + item.gen_real;
+          somaGenEstimadaDia[dateKey] = (somaGenEstimadaDia[dateKey] || 0) + item.gen_estimated;
+        }
       });
   
-      for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-        const dateKey = date.toISOString().split("T")[0];
-        somaGenRealDia[dateKey] = parseFloat((somaGenRealDia[dateKey] || 0).toFixed(2));
-        somaGenEstimadaDia[dateKey] = parseFloat((somaGenEstimadaDia[dateKey] || 0).toFixed(2));
+      // Arredondar para duas casas decimais
+      for (const dateKey in somaGenRealDia) {
+        somaGenRealDia[dateKey] = parseFloat(somaGenRealDia[dateKey].toFixed(2));
+      }
+  
+      for (const dateKey in somaGenEstimadaDia) {
+        somaGenEstimadaDia[dateKey] = parseFloat(somaGenEstimadaDia[dateKey].toFixed(2));
       }
   
       return res.status(200).json({
@@ -92,6 +106,8 @@ class DevicesController {
       return res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  
+  
 }
 
 export default new DevicesController();
