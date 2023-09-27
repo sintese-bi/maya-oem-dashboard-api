@@ -1,5 +1,5 @@
 import { Model, DataTypes } from "sequelize";
-
+import Devices from "./Devices";
 class Generation extends Model {
   static init(sequelize) {
     super.init(
@@ -40,6 +40,12 @@ class Generation extends Model {
       }
     );
     return this;
+  }
+  static associate(models) {
+    this.belongsTo(models.Devices, {
+      foreignKey: 'dev_uuid',
+      as: 'devices'
+    });
   }
 }
 
