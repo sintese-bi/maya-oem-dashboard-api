@@ -27,6 +27,9 @@ class Devices extends Model {
         dev_capacity: {
           type: DataTypes.FLOAT,
         },
+        dev_email: {
+          type: DataTypes.STRING,
+        },
         sta_uuid: { type: DataTypes.UUIDV4 },
       },
       {

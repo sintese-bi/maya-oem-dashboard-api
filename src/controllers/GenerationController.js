@@ -20,7 +20,7 @@ const transporter = nodemailer.createTransport({
   // },
 });
 class GenerationController {
-  //Esta função recupera dados de dispositivos e a temperatura mais recente, dentro de um intervalo de datas especificado. 
+  //Esta função recupera dados de dispositivos e a temperatura mais recente, dentro de um intervalo de datas especificado.
   //Em seguida, ela calcula alertas com base na geração de energia diária em relação à estimada e retorna os resultados em formato JSON.
   async deviceDataAndLatestTemperature(req, res) {
     const { startDate, endDate, type, devUuid } = req.query;
@@ -98,8 +98,8 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-//Esta recupera alertas recentes de um dispositivo específico dentro da última hora. 
-//Ela retorna os dados em formato JSON, incluindo o nome do dispositivo e os detalhes dos alertas (como o tipo de alerta e o inversor associado, se houver). Se houver um erro durante o processo, a função retorna uma mensagem de erro no formato JSON.
+  //Esta recupera alertas recentes de um dispositivo específico dentro da última hora.
+  //Ela retorna os dados em formato JSON, incluindo o nome do dispositivo e os detalhes dos alertas (como o tipo de alerta e o inversor associado, se houver). Se houver um erro durante o processo, a função retorna uma mensagem de erro no formato JSON.
   async recentAlerts(req, res) {
     const { devUuid } = req.query;
 
@@ -184,8 +184,8 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao definir projeção!` });
     }
   }
-//Esta função recebe uma requisição com informações sobre projeção da geração de energia.
-// Ela processa os dados, atualiza as projeções de geração no banco de dados e retorna uma mensagem de sucesso. Se ocorrer um erro durante o processo, ela retorna uma mensagem de erro no formato JSON.
+  //Esta função recebe uma requisição com informações sobre projeção da geração de energia.
+  // Ela processa os dados, atualiza as projeções de geração no banco de dados e retorna uma mensagem de sucesso. Se ocorrer um erro durante o processo, ela retorna uma mensagem de erro no formato JSON.
   async projection(req, res) {
     const { date, devUuid } = req.query;
 
@@ -220,8 +220,8 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  //É enviado um e-mail contendo dados de geração de energia para um endereço específico associado a um dispositivo. 
-  //Ela compõe o corpo do e-mail com os valores fornecidos e utiliza um serviço de transporte de e-mail para enviar a mensagem. 
+  //É enviado um e-mail contendo dados de geração de energia para um endereço específico associado a um dispositivo.
+  //Ela compõe o corpo do e-mail com os valores fornecidos e utiliza um serviço de transporte de e-mail para enviar a mensagem.
   //Em caso de erro, a função retorna uma mensagem no formato JSON.
   async reportgenerationEmail(req, res) {
     try {
@@ -273,6 +273,66 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  async generalreportEmail(req, res) {
+    try {
+      const currentDate = new Date();
+      const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  
+      const result = await Devices.findAll({
+        attributes: ["dev_email"],
+        include: [
+          {
+            where: { 
+              gen_date: {
+                [Op.between]: [firstDayOfMonth, currentDate]
+              }
+            },
+            association: "generation",
+            attributes: ["gen_estimated", "gen_real", "gen_date"],
+          },
+        ],
+      });
+  
+      const reportData = result.map(device => {
+        let sumGenEstimated = 0;
+        let sumGenReal = 0;
+  
+        device.generation.forEach(generation => {
+          sumGenEstimated += generation.gen_estimated;
+          sumGenReal += generation.gen_real;
+        });
+  
+        const currentDateData = {
+          gen_estimated: 0,
+          gen_real: 0
+        };
+  
+        device.generation.forEach(generation => {
+          const genDate = new Date(generation.gen_date);
+          if (genDate.getDate() === currentDate.getDate()) {
+            currentDateData.gen_estimated = generation.gen_estimated;
+            currentDateData.gen_real = generation.gen_real;
+          }
+        });
+  
+        return {
+          dev_email: device.dev_email,
+          currentDayData: currentDateData,
+          sumData: {
+            gen_estimated: sumGenEstimated,
+            gen_real: sumGenReal
+          }
+        };
+      });
+  
+      return res.status(200).json({ 
+        reportData
+      });
+    } catch (error) {
+      res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  
 }
 
 export default new GenerationController();
