@@ -318,15 +318,6 @@ class GenerationController {
             currentDateData.gen_real = generation.gen_real;
           }
         });
-
-        return {
-          dev_email: device.dev_email,
-          currentDayData: currentDateData,
-          sumData: {
-            gen_estimated: sumGenEstimated,
-            gen_real: sumGenReal,
-          },
-        };
       });
       const emailBody = `
       <p>Olá,</p>       
@@ -346,7 +337,7 @@ class GenerationController {
 
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
-        to: "",
+        to: device.dev_email,
         subject: "Dados de Geração da Usina ",
         text: "",
         html: emailBody,
@@ -358,10 +349,14 @@ class GenerationController {
           console.log("E-mail enviado:", info.res);
         }
       });
-
-      return res.status(200).json({
-        reportData,
-      });
+      return {
+        dev_email: device.dev_email,
+        currentDayData: currentDateData,
+        sumData: {
+          gen_estimated: sumGenEstimated,
+          gen_real: sumGenReal,
+        },
+      };
     } catch (error) {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
