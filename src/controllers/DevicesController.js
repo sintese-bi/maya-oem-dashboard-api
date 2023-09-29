@@ -69,6 +69,7 @@ class DevicesController {
             association: "devices",
             where: {
               sta_uuid: "b5f9a5f7-2f67-4ff2-8645-47f55d265e4e",
+              dev_deleted: false
             },
             attributes: [],
           },
