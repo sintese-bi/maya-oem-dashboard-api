@@ -298,7 +298,7 @@ class UsersController {
         include: [
           {
             association: "devices",
-            attributes: ["dev_name","dev_brand","dev_capacity"],
+            attributes: ["dev_name", "dev_brand", "dev_capacity"],
           },
         ],
       });
@@ -412,6 +412,10 @@ class UsersController {
             include: [
               {
                 association: "devices",
+                where: {
+                  sta_uuid: "b5f9a5f7-2f67-4ff2-8645-47f55d265e4e",
+                  dev_deleted: false,
+                },
                 attributes: [
                   "dev_uuid",
                   "dev_name",
