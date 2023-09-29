@@ -117,9 +117,10 @@ routes.get(
   UsersController.alertFrequency
 );
 routes.get(
-  `${apiVersion}/dashboard/:uuid`,
+  `${apiVersion}/dashboard/:uuid/:par?`,
   checkToken,
   UsersController.dashboard
 );
+
 
 export default routes;

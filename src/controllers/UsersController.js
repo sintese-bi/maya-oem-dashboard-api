@@ -298,7 +298,7 @@ class UsersController {
         include: [
           {
             association: "devices",
-            attributes: ["dev_name","dev_brand","dev_capacity"],
+            attributes: ["dev_name", "dev_brand", "dev_capacity"],
           },
         ],
       });
@@ -399,9 +399,18 @@ class UsersController {
   async dashboard(req, res) {
     try {
       const use = req.params.uuid;
-
+      const par = req.params.par;
       const startOfMonth = moment().startOf("month").toDate();
       const endOfMonth = moment().endOf("month").toDate();
+
+      let whereCondition = {};
+
+      if (par === "yes") {
+        whereCondition = {
+          sta_uuid: "b5f9a5f7-2f67-4ff2-8645-47f55d265e4e",
+          dev_deleted: false,
+        };
+      }
 
       const result = await Users.findByPk(use, {
         attributes: ["use_name"],
@@ -412,6 +421,7 @@ class UsersController {
             include: [
               {
                 association: "devices",
+                where: whereCondition,
                 attributes: [
                   "dev_uuid",
                   "dev_name",
@@ -452,6 +462,7 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+
   //localhost:8080/v1/irrcoef/SERGIPE/Areia%20Branca?potSistema=30
   //Esta API assíncrona calcula e atualiza estimativas de geração de energia para um dispositivo específico, com base em dados de irradiação solar fornecidos. Ela recebe informações sobre o estado, cidade, UUID do dispositivo, potência do sistema e nome do contrato. Em seguida, calcula a geração estimada para cada mês do ano, utilizando coeficientes de irradiação solar.
   //Em seguida, atualiza os registros na tabela "generation" com as novas estimativas. Além disso, também atualiza informações do dispositivo, como nome do contrato, capacidade e endereço.
