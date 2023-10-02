@@ -252,7 +252,7 @@ class GenerationController {
           <li><strong>Dados de Geração Real Mensal:</strong> ${gen_real_month}</li>
         </ul>
         <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
-        <p><img src="" alt="Logo da MAYA WATCH"></p>
+        
         `;
 
       const mailOptions = {

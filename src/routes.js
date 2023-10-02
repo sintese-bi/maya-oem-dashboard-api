@@ -66,6 +66,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/generalreport`,
+  checkToken,
   GenerationController.generalreportEmail
 );
 routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
