@@ -64,6 +64,7 @@ routes.post(
   checkToken,
   GenerationController.reportgenerationEmail
 );
+routes.post(`${apiVersion}/emailpdf`, GenerationController.reportgenerationEmailPDF);
 routes.post(
   `${apiVersion}/generalreport`,
   checkToken,
