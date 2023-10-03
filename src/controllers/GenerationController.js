@@ -273,6 +273,9 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  //Essa API é uma função assíncrona chamada reportgenerationEmailPDF que gera e envia relatórios em formato PDF por e-mail. 
+  //Ela aceita um PDF em formato base64, o UUID do dispositivo (dev_uuid) e o endereço de e-mail associado ao dispositivo. O relatório é anexado ao e-mail e enviado. 
+  //Em caso de erro, a API retorna uma mensagem de erro.
   async reportgenerationEmailPDF(req, res) {
     try {
       const { pdf, base64, dev_uuid } = req.body;
@@ -287,7 +290,7 @@ class GenerationController {
       });
       const emailBody = `
       Prezado usuário,
-      
+
       Anexamos um relatório em formato PDF com os dados de geração da usina. Este relatório inclui informações referentes à geração diária, semanal e mensal, apresentadas de forma clara e concisa.
 
       Além disso, no documento, você encontrará um gráfico temporal que ilustra a variação na produção de energia ao longo do período analisado.
@@ -314,6 +317,8 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  //Esta API generalreportEmail retorna dados de relatórios agregados de dispositivos, incluindo estimativas e valores reais de geração de energia para o mês atual e dados do dia atual. 
+  //Se ocorrer um erro, a API retorna uma mensagem de erro com status 400.
   async generalreportEmail(req, res) {
     try {
       const currentDate = new Date();
