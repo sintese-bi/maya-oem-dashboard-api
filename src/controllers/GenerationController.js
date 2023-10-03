@@ -277,14 +277,23 @@ class GenerationController {
     try {
       const { pdf, base64, dev_uuid } = req.body;
       const attachment = {
-        filename: 'relatorio.pdf', // Nome do arquivo anexado no e-mail
+        filename: "relatorio.pdf", // Nome do arquivo anexado no e-mail
         content: base64, // Conteúdo base64 do PDF
-        encoding: 'base64', // Tipo de codificação
+        encoding: "base64", // Tipo de codificação
       };
       const searchDevice_email = await Devices.findOne({
         where: { dev_uuid: dev_uuid },
         attributes: ["dev_email"],
       });
+      const emailBody = `
+      Prezado usuário,
+      
+      Anexamos um relatório em formato PDF com os dados de geração da usina. Este relatório inclui informações referentes à geração diária, semanal e mensal, apresentadas de forma clara e concisa.
+
+      Além disso, no documento, você encontrará um gráfico temporal que ilustra a variação na produção de energia ao longo do período analisado.
+      
+      `;
+
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
         to: searchDevice_email.dev_email,
