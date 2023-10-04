@@ -280,7 +280,7 @@ class GenerationController {
     try {
       const { pdf, base64, dev_uuid } = req.body;
       const attachment = {
-        // filename: "relatorio.pdf", // Nome do arquivo anexado no e-mail
+        filename: "relatorio.pdf", // Nome do arquivo anexado no e-mail
         content: base64, // Conteúdo base64 do PDF
         encoding: "base64", // Tipo de codificação
       };
