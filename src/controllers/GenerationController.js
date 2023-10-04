@@ -273,14 +273,14 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  //Essa API é uma função assíncrona chamada reportgenerationEmailPDF que gera e envia relatórios em formato PDF por e-mail. 
-  //Ela aceita um PDF em formato base64, o UUID do dispositivo (dev_uuid) e o endereço de e-mail associado ao dispositivo. O relatório é anexado ao e-mail e enviado. 
+  //Essa API é uma função assíncrona chamada reportgenerationEmailPDF que gera e envia relatórios em formato PDF por e-mail.
+  //Ela aceita um PDF em formato base64, o UUID do dispositivo (dev_uuid) e o endereço de e-mail associado ao dispositivo. O relatório é anexado ao e-mail e enviado.
   //Em caso de erro, a API retorna uma mensagem de erro.
   async reportgenerationEmailPDF(req, res) {
     try {
       const { pdf, base64, dev_uuid } = req.body;
       const attachment = {
-        filename: "relatorio.pdf", // Nome do arquivo anexado no e-mail
+        // filename: "relatorio.pdf", // Nome do arquivo anexado no e-mail
         content: base64, // Conteúdo base64 do PDF
         encoding: "base64", // Tipo de codificação
       };
@@ -299,8 +299,8 @@ class GenerationController {
 
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
-        to: searchDevice_email.dev_email,
-        subject: "Dados de Geração da Usina ",
+        to: [searchDevice_email.dev_email, "eloymjunior00@gmail.com"],
+        subject: "Relatório de dados de Geração",
         text: "",
         html: emailBody,
         attachments: [attachment],
@@ -317,7 +317,7 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  //Esta API generalreportEmail retorna dados de relatórios agregados de dispositivos, incluindo estimativas e valores reais de geração de energia para o mês atual e dados do dia atual. 
+  //Esta API generalreportEmail retorna dados de relatórios agregados de dispositivos, incluindo estimativas e valores reais de geração de energia para o mês atual e dados do dia atual.
   //Se ocorrer um erro, a API retorna uma mensagem de erro com status 400.
   async generalreportEmail(req, res) {
     try {
