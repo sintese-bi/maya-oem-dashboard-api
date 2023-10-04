@@ -454,7 +454,7 @@ class UsersController {
           },
         ],
       });
-      
+
       return res.status(200).json(result);
     } catch (error) {
       return res
@@ -464,7 +464,7 @@ class UsersController {
   }
 
   //localhost:8080/v1/irrcoef/SERGIPE/Areia%20Branca?potSistema=30
-  //Esta API assíncrona calcula e atualiza estimativas de geração de energia para um dispositivo específico, com base em dados de irradiação solar fornecidos. Ela recebe informações sobre o estado, cidade, UUID do dispositivo, potência do sistema e nome do contrato. 
+  //Esta API assíncrona calcula e atualiza estimativas de geração de energia para um dispositivo específico, com base em dados de irradiação solar fornecidos. Ela recebe informações sobre o estado, cidade, UUID do dispositivo, potência do sistema e nome do contrato.
   //Em seguida, calcula a geração estimada para cada mês do ano, utilizando coeficientes de irradiação solar.
   //Por fim, atualiza os registros na tabela "generation" com as novas estimativas. Além disso, também atualiza informações do dispositivo, como nome do contrato, capacidade e endereço.
   async irradiation(req, res) {
@@ -501,12 +501,23 @@ class UsersController {
         if (!result) {
           return res.status(404).json({ message: "Não encontrado!" });
         }
-
-        const irr = result.get(attribute);
-        const gen_estimated = irr * potSistema * 0.85;
-        const gen_estimated_2 = gen_estimated.toFixed(2);
-        console.log(gen_estimated_2);
-        irradiationData[mes] = parseFloat(gen_estimated_2);
+        const now = new Date();
+        
+        const gen_first = await Generation.findOne({
+          attributes: ["gen_estimated", "gen_real"],
+          where: { dev_uuid: devUuid, gen_date: primeiroDiaDoMes },
+        });
+        if (gen_first.gen_estimated === null) {
+          console.log("OIIIIII");
+          await gen_first.update({ gen_estimated: gen_first.gen_real });
+          irradiationData[mes] = parseFloat(gen_estimated);
+        } else {
+          const irr = result.get(attribute);
+          const gen_estimated = irr * potSistema * 0.85;
+          const gen_estimated_2 = gen_estimated.toFixed(2);
+          console.log(gen_estimated_2);
+          irradiationData[mes] = parseFloat(gen_estimated_2);
+        }
       }
 
       // Busque todos os registros associados ao devUuid na tabela "generation"
