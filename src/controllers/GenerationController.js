@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
     pass: "xbox ejjd wokp ystv",
   },
   // tls: {
-  //   rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
+  //   rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
   // },
 });
 class GenerationController {
@@ -278,7 +278,7 @@ class GenerationController {
   //Em caso de erro, a API retorna uma mensagem de erro.
   async reportgenerationEmailPDF(req, res) {
     try {
-      const { pdf, base64, dev_uuid } = req.body;
+      const { base64, dev_uuid } = req.body;
       const attachment = {
         filename: "relatorio.pdf", // Nome do arquivo anexado no e-mail
         content: base64, // Conteúdo base64 do PDF
@@ -288,13 +288,17 @@ class GenerationController {
         where: { dev_uuid: dev_uuid },
         attributes: ["dev_email"],
       });
+      if (!searchDevice_email) {
+        return res.status(400).json({ message: "Email não encontrado!" });
+      }
       const emailBody = `
       Prezado usuário,
 
       Anexamos um relatório em formato PDF com os dados de geração da usina. Este relatório inclui informações referentes à geração diária, semanal e mensal, apresentadas de forma clara e concisa.
 
       Além disso, no documento, você encontrará um gráfico temporal que ilustra a variação na produção de energia ao longo do período analisado.
-      
+      Atenciosamente, 
+      <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
       `;
 
       const mailOptions = {
@@ -308,9 +312,13 @@ class GenerationController {
 
       transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
-          console.error("Erro ao enviar o e-mail:", error);
+          return res
+            .status(400)
+            .json({ message: `Erro ao enviar o email! ${error}` });
         } else {
-          console.log("E-mail enviado:", info.res);
+          return res
+            .status(200)
+            .json({ message: `Email enviado com sucesso!` });
         }
       });
     } catch (error) {

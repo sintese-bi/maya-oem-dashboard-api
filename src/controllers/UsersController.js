@@ -492,7 +492,12 @@ class UsersController {
 
       for (const mes of meses) {
         const attribute = `ic_${mes}`;
-
+        const monthIndex = meses.indexOf(mes) + 1;
+        const firstDayOfMonth = new Date(
+          new Date().getFullYear(),
+          monthIndex - 1,
+          1
+        );
         const result = await IrradiationCoefficient.findOne({
           where: { ic_states, ic_city },
           attributes: [attribute],
@@ -501,16 +506,16 @@ class UsersController {
         if (!result) {
           return res.status(404).json({ message: "Não encontrado!" });
         }
-        const now = new Date();
-        
+
         const gen_first = await Generation.findOne({
           attributes: ["gen_estimated", "gen_real"],
-          where: { dev_uuid: devUuid, gen_date: primeiroDiaDoMes },
+          where: { dev_uuid: devUuid, gen_date: firstDayOfMonth },
         });
         if (gen_first.gen_estimated === null) {
           console.log("OIIIIII");
-          await gen_first.update({ gen_estimated: gen_first.gen_real });
-          irradiationData[mes] = parseFloat(gen_estimated);
+          const estimated = gen_first.gen_real;
+
+          irradiationData[mes] = parseFloat(estimated);
         } else {
           const irr = result.get(attribute);
           const gen_estimated = irr * potSistema * 0.85;
@@ -528,9 +533,13 @@ class UsersController {
       const deviceToUpdate = await Devices.findOne({
         where: { dev_uuid: devUuid },
       });
+      const currentMonth = new Date().getMonth();
       // Atualize o valor da coluna "gen_estimated" para cada dia do mês correspondente
       for (const generation of generationsToUpdate) {
         const month = meses[new Date(generation.gen_date).getMonth()];
+        if (month == currentMonth) {
+          generation.estimated = irradiationData[month];
+        }
         generation.gen_estimated = irradiationData[month];
         await generation.save();
       }

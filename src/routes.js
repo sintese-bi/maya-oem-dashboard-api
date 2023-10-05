@@ -64,7 +64,11 @@ routes.post(
   checkToken,
   GenerationController.reportgenerationEmail
 );
-routes.post(`${apiVersion}/emailpdf`, GenerationController.reportgenerationEmailPDF);
+routes.post(
+  `${apiVersion}/emailpdf`,
+
+  GenerationController.reportgenerationEmailPDF
+);
 routes.post(
   `${apiVersion}/generalreport`,
   checkToken,
@@ -123,6 +127,5 @@ routes.get(
   checkToken,
   UsersController.dashboard
 );
-
 
 export default routes;
