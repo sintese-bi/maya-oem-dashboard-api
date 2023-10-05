@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
     pass: "xbox ejjd wokp ystv",
   },
   // tls: {
-  //   rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
+  //   rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
   // },
 });
 class GenerationController {
@@ -252,7 +252,7 @@ class GenerationController {
           <li><strong>Dados de Geração Real Mensal:</strong> ${gen_real_month}</li>
         </ul>
         <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
-        <p><img src="" alt="Logo da MAYA WATCH"></p>
+        
         `;
 
       const mailOptions = {
@@ -273,60 +273,118 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  //Essa API é uma função assíncrona chamada reportgenerationEmailPDF que gera e envia relatórios em formato PDF por e-mail.
+  //Ela aceita um PDF em formato base64, o UUID do dispositivo (dev_uuid) e o endereço de e-mail associado ao dispositivo. O relatório é anexado ao e-mail e enviado.
+  //Em caso de erro, a API retorna uma mensagem de erro.
+  async reportgenerationEmailPDF(req, res) {
+    try {
+      const { base64, dev_uuid } = req.body;
+      const attachment = {
+        filename: "relatorio.pdf", // Nome do arquivo anexado no e-mail
+        content: base64, // Conteúdo base64 do PDF
+        encoding: "base64", // Tipo de codificação
+      };
+      const searchDevice_email = await Devices.findOne({
+        where: { dev_uuid: dev_uuid },
+        attributes: ["dev_email"],
+      });
+      if (!searchDevice_email) {
+        return res.status(400).json({ message: "Email não encontrado!" });
+      }
+      const emailBody = `
+      Prezado usuário,
+
+      Anexamos um relatório em formato PDF com os dados de geração da usina. Este relatório inclui informações referentes à geração diária, semanal e mensal, apresentadas de forma clara e concisa.
+
+      Além disso, no documento, você encontrará um gráfico temporal que ilustra a variação na produção de energia ao longo do período analisado.
+      Atenciosamente, 
+      <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
+      `;
+
+      const mailOptions = {
+        from: '"noreplymayawatch@gmail.com',
+        to: [searchDevice_email.dev_email, "eloymjunior00@gmail.com"],
+        subject: "Relatório de dados de Geração",
+        text: "",
+        html: emailBody,
+        attachments: [attachment],
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          return res
+            .status(400)
+            .json({ message: `Erro ao enviar o email! ${error}` });
+        } else {
+          return res
+            .status(200)
+            .json({ message: `Email enviado com sucesso!` });
+        }
+      });
+    } catch (error) {
+      res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  //Esta API generalreportEmail retorna dados de relatórios agregados de dispositivos, incluindo estimativas e valores reais de geração de energia para o mês atual e dados do dia atual.
+  //Se ocorrer um erro, a API retorna uma mensagem de erro com status 400.
   async generalreportEmail(req, res) {
     try {
       const currentDate = new Date();
-      const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  
+      const firstDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+
       const result = await Devices.findAll({
         attributes: ["dev_email"],
         include: [
           {
-            where: { 
+            where: {
               gen_date: {
-                [Op.between]: [firstDayOfMonth, currentDate]
-              }
+                [Op.between]: [firstDayOfMonth, currentDate],
+              },
             },
             association: "generation",
             attributes: ["gen_estimated", "gen_real", "gen_date"],
           },
         ],
       });
-  
-      const reportData = result.map(device => {
+
+      const reportData = result.map((device) => {
         let sumGenEstimated = 0;
         let sumGenReal = 0;
-  
-        device.generation.forEach(generation => {
+
+        device.generation.forEach((generation) => {
           sumGenEstimated += generation.gen_estimated;
           sumGenReal += generation.gen_real;
         });
-  
+
         const currentDateData = {
           gen_estimated: 0,
-          gen_real: 0
+          gen_real: 0,
         };
-  
-        device.generation.forEach(generation => {
+
+        device.generation.forEach((generation) => {
           const genDate = new Date(generation.gen_date);
           if (genDate.getDate() === currentDate.getDate()) {
             currentDateData.gen_estimated = generation.gen_estimated;
             currentDateData.gen_real = generation.gen_real;
           }
         });
-  
+
         return {
           dev_email: device.dev_email,
           currentDayData: currentDateData,
           sumData: {
             gen_estimated: sumGenEstimated,
-            gen_real: sumGenReal
-          }
+            gen_real: sumGenReal,
+          },
         };
       });
-  
-      return res.status(200).json({ 
-        reportData
+
+      return res.status(200).json({
+        reportData,
       });
     } catch (error) {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
