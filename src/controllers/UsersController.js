@@ -428,6 +428,7 @@ class UsersController {
                   "dev_brand",
                   "dev_deleted",
                   "dev_capacity",
+                  "dev_address"
                 ],
                 include: [
                   {
