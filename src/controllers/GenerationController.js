@@ -325,6 +325,23 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  async updateEmail(req, res) {
+    try {
+      const { dev_uuid, email } = req.body;
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "O email não é válido." });
+      }
+      await Devices.update(
+        { dev_email: email },
+        { where: { dev_uuid: dev_uuid } }
+      );
+      return res.status(200).json({ message: `Email atualizado com sucesso!` });
+    } catch (error) {
+      res.status(400).json({ message: `Erro ao atualizar email. ${error}` });
+    }
+  }
   //Esta API generalreportEmail retorna dados de relatórios agregados de dispositivos, incluindo estimativas e valores reais de geração de energia para o mês atual e dados do dia atual.
   //Se ocorrer um erro, a API retorna uma mensagem de erro com status 400.
   async generalreportEmail(req, res) {
