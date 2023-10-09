@@ -288,7 +288,7 @@ class GenerationController {
         where: { dev_uuid: dev_uuid },
         attributes: ["dev_email"],
       });
-      if (!searchDevice_email) {
+      if (!searchDevice_email.dev_email) {
         return res.status(400).json({ message: "Email não encontrado!" });
       }
       const emailBody = `
