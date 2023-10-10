@@ -64,11 +64,11 @@ routes.post(
   checkToken,
   GenerationController.reportgenerationEmail
 );
-routes.post(
-  `${apiVersion}/emailpdf`,
-  checkToken,
-  GenerationController.reportgenerationEmailPDF
-);
+  routes.post(
+    `${apiVersion}/emailpdf`,
+    checkToken,
+    GenerationController.reportgenerationEmailPDF
+  );
 routes.post(
   `${apiVersion}/updateemail`,
   checkToken,
