@@ -132,6 +132,7 @@ routes.post(
   checkToken,
   UsersController.cancelUserPlan
 );
+//Api da Tabela
 routes.get(
   `${apiVersion}/dashboard/:uuid/:par?`,
   checkToken,
