@@ -428,7 +428,7 @@ class UsersController {
                   "dev_brand",
                   "dev_deleted",
                   "dev_capacity",
-                  "dev_address"
+                  "dev_address",
                 ],
                 include: [
                   {
@@ -781,6 +781,24 @@ class UsersController {
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: "Erro ao criar nova senha!" });
+    }
+  }
+  async cancelUserPlan(req, res) {
+    try {
+      const { use_uuid } = req.body;
+      console.log(use_uuid);
+      await Users.update(
+        { use_type_plan: false, use_type_member: "" },
+        { where: { use_uuid: use_uuid } }
+      );
+
+      return res
+        .status(200)
+        .json({ message: "Seu plano foi cancelado com sucesso!" });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: "Erro ao alterar o tipo de membro do cliente!" });
     }
   }
 }
