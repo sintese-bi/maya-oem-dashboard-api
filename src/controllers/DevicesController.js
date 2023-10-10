@@ -69,7 +69,7 @@ class DevicesController {
             association: "devices",
             where: {
               sta_uuid: "b5f9a5f7-2f67-4ff2-8645-47f55d265e4e",
-              dev_deleted: false
+              dev_deleted: false,
             },
             attributes: [],
           },
@@ -82,11 +82,13 @@ class DevicesController {
 
       result.forEach((item) => {
         const dateKey = item.gen_date.split("T")[0];
-
-        somaGenRealDia[dateKey] =
-          (somaGenRealDia[dateKey] || 0) + item.gen_real;
-        somaGenEstimadaDia[dateKey] =
-          (somaGenEstimadaDia[dateKey] || 0) + item.gen_estimated;
+        // Verifique se a geração real é maior que 0 antes de adicionar à soma
+        if (item.gen_real > 0) {
+          somaGenRealDia[dateKey] =
+            (somaGenRealDia[dateKey] || 0) + item.gen_real;
+          somaGenEstimadaDia[dateKey] =
+            (somaGenEstimadaDia[dateKey] || 0) + item.gen_estimated;
+        }
       });
 
       for (

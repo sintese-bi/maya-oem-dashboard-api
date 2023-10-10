@@ -27,7 +27,7 @@ const transporter = nodemailer.createTransport({
 });
 
 class StripeController {
-  //Esta API trata webhooks do Stripe para processar pagamentos bem-sucedidos. Ao receber um evento de pagamento confirmado, ela atualiza o tipo de plano e status de membro de um usuário no banco de dados. 
+  //Esta API trata webhooks do Stripe para processar pagamentos bem-sucedidos. Ao receber um evento de pagamento confirmado, ela atualiza o tipo de plano e status de membro de um usuário no banco de dados.
   //Em seguida, envia um e-mail de confirmação de compra ao cliente, com informações relevantes sobre a transação.
   async handleStripeWebhook(req, res) {
     const signature = req.headers["stripe-signature"];
@@ -61,6 +61,8 @@ class StripeController {
           type_plan = "2";
         } else if (amount == 629.0) {
           type_plan = "3";
+        } else if (amount == 99.0) {
+          type_plan = "4";
         } else {
           type_plan = "0";
         }
@@ -68,7 +70,7 @@ class StripeController {
           await Users.update(
             {
               use_type_plan: type_plan,
-              use_type_member:true,
+              use_type_member: true,
             },
             {
               where: { use_email: customerEmail },

@@ -127,6 +127,12 @@ routes.get(
   `${apiVersion}/alertFrequency/:uuid`,
   UsersController.alertFrequency
 );
+routes.post(
+  `${apiVersion}/cancelplan`,
+  checkToken,
+  UsersController.cancelUserPlan
+);
+//Api da Tabela
 routes.get(
   `${apiVersion}/dashboard/:uuid/:par?`,
   checkToken,
