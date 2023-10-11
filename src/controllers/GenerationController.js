@@ -303,7 +303,7 @@ class GenerationController {
 
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
-        to: [searchDevice_email.dev_email],
+        to: [searchDevice_email.dev_email,"contato@mayaenergy.com.br"],
         subject: "Relatório de dados de Geração",
         text: "",
         html: emailBody,
