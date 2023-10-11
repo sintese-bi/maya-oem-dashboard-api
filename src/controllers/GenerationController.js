@@ -297,13 +297,13 @@ class GenerationController {
       Anexamos um relatório em formato PDF com os dados de geração da usina. Este relatório inclui informações referentes à geração diária, semanal e mensal, apresentadas de forma clara e concisa.
 
       Além disso, no documento, você encontrará um gráfico temporal que ilustra a variação na produção de energia ao longo do período analisado.
-      Atenciosamente, 
+      
       <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
       `;
 
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
-        to: [searchDevice_email.dev_email, "eloymjunior00@gmail.com"],
+        to: [searchDevice_email.dev_email],
         subject: "Relatório de dados de Geração",
         text: "",
         html: emailBody,
