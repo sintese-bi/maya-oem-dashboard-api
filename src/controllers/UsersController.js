@@ -142,6 +142,8 @@ class UsersController {
           "use_type_plan",
           "use_type_member",
           "use_email",
+          "use_city_state",
+          "use_telephone"
         ],
         where: { use_email: use_email },
         include: [
