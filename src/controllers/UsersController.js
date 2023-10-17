@@ -98,7 +98,7 @@ class UsersController {
       for (const inversor of inversores) {
         const newBrand = await Brand.create({
           use_uuid: newUser.use_uuid,
-          bl_name: inversor.brand,
+          bl_name: inversor.marca,
           bl_login: inversor.login,
           bl_password: inversor.senha,
         });
