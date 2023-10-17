@@ -89,7 +89,7 @@ class UsersController {
       for (const inversor of inversores) {
         const newBrand = await Brand.create({
           use_uuid: newUser.use_uuid,
-          bl_name: "teste",
+          bl_name: inversor.brand,
           bl_login: inversor.login,
           bl_password: inversor.senha,
         });
@@ -107,7 +107,7 @@ class UsersController {
           dev_brand: item.marca.toLowerCase(),
         });
       }
-
+      
       return res.status(201).json({ message: "Usuário criado com sucesso!" });
     } catch (error) {
       console.error(error);
