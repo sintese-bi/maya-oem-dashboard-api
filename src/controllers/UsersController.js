@@ -54,7 +54,7 @@ class UsersController {
         where: { use_email: email },
       });
       const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-
+      console.log(req.body);
       if (!emailRegex.test(email)) {
         return res.status(400).json({ message: "O email não é válido." });
       }
@@ -76,6 +76,17 @@ class UsersController {
       const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Criação do novo usuário na tabela Users
+      
+      let brandUuids = []; // Array para armazenar os bl_uuids
+      for (const inversor of inversores) {
+        if (!inversor.login || !inversor.senha) {
+          return res.status(400).json({
+            message:
+              "O login e a senha são obrigatórios para todos os inversores.",
+          });
+        }
+      }
+      // Criação do novo usuário na tabela Users
       const newUser = await Users.create({
         use_name: nome_completo,
         use_type_member: false,
@@ -84,17 +95,6 @@ class UsersController {
         use_email: email,
         use_password: passwordHash,
       });
-      let brandUuids = []; // Array para armazenar os bl_uuids
-      for (const inversor of inversores) {
-        if (!inversor.login || !inversor.senha) {
-          return res
-            .status(400)
-            .json({
-              message:
-                "O login e a senha são obrigatórios para todos os inversores.",
-            });
-        }
-      }
       for (const inversor of inversores) {
         const newBrand = await Brand.create({
           use_uuid: newUser.use_uuid,
@@ -102,7 +102,7 @@ class UsersController {
           bl_login: inversor.login,
           bl_password: inversor.senha,
         });
-
+        //console.log('bl_name:', inversor.brand);
         brandUuids.push({
           bl_uuid: newBrand.bl_uuid,
           marca: inversor.marca,
