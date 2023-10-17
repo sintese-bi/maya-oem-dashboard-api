@@ -85,7 +85,16 @@ class UsersController {
         use_password: passwordHash,
       });
       let brandUuids = []; // Array para armazenar os bl_uuids
-
+      for (const inversor of inversores) {
+        if (!inversor.login || !inversor.senha) {
+          return res
+            .status(400)
+            .json({
+              message:
+                "O login e a senha são obrigatórios para todos os inversores.",
+            });
+        }
+      }
       for (const inversor of inversores) {
         const newBrand = await Brand.create({
           use_uuid: newUser.use_uuid,
@@ -107,7 +116,7 @@ class UsersController {
           dev_brand: item.marca.toLowerCase(),
         });
       }
-      
+
       return res.status(201).json({ message: "Usuário criado com sucesso!" });
     } catch (error) {
       console.error(error);
@@ -143,7 +152,7 @@ class UsersController {
           "use_type_member",
           "use_email",
           "use_city_state",
-          "use_telephone"
+          "use_telephone",
         ],
         where: { use_email: use_email },
         include: [
