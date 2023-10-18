@@ -837,10 +837,27 @@ class UsersController {
         },
         { where: { use_uuid: use_uuid } }
       );
-
+      const data = await Users.findOne(
+        {
+          attributes: [
+            "use_uuid",
+            "use_name",
+            "use_password",
+            "use_type_plan",
+            "use_type_member",
+            "use_email",
+            "use_city_state",
+            "use_telephone",
+          ],
+        },
+        { where: { use_uuid: use_uuid } }
+      );
       return res
         .status(200)
-        .json({ message: "Seus dados foram atualizados com sucesso!" });
+        .json({
+          message: "Seus dados foram atualizados com sucesso!",
+          Informações: data,
+        });
     } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar os dados!" });
     }

@@ -84,21 +84,7 @@ class DevicesController {
         },
         attributes: ["gen_date", "gen_real", "gen_estimated"],
       });
-      const data = await Users.findOne(
-        {
-          attributes: [
-            "use_uuid",
-            "use_name",
-            "use_password",
-            "use_type_plan",
-            "use_type_member",
-            "use_email",
-            "use_city_state",
-            "use_telephone",
-          ],
-        },
-        { where: { use_uuid: use_uuid } }
-      );
+      
       const somaGenRealDia = {};
       const somaGenEstimadaDia = {};
 
@@ -131,7 +117,7 @@ class DevicesController {
         message: "Somas calculadas com sucesso!",
         somaPorDiaReal: somaGenRealDia,
         somaPorDiaEstimada: somaGenEstimadaDia,
-        data,
+      
       });
     } catch (error) {
       return res
