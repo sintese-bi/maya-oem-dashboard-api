@@ -134,7 +134,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/updateuser`,
-  
+  checkToken,
   UsersController.UpdateUserInformation
 );
 //Api da Tabela
