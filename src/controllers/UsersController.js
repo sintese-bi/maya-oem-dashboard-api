@@ -838,11 +838,11 @@ class UsersController {
         { where: { use_uuid: use_uuid } }
       );
       const data = await Users.findOne(
+        { where: { use_uuid: use_uuid } },
         {
           attributes: [
             "use_uuid",
             "use_name",
-            "use_password",
             "use_type_plan",
             "use_type_member",
             "use_email",
@@ -850,7 +850,7 @@ class UsersController {
             "use_telephone",
           ],
         },
-        { where: { use_uuid: use_uuid } }
+        
       );
       return res
         .status(200)
