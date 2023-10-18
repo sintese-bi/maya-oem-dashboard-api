@@ -837,8 +837,9 @@ class UsersController {
         },
         { where: { use_uuid: use_uuid } }
       );
-      const data = await Users.findOne(
-        { where: { use_uuid: use_uuid } },
+      const data = await Users.findByPk(
+        use_uuid,
+
         {
           attributes: [
             "use_uuid",
@@ -849,15 +850,12 @@ class UsersController {
             "use_city_state",
             "use_telephone",
           ],
-        },
-        
+        }
       );
-      return res
-        .status(200)
-        .json({
-          message: "Seus dados foram atualizados com sucesso!",
-          Informações: data,
-        });
+      return res.status(200).json({
+        message: "Seus dados foram atualizados com sucesso!",
+        Informações: data,
+      });
     } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar os dados!" });
     }
