@@ -2,6 +2,7 @@ import moment from "moment-timezone";
 import Devices from "../models/Devices";
 import Generation from "../models/Generation";
 import { Op } from "sequelize";
+import Users from "../models/Users";
 class DevicesController {
   //Esta função index processa dados de dispositivos, recuperando informações de gerações associadas a eles.
   //Ela inclui a ordenação por data e trata casos onde a geração atual não está disponível, utilizando dados da geração anterior.
@@ -74,7 +75,6 @@ class DevicesController {
                 },
               },
             ],
-            
           },
         ],
         where: {
@@ -84,7 +84,21 @@ class DevicesController {
         },
         attributes: ["gen_date", "gen_real", "gen_estimated"],
       });
-
+      const data = await Users.findOne(
+        {
+          attributes: [
+            "use_uuid",
+            "use_name",
+            "use_password",
+            "use_type_plan",
+            "use_type_member",
+            "use_email",
+            "use_city_state",
+            "use_telephone",
+          ],
+        },
+        { where: { use_uuid: use_uuid } }
+      );
       const somaGenRealDia = {};
       const somaGenEstimadaDia = {};
 
@@ -117,6 +131,7 @@ class DevicesController {
         message: "Somas calculadas com sucesso!",
         somaPorDiaReal: somaGenRealDia,
         somaPorDiaEstimada: somaGenEstimadaDia,
+        data,
       });
     } catch (error) {
       return res
