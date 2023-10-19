@@ -65,6 +65,7 @@ class Users extends Model {
       foreignKey: "use_uuid",
       as: "brand_login",
     });
+    
     //Nesse caso, um usuário está associado a um único perfil.
     this.belongsTo(models.ProfileLevel, {
       foreignKey: "pl_uuid",

@@ -31,7 +31,10 @@ class Brand extends Model {
       foreignKey: "bl_uuid",
       as: "devices",
     });
-   
+    this.belongsTo(models.Users, {
+      foreignKey: "use_uuid",
+      as: "users",
+    });
   }
 }
 export default Brand;

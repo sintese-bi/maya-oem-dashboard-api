@@ -76,7 +76,7 @@ class UsersController {
       const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Criação do novo usuário na tabela Users
-      
+
       let brandUuids = []; // Array para armazenar os bl_uuids
       for (const inversor of inversores) {
         if (!inversor.login || !inversor.senha) {
@@ -810,6 +810,54 @@ class UsersController {
       return res
         .status(500)
         .json({ message: "Erro ao alterar o tipo de membro do cliente!" });
+    }
+  }
+  async UpdateUserInformation(req, res) {
+    try {
+      const { use_name, use_email, use_city_state, use_telephone, use_uuid } =
+        req.body;
+      const existingEmail = await Users.findOne({
+        attributes: ["use_email"],
+        where: { use_email: use_email },
+      });
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+      console.log(req.body);
+      if (!emailRegex.test(use_email)) {
+        return res.status(400).json({ message: "O email não é válido." });
+      }
+      if (existingEmail) {
+        return res.status(400).json({ message: "O email já está em uso." });
+      }
+      await Users.update(
+        {
+          use_email: use_email,
+          use_name: use_name,
+          use_city_state: use_city_state,
+          use_telephone: use_telephone,
+        },
+        { where: { use_uuid: use_uuid } }
+      );
+      const data = await Users.findByPk(
+        use_uuid,
+
+        {
+          attributes: [
+            "use_uuid",
+            "use_name",
+            "use_type_plan",
+            "use_type_member",
+            "use_email",
+            "use_city_state",
+            "use_telephone",
+          ],
+        }
+      );
+      return res.status(200).json({
+        message: "Seus dados foram atualizados com sucesso!",
+        Informações: data,
+      });
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao atualizar os dados!" });
     }
   }
 }

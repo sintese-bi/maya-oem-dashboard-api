@@ -52,9 +52,9 @@ class Devices extends Model {
       foreignKey: "dev_uuid",
       as: "alerts",
     });
-    this.hasMany(models.Brand, {
+    this.belongsTo(models.Brand, {
       foreignKey: "bl_uuid",
-      as: "brand",
+      as: "brand_login",
     });
     this.hasMany(models.Temperature, {
       foreignKey: "dev_uuid",

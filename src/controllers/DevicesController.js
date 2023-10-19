@@ -2,6 +2,7 @@ import moment from "moment-timezone";
 import Devices from "../models/Devices";
 import Generation from "../models/Generation";
 import { Op } from "sequelize";
+import Users from "../models/Users";
 class DevicesController {
   //Esta função index processa dados de dispositivos, recuperando informações de gerações associadas a eles.
   //Ela inclui a ordenação por data e trata casos onde a geração atual não está disponível, utilizando dados da geração anterior.
@@ -54,16 +55,11 @@ class DevicesController {
   //Para cada dia dentro do intervalo, ela busca e soma as gerações correspondentes de todas as usinas. Os resultados são retornados em formato JSON, incluindo as somas por dia tanto para a geração real quanto para a estimada. Em caso de erro, uma mensagem de erro é retornada com o status 400.
   async sumGeneration(req, res) {
     try {
-      const { startDate, endDate } = req.body;
+      const { startDate, endDate, use_uuid } = req.body;
       const start = new Date(startDate);
       const end = new Date(endDate);
 
       const result = await Generation.findAll({
-        where: {
-          gen_date: {
-            [Op.between]: [start, end],
-          },
-        },
         include: [
           {
             association: "devices",
@@ -71,12 +67,24 @@ class DevicesController {
               sta_uuid: "b5f9a5f7-2f67-4ff2-8645-47f55d265e4e",
               dev_deleted: false,
             },
-            attributes: [],
+            include: [
+              {
+                association: "brand_login",
+                where: {
+                  use_uuid: use_uuid,
+                },
+              },
+            ],
           },
         ],
+        where: {
+          gen_date: {
+            [Op.between]: [start, end],
+          },
+        },
         attributes: ["gen_date", "gen_real", "gen_estimated"],
       });
-
+      
       const somaGenRealDia = {};
       const somaGenEstimadaDia = {};
 
@@ -109,6 +117,7 @@ class DevicesController {
         message: "Somas calculadas com sucesso!",
         somaPorDiaReal: somaGenRealDia,
         somaPorDiaEstimada: somaGenEstimadaDia,
+      
       });
     } catch (error) {
       return res
