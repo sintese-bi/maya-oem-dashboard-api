@@ -27,7 +27,7 @@ class Brand extends Model {
   }
 
   static associate(models) {
-    this.belongsTo(models.Devices, {
+    this.hasMany(models.Devices, {
       foreignKey: "bl_uuid",
       as: "devices",
     });
