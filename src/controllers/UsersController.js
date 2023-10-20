@@ -95,11 +95,13 @@ class UsersController {
         use_email: email,
         use_password: passwordHash,
       });
+      
       for (const inversor of inversores) {
+        const loginSemAspas = inversor.login.replace(/^"(.*)"$/, '$1'); 
         const newBrand = await Brand.create({
           use_uuid: newUser.use_uuid,
-          bl_name: inversor.marca,
-          bl_login: inversor.login,
+          bl_name: inversor.marca.toLowerCase(),
+          bl_login: loginSemAspas,
           bl_password: inversor.senha,
         });
         //console.log('bl_name:', inversor.brand);
