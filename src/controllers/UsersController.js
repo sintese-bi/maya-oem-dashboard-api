@@ -15,6 +15,22 @@ import Devices from "../models/Devices";
 import nodemailer from "nodemailer";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
+//Configuração das credenciais do email de envio
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+
+  secure: false, //alterar
+  auth: {
+    user: "noreplymayawatch@gmail.com",
+    pass: "xbox ejjd wokp ystv",
+  },
+  tls: {
+    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
+  },
+});
+
 class UsersController {
   //Esta API exibe os detalhes de um usuário com base no UUID fornecido, incluindo nome e e-mail. Se o usuário não for encontrado, retorna uma mensagem de erro.
   async show(req, res) {
@@ -118,7 +134,38 @@ class UsersController {
           dev_brand: item.marca.toLowerCase(),
         });
       }
-
+      const emailBody = `
+      <p>Olá,</p>
+              
+      <p>Seu registro foi efetuado com sucesso!</p>
+                      
+      <p>Você pode conferir todas as funcionalidades e aprender a utilizar nosso dashboard através do contato (31) 9 8234-1415.</p>
+                          
+      <p>Se houver qualquer necessidade de alteração nos dados informados, por favor, não hesite em nos contactar para atualização pelo e-mail suportemayawatch@gmail.com.</p>
+                      
+      <p>Se você tiver alguma dúvida ou precisar de suporte adicional, estamos à sua disposição. Sua satisfação e sucesso são nossas principais prioridades!</p>
+                      
+      <p>Agradecemos pela confiança em nossos serviços.</p>
+                      
+      <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
+      <p><img src="" alt="Logo da MAYA WATCH"></p>
+      
+                  `;
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      const mailOptions = {
+        from: '"noreplymayawatch@gmail.com',
+        to: email,
+        subject: "Registro de usuário.",
+        text: "",
+        html: emailBody,
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Erro ao enviar o e-mail:", error);
+        } else {
+          console.log("E-mail enviado:", info.res);
+        }
+      });
       return res.status(201).json({ message: "Usuário criado com sucesso!" });
     } catch (error) {
       console.error(error);
@@ -861,6 +908,14 @@ class UsersController {
     } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar os dados!" });
     }
+  }
+  async massEmailSending(req,res){
+    
+
+
+
+
+
   }
 }
 

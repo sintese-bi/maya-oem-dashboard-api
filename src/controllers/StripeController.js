@@ -101,7 +101,7 @@ class StripeController {
           from: '"noreplymayawatch@gmail.com',
           to: customerEmail,
           subject: "Confirmação de Compra",
-          text: "Corpo de email em desenvolvimento",
+          text: "",
           html: emailBody,
         };
         transporter.sendMail(mailOptions, (error, info) => {
