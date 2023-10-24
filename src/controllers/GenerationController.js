@@ -348,6 +348,7 @@ class GenerationController {
   //Se ocorrer um erro, a API retorna uma mensagem de erro com status 400.
   async generalreportEmail(req, res) {
     try {
+      const { use_uuid } = req.body;
       const currentDate = new Date();
       const firstDayOfMonth = new Date(
         currentDate.getFullYear(),
@@ -356,16 +357,22 @@ class GenerationController {
       );
 
       const result = await Devices.findAll({
-        attributes: ["dev_email", "dev_name", "dev_brand", "dev_capacity"],
+        attributes: ["dev_email", "dev_name", "dev_brand", "dev_capacity","dev_uuid"],
         include: [
           {
+            association: "brand_login",
+            where: {
+              use_uuid: use_uuid,
+            },
+          },
+          {
+            association: "generation",
+            attributes: ["gen_estimated", "gen_real", "gen_date"],
             where: {
               gen_date: {
                 [Op.between]: [firstDayOfMonth, currentDate],
               },
             },
-            association: "generation",
-            attributes: ["gen_estimated", "gen_real", "gen_date"],
           },
         ],
       });
@@ -393,6 +400,7 @@ class GenerationController {
         });
 
         return {
+          dev_uuid: device.dev_uuid,
           dev_email: device.dev_email,
           dev_name: device.dev_name,
           dev_brand: device.dev_brand,
