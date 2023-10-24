@@ -111,9 +111,9 @@ class UsersController {
         use_email: email,
         use_password: passwordHash,
       });
-      
+
       for (const inversor of inversores) {
-        const loginSemAspas = inversor.login.replace(/^"(.*)"$/, '$1'); 
+        const loginSemAspas = inversor.login.replace(/^"(.*)"$/, "$1");
         const newBrand = await Brand.create({
           use_uuid: newUser.use_uuid,
           bl_name: inversor.marca.toLowerCase(),
@@ -909,13 +909,65 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao atualizar os dados!" });
     }
   }
-  async massEmailSending(req,res){
-    
+  //Essa API é responsável por enviar e-mails com relatórios em formato PDF para os endereços associados a dispositivos específicos.
+  //Ela aceita uma requisição contendo uma matriz de objetos, onde cada objeto possui um dev_uuid identificando um dispositivo e o conteúdo do PDF em formato base64 (base64).
+  async massEmail(req, res) {
+    try {
+      const pdfDataArray = req.body; // Array de objetos com dev_uuid e base64 do PDF
 
+      const mailPromises = pdfDataArray.map(async (pdfData) => {
+        const { base64, dev_uuid } = pdfData;
 
+        const attachment = {
+          filename: "relatorio.pdf",
+          content: base64,
+          encoding: "base64",
+        };
 
+        const searchDeviceEmail = await Devices.findOne({
+          where: { dev_uuid: dev_uuid },
+          attributes: ["dev_email"],
+        });
 
+        const emailBody = `
+          Prezado usuário,
+          
+          Anexamos um relatório em formato PDF com os dados de geração da usina. Este relatório inclui informações referentes à geração diária, semanal e mensal, apresentadas de forma clara e concisa.
+  
+          Além disso, no documento, você encontrará um gráfico temporal que ilustra a variação na produção de energia ao longo do período analisado.
+  
+          <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
+        `;
 
+        const mailOptions = {
+          from: '"noreplymayawatch@gmail.com',
+          to: [searchDeviceEmail.dev_email],
+          subject: "Relatório de dados de Geração",
+          text: "",
+          html: emailBody,
+          attachments: [attachment],
+        };
+
+        try {
+          await transporter.sendMail(mailOptions);
+          return {
+            success: true,
+            message: `Email enviado com sucesso para dev_uuid: ${dev_uuid}`,
+          };
+        } catch (error) {
+          return {
+            success: false,
+            message: `Erro ao enviar o email para dev_uuid: ${dev_uuid} - ${error}`,
+          };
+        }
+      });
+
+      const results = await Promise.all(mailPromises);
+
+      res.status(200).json(results);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao retornar os dados!" });
+    }
   }
 }
 

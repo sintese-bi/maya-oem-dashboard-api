@@ -76,7 +76,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/generalreport`,
-  checkToken,
+  
   GenerationController.generalreportEmail
 );
 routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
@@ -136,6 +136,11 @@ routes.post(
   `${apiVersion}/updateuser`,
   
   UsersController.UpdateUserInformation
+);
+routes.post(
+  `${apiVersion}/massemail`,
+  
+  UsersController.massEmail
 );
 //Api da Tabela
 routes.get(
