@@ -144,7 +144,8 @@ class UsersController {
       <p>Se houver qualquer necessidade de alteração nos dados informados, por favor, não hesite em nos contactar para atualização pelo e-mail suportemayawatch@gmail.com.</p>
                       
       <p>Se você tiver alguma dúvida ou precisar de suporte adicional, estamos à sua disposição. Sua satisfação e sucesso são nossas principais prioridades!</p>
-                      
+
+      <p>Seu login para acessar o Dashboard é: ${email} e a senha: ${password}<p>
       <p>Agradecemos pela confiança em nossos serviços.</p>
                       
       <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
