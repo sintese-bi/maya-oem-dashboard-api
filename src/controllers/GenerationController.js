@@ -303,7 +303,7 @@ class GenerationController {
 
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
-        to: [searchDevice_email.dev_email,"contato@mayaenergy.com.br"],
+        to: [searchDevice_email.dev_email, "contato@mayaenergy.com.br"],
         subject: "Relatório de dados de Geração",
         text: "",
         html: emailBody,
@@ -325,8 +325,8 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  //Esta API permite a atualização assíncrona de um endereço de e-mail associado a um dispositivo. 
-  //Primeiro, verifica se o e-mail fornecido é válido. Em seguida, atualiza o e-mail do dispositivo identificado pelo dev_uuid. 
+  //Esta API permite a atualização assíncrona de um endereço de e-mail associado a um dispositivo.
+  //Primeiro, verifica se o e-mail fornecido é válido. Em seguida, atualiza o e-mail do dispositivo identificado pelo dev_uuid.
   async updateEmail(req, res) {
     try {
       const { dev_uuid, email } = req.body;
@@ -356,7 +356,7 @@ class GenerationController {
       );
 
       const result = await Devices.findAll({
-        attributes: ["dev_email"],
+        attributes: ["dev_email", "dev_name", "dev_brand", "dev_capacity"],
         include: [
           {
             where: {
