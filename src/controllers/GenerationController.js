@@ -325,6 +325,8 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  //Esta API permite a atualização assíncrona de um endereço de e-mail associado a um dispositivo. 
+  //Primeiro, verifica se o e-mail fornecido é válido. Em seguida, atualiza o e-mail do dispositivo identificado pelo dev_uuid. 
   async updateEmail(req, res) {
     try {
       const { dev_uuid, email } = req.body;

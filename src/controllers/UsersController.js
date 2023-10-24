@@ -15,6 +15,22 @@ import Devices from "../models/Devices";
 import nodemailer from "nodemailer";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
+//Configuração das credenciais do email de envio
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+
+  secure: false, //alterar
+  auth: {
+    user: "noreplymayawatch@gmail.com",
+    pass: "xbox ejjd wokp ystv",
+  },
+  tls: {
+    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
+  },
+});
+
 class UsersController {
   //Esta API exibe os detalhes de um usuário com base no UUID fornecido, incluindo nome e e-mail. Se o usuário não for encontrado, retorna uma mensagem de erro.
   async show(req, res) {
@@ -95,9 +111,9 @@ class UsersController {
         use_email: email,
         use_password: passwordHash,
       });
-      
+
       for (const inversor of inversores) {
-        const loginSemAspas = inversor.login.replace(/^"(.*)"$/, '$1'); 
+        const loginSemAspas = inversor.login.replace(/^"(.*)"$/, "$1");
         const newBrand = await Brand.create({
           use_uuid: newUser.use_uuid,
           bl_name: inversor.marca.toLowerCase(),
@@ -118,7 +134,38 @@ class UsersController {
           dev_brand: item.marca.toLowerCase(),
         });
       }
-
+      const emailBody = `
+      <p>Olá,</p>
+              
+      <p>Seu registro foi efetuado com sucesso!</p>
+                      
+      <p>Você pode conferir todas as funcionalidades e aprender a utilizar nosso dashboard através do contato (31) 9 8234-1415.</p>
+                          
+      <p>Se houver qualquer necessidade de alteração nos dados informados, por favor, não hesite em nos contactar para atualização pelo e-mail suportemayawatch@gmail.com.</p>
+                      
+      <p>Se você tiver alguma dúvida ou precisar de suporte adicional, estamos à sua disposição. Sua satisfação e sucesso são nossas principais prioridades!</p>
+                      
+      <p>Agradecemos pela confiança em nossos serviços.</p>
+                      
+      <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
+      <p><img src="" alt="Logo da MAYA WATCH"></p>
+      
+                  `;
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+      const mailOptions = {
+        from: '"noreplymayawatch@gmail.com',
+        to: email,
+        subject: "Registro de usuário.",
+        text: "",
+        html: emailBody,
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Erro ao enviar o e-mail:", error);
+        } else {
+          console.log("E-mail enviado:", info.res);
+        }
+      });
       return res.status(201).json({ message: "Usuário criado com sucesso!" });
     } catch (error) {
       console.error(error);
@@ -860,6 +907,66 @@ class UsersController {
       });
     } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar os dados!" });
+    }
+  }
+  //Essa API é responsável por enviar e-mails com relatórios em formato PDF para os endereços associados a dispositivos específicos.
+  //Ela aceita uma requisição contendo uma matriz de objetos, onde cada objeto possui um dev_uuid identificando um dispositivo e o conteúdo do PDF em formato base64 (base64).
+  async massEmail(req, res) {
+    try {
+      const pdfDataArray = req.body; // Array de objetos com dev_uuid e base64 do PDF
+
+      const mailPromises = pdfDataArray.map(async (pdfData) => {
+        const { base64, dev_uuid } = pdfData;
+
+        const attachment = {
+          filename: "relatorio.pdf",
+          content: base64,
+          encoding: "base64",
+        };
+
+        const searchDeviceEmail = await Devices.findOne({
+          where: { dev_uuid: dev_uuid },
+          attributes: ["dev_email"],
+        });
+
+        const emailBody = `
+          Prezado usuário,
+          
+          Anexamos um relatório em formato PDF com os dados de geração da usina. Este relatório inclui informações referentes à geração diária, semanal e mensal, apresentadas de forma clara e concisa.
+  
+          Além disso, no documento, você encontrará um gráfico temporal que ilustra a variação na produção de energia ao longo do período analisado.
+  
+          <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
+        `;
+
+        const mailOptions = {
+          from: '"noreplymayawatch@gmail.com',
+          to: [searchDeviceEmail.dev_email],
+          subject: "Relatório de dados de Geração",
+          text: "",
+          html: emailBody,
+          attachments: [attachment],
+        };
+
+        try {
+          await transporter.sendMail(mailOptions);
+          return {
+            success: true,
+            message: `Email enviado com sucesso para dev_uuid: ${dev_uuid}`,
+          };
+        } catch (error) {
+          return {
+            success: false,
+            message: `Erro ao enviar o email para dev_uuid: ${dev_uuid} - ${error}`,
+          };
+        }
+      });
+
+      const results = await Promise.all(mailPromises);
+
+      res.status(200).json(results);
+    } catch (error) {
+      res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
   }
 }
