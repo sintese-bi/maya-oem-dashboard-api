@@ -394,6 +394,9 @@ class GenerationController {
 
         return {
           dev_email: device.dev_email,
+          dev_name: device.dev_name,
+          dev_brand: device.dev_brand,
+          dev_capacity: device.dev_capacity,
           currentDayData: currentDateData,
           sumData: {
             gen_estimated: sumGenEstimated,
