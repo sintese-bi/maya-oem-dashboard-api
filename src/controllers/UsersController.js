@@ -21,13 +21,13 @@ const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
 
-  secure: false, //alterar
+  secure: true, //alterar
   auth: {
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
   tls: {
-    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
+    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
   },
 });
 
@@ -64,6 +64,7 @@ class UsersController {
         quantidade_inversores,
         inversores,
       } = req.body;
+
       console.log(email, nome_completo);
       const existingEmail = await Users.findOne({
         attributes: ["use_email"],
@@ -111,14 +112,57 @@ class UsersController {
         use_email: email,
         use_password: passwordHash,
       });
-
+      let bl_url;
       for (const inversor of inversores) {
+        switch (inversor.marca) {
+          case "aurora":
+            bl_url =
+              "https://www.auroravision.net/ums/v1/loginPage?redirectUrl=https:%2F%2Fwww.auroravision.net%2Fdash%2Fhome.jsf&cause=MISSING_TOKEN";
+            break;
+          case "apsystems":
+            bl_url = "https://apsystemsema.com/ema/index.action";
+            break;
+          case "canadian":
+            bl_url = "https://monitoring.csisolar.com/login";
+            break;
+          case "fronius":
+            bl_url = "https://www.solarweb.com/PvSystems/Widgets";
+            break;
+          case "fusion":
+            bl_url =
+              "https://la5.fusionsolar.huawei.com/unisso/login.action?service=%2Funisess%2Fv1%2Fauth%3Fservice%3D%252F";
+            break;
+          case "goodwe":
+            bl_url = "https://www.semsportal.com/PowerStation/powerstatus";
+            break;
+          case "growatt":
+            bl_url = "https://server.growatt.com/index";
+            break;
+          case "solarman":
+            bl_url = "https://pro.solarmanpv.com/business/maintain/plant";
+            break;
+          case "solarz":
+            bl_url = "https://app.solarz.com.br/login";
+            break;
+          case "renovigi":
+            bl_url =
+              "https://www.renovigi.solar/cus/renovigi/index_po.html?1690209459489";
+            break;
+          case "weg":
+            bl_url = "https://iot.weg.net/#/portal/main";
+            break;
+          case "isolar-cloud":
+            bl_url = "https://www.isolarcloud.com.hk/?lang=pt_BR";
+            break;
+        }
         const loginSemAspas = inversor.login.replace(/^"(.*)"$/, "$1");
+        console.log({ message: bl_url });
         const newBrand = await Brand.create({
           use_uuid: newUser.use_uuid,
           bl_name: inversor.marca.toLowerCase(),
           bl_login: loginSemAspas,
           bl_password: inversor.senha,
+          bl_url: bl_url,
         });
         //console.log('bl_name:', inversor.brand);
         brandUuids.push({
@@ -144,7 +188,8 @@ class UsersController {
       <p>Se houver qualquer necessidade de alteração nos dados informados, por favor, não hesite em nos contactar para atualização pelo e-mail suportemayawatch@gmail.com.</p>
                       
       <p>Se você tiver alguma dúvida ou precisar de suporte adicional, estamos à sua disposição. Sua satisfação e sucesso são nossas principais prioridades!</p>
-                      
+
+      <p>Seu login para acessar o Dashboard é: ${email} e a senha: ${password}<p>
       <p>Agradecemos pela confiança em nossos serviços.</p>
                       
       <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
