@@ -134,12 +134,12 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/updateuser`,
-  
+  checkToken,
   UsersController.UpdateUserInformation
 );
 routes.post(
   `${apiVersion}/massemail`,
-  
+  checkToken,
   UsersController.massEmail
 );
 //Api da Tabela
