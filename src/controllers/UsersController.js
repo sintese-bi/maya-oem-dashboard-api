@@ -513,12 +513,17 @@ class UsersController {
       if (par === "yes") {
         whereCondition = {
           sta_uuid: "b5f9a5f7-2f67-4ff2-8645-47f55d265e4e",
-          [Op.or]: [
-            { dev_deleted: false },
-            { dev_deleted: { [Op.is]: null } }
-          ]
+          [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         };
       }
+      const brand = await Users.findByPk(use, {
+        include: [
+          {
+            association: "brand_login",
+            attributes: ["bl_name", "bl_uuid"],
+          },
+        ],
+      });
 
       const result = await Users.findByPk(use, {
         attributes: ["use_name"],
@@ -564,7 +569,7 @@ class UsersController {
         ],
       });
 
-      return res.status(200).json(result);
+      return res.status(200).json({ result, brand });
     } catch (error) {
       return res
         .status(400)
