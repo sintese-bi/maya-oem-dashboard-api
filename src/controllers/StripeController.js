@@ -9,7 +9,7 @@ const stripe = new Stripe(
     apiVersion: "2020-08-27",
   }
 );
-const endpointSecret = "whsec_mJOG3hsIF1Q0kqLzEXthOxxfzXXvQH9C";
+const endpointSecret = "whsec_Nt3O4p1v04xHSXUYGPClNzoq6H4xfB1m";
 //Configuração das credenciais do email de envio
 const transporter = nodemailer.createTransport({
   service: "gmail",
