@@ -137,20 +137,21 @@ routes.post(
   checkToken,
   UsersController.UpdateUserInformation
 );
-routes.post(
-  `${apiVersion}/massemail`,
-  checkToken,
-  UsersController.massEmail
-);
+routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
 routes.post(
   `${apiVersion}/emaildash`,
   checkToken,
   UsersController.portalemailLogins
 );
+routes.post(
+  `${apiVersion}/deviceinfo`,
+  checkToken,
+  UsersController.deviceInformation
+);
 //Api da Tabela
 routes.get(
   `${apiVersion}/dashboard/:uuid/:par?`,
-  
+
   UsersController.dashboard
 );
 

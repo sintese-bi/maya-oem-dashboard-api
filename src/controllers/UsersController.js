@@ -1048,6 +1048,35 @@ class UsersController {
       }
     }
   }
+  async deviceInformation(req, res) {
+    try {
+      const { use_uuid } = req.body;
+
+      const result = await Devices.findAll({
+        attributes: [
+          "dev_email",
+          "dev_name",
+          "dev_brand",
+          "dev_capacity",
+          "dev_uuid",
+        ],
+        include: [
+          {
+            association: "brand_login",
+            attributes:[],
+            where: {
+              use_uuid: use_uuid,
+            },
+          },
+        ],
+      });
+      return res.status(200).json(result);
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: "Erro ao retornar os dados das plantas!" });
+    }
+  }
 }
 
 export default new UsersController();
