@@ -142,10 +142,15 @@ routes.post(
   checkToken,
   UsersController.massEmail
 );
+routes.post(
+  `${apiVersion}/emaildash`,
+  checkToken,
+  UsersController.portalemailLogins
+);
 //Api da Tabela
 routes.get(
   `${apiVersion}/dashboard/:uuid/:par?`,
-  checkToken,
+  
   UsersController.dashboard
 );
 

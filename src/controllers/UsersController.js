@@ -1022,6 +1022,32 @@ class UsersController {
       res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
   }
+  async portalemailLogins(req, res) {
+    try {
+      const { use_uuid, use_email } = req.body;
+      const existingEmail = await Users.findOne({
+        attributes: ["use_email"],
+        where: { use_email: use_email },
+      });
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+      console.log(req.body);
+      if (!emailRegex.test(use_email)) {
+        return res.status(400).json({ message: "O email não é válido." });
+      }
+      if (existingEmail) {
+        return res.status(400).json({ message: "O email já está em uso." });
+      }
+      await Users.update(
+        { use_email: use_email },
+        { where: { use_uuid: use_uuid } }
+      );
+      return res.status(200).json({ message: "Email atualizado com sucesso!" });
+    } catch (error) {
+      {
+        return res.status(500).json({ message: "Erro ao atualizar o email!" });
+      }
+    }
+  }
 }
 
 export default new UsersController();
