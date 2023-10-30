@@ -148,6 +148,11 @@ routes.post(
   checkToken,
   UsersController.deviceInformation
 );
+routes.post(
+  `${apiVersion}/updateemaildevice`,
+  checkToken,
+  UsersController.updatedeviceEmail
+);
 //Api da Tabela
 routes.get(
   `${apiVersion}/dashboard/:uuid/:par?`,

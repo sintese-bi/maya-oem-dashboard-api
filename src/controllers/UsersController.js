@@ -1063,7 +1063,7 @@ class UsersController {
         include: [
           {
             association: "brand_login",
-            attributes:[],
+            attributes: [],
             where: {
               use_uuid: use_uuid,
             },
@@ -1077,6 +1077,24 @@ class UsersController {
         .json({ message: "Erro ao retornar os dados das plantas!" });
     }
   }
-}
+  async updatedeviceEmail(req, res) {
+    try {
+      const arraydevices = req.body;
+      arraydevices.map(async (devarray) => {
+        const { dev_uuid, dev_capacity, dev_email } = devarray;
 
+        await Devices.update(
+          { dev_capacity: dev_capacity, dev_email: dev_email },
+
+          { where: { dev_uuid: dev_uuid } }
+        );
+      });
+      return res
+        .status(200)
+        .json({ message: "Emails atualizados com sucesso!" });
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+    }
+  }
+}
 export default new UsersController();
