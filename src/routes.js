@@ -137,10 +137,21 @@ routes.post(
   checkToken,
   UsersController.UpdateUserInformation
 );
+routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
 routes.post(
-  `${apiVersion}/massemail`,
+  `${apiVersion}/emaildash`,
   checkToken,
-  UsersController.massEmail
+  UsersController.portalemailLogins
+);
+routes.post(
+  `${apiVersion}/deviceinfo`,
+  checkToken,
+  UsersController.deviceInformation
+);
+routes.post(
+  `${apiVersion}/updateemaildevice`,
+  checkToken,
+  UsersController.updatedeviceEmail
 );
 //Api da Tabela
 routes.get(

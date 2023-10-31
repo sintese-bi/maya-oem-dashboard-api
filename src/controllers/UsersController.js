@@ -512,7 +512,7 @@ class UsersController {
 
       if (par === "yes") {
         whereCondition = {
-          sta_uuid: "b5f9a5f7-2f67-4ff2-8645-47f55d265e4e",
+          // sta_uuid: "b5f9a5f7-2f67-4ff2-8645-47f55d265e4e",
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         };
       }
@@ -1022,6 +1022,79 @@ class UsersController {
       res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
   }
-}
+  async portalemailLogins(req, res) {
+    try {
+      const { use_uuid, use_email } = req.body;
+      const existingEmail = await Users.findOne({
+        attributes: ["use_email"],
+        where: { use_email: use_email },
+      });
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+      console.log(req.body);
+      if (!emailRegex.test(use_email)) {
+        return res.status(400).json({ message: "O email não é válido." });
+      }
+      if (existingEmail) {
+        return res.status(400).json({ message: "O email já está em uso." });
+      }
+      await Users.update(
+        { use_email: use_email },
+        { where: { use_uuid: use_uuid } }
+      );
+      return res.status(200).json({ message: "Email atualizado com sucesso!" });
+    } catch (error) {
+      {
+        return res.status(500).json({ message: "Erro ao atualizar o email!" });
+      }
+    }
+  }
+  async deviceInformation(req, res) {
+    try {
+      const { use_uuid } = req.body;
 
+      const result = await Devices.findAll({
+        attributes: [
+          "dev_email",
+          "dev_name",
+          "dev_brand",
+          "dev_capacity",
+          "dev_uuid",
+        ],
+        include: [
+          {
+            association: "brand_login",
+            attributes: [],
+            where: {
+              use_uuid: use_uuid,
+            },
+          },
+        ],
+      });
+      return res.status(200).json(result);
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: "Erro ao retornar os dados das plantas!" });
+    }
+  }
+  async updatedeviceEmail(req, res) {
+    try {
+      const arraydevices = req.body;
+      arraydevices.map(async (devarray) => {
+        const { dev_uuid, dev_capacity, dev_email } = devarray;
+
+        await Devices.update(
+          { dev_capacity: dev_capacity, dev_email: dev_email },
+
+          { where: { dev_uuid: dev_uuid } }
+        );
+      });
+      return res
+        .status(200)
+        .json({ message: "Emails atualizados com sucesso!" });
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+    }
+  }
+}
 export default new UsersController();
