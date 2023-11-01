@@ -154,6 +154,10 @@ class UsersController {
           case "isolar-cloud":
             bl_url = "https://www.isolarcloud.com.hk/?lang=pt_BR";
             break;
+          case "hoymiles":
+            bl_url =
+              "https://global.hoymiles.com/platform/login?form=logout&notice=1";
+            break;
         }
         const loginSemAspas = inversor.login.replace(/^"(.*)"$/, "$1");
         console.log({ message: bl_url });
@@ -507,7 +511,7 @@ class UsersController {
       const par = req.params.par;
       const startOfMonth = moment().startOf("month").toDate();
       const endOfMonth = moment().endOf("month").toDate();
-
+      console.log(startOfMonth, endOfMonth);
       let whereCondition = {};
 
       if (par === "yes") {
