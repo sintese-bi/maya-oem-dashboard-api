@@ -14,6 +14,7 @@ import Generation from "../models/Generation";
 import Devices from "../models/Devices";
 import nodemailer from "nodemailer";
 import csv from "csv-parser";
+import { createObjectCsvWriter } from "csv-writer";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 //Configuração das credenciais do email de envio
@@ -1113,6 +1114,33 @@ class UsersController {
           },
         ],
       });
+      const informations = result.map((item) => [
+        item.dev_capacity,
+        item.brand_login.bl_uuid,
+      ]);
+      console.log(informations);
+      const csvWriter = createCsvWriter({
+        path: "src/informations.csv",
+        header: [
+          { id: "dev_capacity", title: "Device Capacity" },
+          { id: "bl_uuid", title: "Brand UUID" },
+        ],
+      });
+      console.log('Antes de escrever o CSV');
+      csvWriter
+        .writeRecords(informations)
+        .then(() => {
+          console.log("CSV file written successfully");
+          return res.download("informations.csv");
+        })
+        .catch((error) => {
+          console.error("Error writing CSV file:", error);
+          return res
+            .status(500)
+            .json({ message: "Não foi possível gerar o CSV!" });
+        });
+      
+
       return res.status(200).json(result);
     } catch (error) {
       return res.status(500).json({ message: "Não foi possível geral o CSV!" });
