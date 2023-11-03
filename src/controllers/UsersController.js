@@ -13,7 +13,7 @@ import Users from "../models/Users";
 import Generation from "../models/Generation";
 import Devices from "../models/Devices";
 import nodemailer from "nodemailer";
-import csv from 'csv-parser';
+import csv from "csv-parser";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 //Configuração das credenciais do email de envio
@@ -517,7 +517,6 @@ class UsersController {
 
       if (par === "yes") {
         whereCondition = {
-          
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         };
       }
@@ -1101,18 +1100,23 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
   }
-  async csvDownload(req,res){
-    const {use_uuid}=req.body;
-    
-
-
-
-
-
-
-
-
-
+  async csvDownload(req, res) {
+    try {
+      const { use_uuid } = req.body;
+      const result = await Devices.findAll({
+        attributes: ["dev_capacity"],
+        include: [
+          {
+            association: "brand_login",
+            where: { use_uuid: use_uuid },
+            attributes: ["bl_uuid", "bl_name"],
+          },
+        ],
+      });
+      return res.status(200).json(result);
+    } catch (error) {
+      return res.status(500).json({ message: "Não foi possível geral o CSV!" });
+    }
   }
 }
 export default new UsersController();

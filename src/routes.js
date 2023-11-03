@@ -153,6 +153,11 @@ routes.post(
   checkToken,
   UsersController.updatedeviceEmail
 );
+routes.post(
+  `${apiVersion}/csvdownload`,
+  
+  UsersController.csvDownload
+);
 //Api da Tabela
 routes.get(
   `${apiVersion}/dashboard/:uuid/:par?`,
