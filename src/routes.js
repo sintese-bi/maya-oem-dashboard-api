@@ -156,7 +156,7 @@ routes.post(
 //Api da Tabela
 routes.get(
   `${apiVersion}/dashboard/:uuid/:par?`,
-  checkToken,
+  
   UsersController.dashboard
 );
 

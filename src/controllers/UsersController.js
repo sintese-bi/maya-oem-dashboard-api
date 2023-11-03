@@ -13,6 +13,7 @@ import Users from "../models/Users";
 import Generation from "../models/Generation";
 import Devices from "../models/Devices";
 import nodemailer from "nodemailer";
+import csv from 'csv-parser';
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 //Configuração das credenciais do email de envio
@@ -516,7 +517,7 @@ class UsersController {
 
       if (par === "yes") {
         whereCondition = {
-          // sta_uuid: "b5f9a5f7-2f67-4ff2-8645-47f55d265e4e",
+          
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         };
       }
@@ -1099,6 +1100,19 @@ class UsersController {
     } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
+  }
+  async csvDownload(req,res){
+    const {use_uuid}=req.body;
+    
+
+
+
+
+
+
+
+
+
   }
 }
 export default new UsersController();
