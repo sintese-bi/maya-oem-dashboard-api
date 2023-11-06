@@ -13,6 +13,9 @@ import Users from "../models/Users";
 import Generation from "../models/Generation";
 import Devices from "../models/Devices";
 import nodemailer from "nodemailer";
+import csvParser from "csv-parser";
+import createCsvWriter from "csv-writer";
+
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 //Configuração das credenciais do email de envio
@@ -153,6 +156,10 @@ class UsersController {
             break;
           case "isolar-cloud":
             bl_url = "https://www.isolarcloud.com.hk/?lang=pt_BR";
+            break;
+          case "hoymiles":
+            bl_url =
+              "https://global.hoymiles.com/platform/login?form=logout&notice=1";
             break;
         }
         const loginSemAspas = inversor.login.replace(/^"(.*)"$/, "$1");
@@ -507,12 +514,11 @@ class UsersController {
       const par = req.params.par;
       const startOfMonth = moment().startOf("month").toDate();
       const endOfMonth = moment().endOf("month").toDate();
-
+      console.log(startOfMonth, endOfMonth);
       let whereCondition = {};
 
       if (par === "yes") {
         whereCondition = {
-          // sta_uuid: "b5f9a5f7-2f67-4ff2-8645-47f55d265e4e",
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         };
       }
@@ -1094,6 +1100,45 @@ class UsersController {
         .json({ message: "Emails atualizados com sucesso!" });
     } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
+    }
+  } 
+  async csvDownload(req, res) {
+    try {
+      const { use_uuid } = req.body;
+      const result = await Devices.findAll({
+        attributes: ["dev_capacity"],
+        include: [
+          {
+            association: "brand_login",
+            where: { use_uuid: use_uuid },
+            attributes: ["bl_uuid", "bl_name"],
+          },
+        ],
+      });
+      const informations = result.map((item) => [
+        item.dev_capacity,
+        item.brand_login.bl_uuid,
+      ]);
+      console.log(informations);
+      const csvWriter = createCsvWriter({
+        path: "information.csv",
+        
+      });
+      console.log(csvWriter);
+      csvWriter
+        
+        .then(() => {
+          console.log("CSV file written successfully");
+          return res.download("informations.csv");
+        })
+        .catch((error) => {
+          console.error("Error writing CSV file:", error);
+          return res
+            .status(500)
+            .json({ message: "Não foi possível gerar o CSV!" });
+        });
+    } catch (error) {
+      return res.status(500).json({ message: "Não foi possível geral o CSV!" });
     }
   }
 }

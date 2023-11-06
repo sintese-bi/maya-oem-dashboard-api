@@ -346,6 +346,7 @@ class GenerationController {
   }
   //Esta API generalreportEmail retorna dados de relatórios agregados de dispositivos, incluindo estimativas e valores reais de geração de energia para o mês atual e dados do dia atual.
   //Se ocorrer um erro, a API retorna uma mensagem de erro com status 400.
+  //Os dados de geração dessa api que retornam são do primeiro dia do mês até o dia atual
   async generalreportEmail(req, res) {
     try {
       const { use_uuid } = req.body;
@@ -357,7 +358,7 @@ class GenerationController {
       );
 
       const result = await Devices.findAll({
-        attributes: ["dev_email", "dev_name", "dev_brand", "dev_capacity","dev_uuid"],
+        attributes: ["dev_email", "dev_name", "dev_brand", "dev_capacity","dev_uuid","dev_deleted"],
         include: [
           {
             association: "brand_login",
