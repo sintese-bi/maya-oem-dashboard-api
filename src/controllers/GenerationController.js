@@ -351,14 +351,22 @@ class GenerationController {
     try {
       const { use_uuid } = req.body;
       const currentDate = new Date();
+
       const firstDayOfMonth = new Date(
         currentDate.getFullYear(),
         currentDate.getMonth(),
-        1
+        2
       );
-
+      console.log(currentDate, firstDayOfMonth);
       const result = await Devices.findAll({
-        attributes: ["dev_email", "dev_name", "dev_brand", "dev_capacity","dev_uuid","dev_deleted"],
+        attributes: [
+          "dev_email",
+          "dev_name",
+          "dev_brand",
+          "dev_capacity",
+          "dev_uuid",
+          "dev_deleted",
+        ],
         include: [
           {
             association: "brand_login",
@@ -387,17 +395,18 @@ class GenerationController {
           sumGenReal += generation.gen_real;
         });
 
-        const currentDateData = {
-          gen_estimated: 0,
-          gen_real: 0,
-        };
+        const currentDateData = {};
 
         device.generation.forEach((generation) => {
           const genDate = new Date(generation.gen_date);
-          if (genDate.getDate() === currentDate.getDate()) {
-            currentDateData.gen_estimated = generation.gen_estimated;
-            currentDateData.gen_real = generation.gen_real;
-          }
+          const formattedGenDate = `${genDate.getFullYear()}-${
+            genDate.getMonth() + 1
+          }-${genDate.getDate()}`;
+
+          currentDateData[formattedGenDate] = {
+            gen_estimated: generation.gen_estimated,
+            gen_real: generation.gen_real,
+          };
         });
 
         return {
@@ -409,7 +418,7 @@ class GenerationController {
           currentDayData: currentDateData,
           sumData: {
             gen_estimated: sumGenEstimated,
-            gen_real: sumGenReal,
+            gen_real: sumGenReal.toFixed(2),
           },
         };
       });
