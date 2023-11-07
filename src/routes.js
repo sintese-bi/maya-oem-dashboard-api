@@ -70,6 +70,11 @@ routes.post(
   GenerationController.reportgenerationEmailPDF
 );
 routes.post(
+  `${apiVersion}/updateplants`,
+  checkToken,
+  GenerationController.updatePlants
+);
+routes.post(
   `${apiVersion}/updateemail`,
   checkToken,
   GenerationController.updateEmail
