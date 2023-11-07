@@ -72,7 +72,7 @@ routes.post(
 routes.post(
   `${apiVersion}/updateplants`,
   checkToken,
-  GenerationController.updatePlants
+  UsersController.updatePlants
 );
 routes.post(
   `${apiVersion}/updateemail`,

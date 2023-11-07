@@ -92,8 +92,8 @@ class UsersController {
           .json({ message: "A senha e a confirmação precisam ser iguais." });
       }
 
-      const saltRounds = 10;
-      const passwordHash = await bcrypt.hash(password, saltRounds);
+      // const saltRounds = 10;
+      // const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Criação do novo usuário na tabela Users
 
@@ -113,7 +113,7 @@ class UsersController {
         pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
         use_module_numbers: quantidade_inversores,
         use_email: email,
-        use_password: passwordHash,
+        use_password: password,
       });
       let bl_url;
       for (const inversor of inversores) {
