@@ -92,8 +92,8 @@ class UsersController {
           .json({ message: "A senha e a confirmação precisam ser iguais." });
       }
 
-      const saltRounds = 10;
-      const passwordHash = await bcrypt.hash(password, saltRounds);
+      // const saltRounds = 10;
+      // const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Criação do novo usuário na tabela Users
 
@@ -109,11 +109,11 @@ class UsersController {
       // Criação do novo usuário na tabela Users
       const newUser = await Users.create({
         use_name: nome_completo,
-        use_type_member: false,
+        use_type_member: true,
         pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
         use_module_numbers: quantidade_inversores,
         use_email: email,
-        use_password: passwordHash,
+        use_password: password,
       });
       let bl_url;
       for (const inversor of inversores) {
@@ -1141,5 +1141,31 @@ class UsersController {
       return res.status(500).json({ message: "Não foi possível geral o CSV!" });
     }
   }
+ async updatePlants(req,res){
+  try {
+    const {use_uuid}=req.body
+    const arrayplants = req.body;
+    let { ic_city, ic_states } = req.params;
+      ic_states = ic_states.toUpperCase();
+    arrayplants.map(async (devarray) => {
+      const { dev_uuid,dev_capacity,ic_city,ic_states } = devarray;
+      const coefficient = await IrradiationCoefficient.findOne({
+        where: { ic_city, ic_states },
+        attributes: ["ic_yearly"],
+      });
+      await Devices.update(
+        { dev_capacity: dev_capacity, dev_email: dev_email },
+
+        { where: { dev_uuid: dev_uuid } }
+      );
+    });
+    return res
+      .status(200)
+      .json({ message: "Dados atualizados com sucesso!" });
+  } catch (error) {
+    return res.status(500).json({ message: "Erro ao atualizar dados!" });
+  }
+
+ }
 }
 export default new UsersController();
