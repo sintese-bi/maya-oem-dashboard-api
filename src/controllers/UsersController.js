@@ -1085,8 +1085,8 @@ class UsersController {
   }
   async updatedeviceEmail(req, res) {
     try {
-      const {arraydevices} = req.body;
-      
+      const { arraydevices } = req.body;
+
       arraydevices.map(async (devarray) => {
         const { dev_uuid, dev_capacity, dev_email } = devarray;
 
@@ -1143,38 +1143,44 @@ class UsersController {
   }
   async updatePlants(req, res) {
     try {
-      // const { use_uuid } = req.body;
+      const { arrayplants, use_uuid } = req.body;
+      const result = await Devices.findAll({
+        attributes: [
+          "dev_email",
+          "dev_name",
+          "dev_brand",
+          "dev_capacity",
+          "dev_uuid",
+          "dev_deleted",
+        ],
+        include: [
+          {
+            association: "brand_login",
+            where: {
+              use_uuid: use_uuid,
+            },
+          },
+        ],
+      });
       
-      // const result = await Devices.findAll({
-      //   attributes: [
-      //     "dev_email",
-      //     "dev_name",
-      //     "dev_brand",
-      //     "dev_capacity",
-      //     "dev_uuid",
-      //     "dev_deleted",
-      //   ],
-      //   include: [
-      //     {
-      //       association: "brand_login",
-      //       where: {
-      //         use_uuid: use_uuid,
-      //       },
-      //     },
-      //   ],
-      // });
-      const arrayplants = req.body;
       arrayplants.map(async (devarray) => {
-        const { dev_uuid, dev_capacity } = devarray;
-
+        const { dev_uuid, dev_capacity, dev_email, ic_city, ic_states } =
+          devarray;
+         let a=await IrradiationCoefficient.findOne({
+          where: { ic_city, ic_states },
+          attributes: ["ic_yearly"],
+        });
+        console.log(a.dataValues)
         await Devices.update(
-          { dev_capacity: dev_capacity},
+          { dev_capacity: dev_capacity, dev_email: dev_email },
 
           { where: { dev_uuid: dev_uuid } }
         );
       });
-      console.log(all);
-      return res.status(200).json(result);
+
+      return res
+        .status(200)
+        .json({ message: "Dados atualizados com sucesso!" });
     } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }

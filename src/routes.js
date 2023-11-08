@@ -155,7 +155,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/updateemaildevice`,
-  
+  checkToken,
   UsersController.updatedeviceEmail
 );
 routes.post(
