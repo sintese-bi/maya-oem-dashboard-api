@@ -1170,7 +1170,7 @@ class UsersController {
           where: { ic_city, ic_states },
           attributes: ["ic_yearly"],
         });
-        console.log(a.dataValues)
+        console.log(a.dataValues.ic_yearly)
         await Devices.update(
           { dev_capacity: dev_capacity, dev_email: dev_email },
 
@@ -1180,7 +1180,7 @@ class UsersController {
 
       return res
         .status(200)
-        .json({ message: "Dados atualizados com sucesso!" });
+        .json({ message: "Dados atualizados com sucesso!", result});
     } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
