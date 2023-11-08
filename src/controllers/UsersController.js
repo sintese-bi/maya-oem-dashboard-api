@@ -110,7 +110,7 @@ class UsersController {
       const newUser = await Users.create({
         use_name: nome_completo,
         use_type_member: true,
-        pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
+        pl_uuid: "049686ee-5d83-4edf-9972-8e432deccf1f",
         use_module_numbers: quantidade_inversores,
         use_email: email,
         use_password: password,
@@ -1143,13 +1143,14 @@ class UsersController {
   }
  async updatePlants(req,res){
   try {
-    const {use_uuid}=req.body
+    const {use_uuid}=req.body;
     const arrayplants = req.body;
     let { ic_city, ic_states } = req.params;
       ic_states = ic_states.toUpperCase();
-    arrayplants.map(async (devarray) => {
+    
+    const all=  arrayplants.map(async (devarray) => {
       const { dev_uuid,dev_capacity,ic_city,ic_states } = devarray;
-      const coefficient = await IrradiationCoefficient.findOne({
+      await IrradiationCoefficient.findOne({
         where: { ic_city, ic_states },
         attributes: ["ic_yearly"],
       });
@@ -1161,7 +1162,7 @@ class UsersController {
     });
     return res
       .status(200)
-      .json({ message: "Dados atualizados com sucesso!" });
+      .json({ message: "Dados atualizados com sucesso!"},all);
   } catch (error) {
     return res.status(500).json({ message: "Erro ao atualizar dados!" });
   }
