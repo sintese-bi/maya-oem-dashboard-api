@@ -1085,7 +1085,8 @@ class UsersController {
   }
   async updatedeviceEmail(req, res) {
     try {
-      const arraydevices = req.body;
+      const {arraydevices} = req.body;
+      
       arraydevices.map(async (devarray) => {
         const { dev_uuid, dev_capacity, dev_email } = devarray;
 
@@ -1101,7 +1102,7 @@ class UsersController {
     } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
-  } 
+  }
   async csvDownload(req, res) {
     try {
       const { use_uuid } = req.body;
@@ -1122,11 +1123,10 @@ class UsersController {
       console.log(informations);
       const csvWriter = createCsvWriter({
         path: "information.csv",
-        
       });
       console.log(csvWriter);
       csvWriter
-        
+
         .then(() => {
           console.log("CSV file written successfully");
           return res.download("informations.csv");
@@ -1141,32 +1141,43 @@ class UsersController {
       return res.status(500).json({ message: "Não foi possível geral o CSV!" });
     }
   }
- async updatePlants(req,res){
-  try {
-    const {use_uuid}=req.body;
-    const arrayplants = req.body;
-    let { ic_city, ic_states } = req.params;
-      ic_states = ic_states.toUpperCase();
-    
-    const all=  arrayplants.map(async (devarray) => {
-      const { dev_uuid,dev_capacity,ic_city,ic_states } = devarray;
-      await IrradiationCoefficient.findOne({
-        where: { ic_city, ic_states },
-        attributes: ["ic_yearly"],
+  async updatePlants(req, res) {
+    try {
+      // const { use_uuid } = req.body;
+      
+      // const result = await Devices.findAll({
+      //   attributes: [
+      //     "dev_email",
+      //     "dev_name",
+      //     "dev_brand",
+      //     "dev_capacity",
+      //     "dev_uuid",
+      //     "dev_deleted",
+      //   ],
+      //   include: [
+      //     {
+      //       association: "brand_login",
+      //       where: {
+      //         use_uuid: use_uuid,
+      //       },
+      //     },
+      //   ],
+      // });
+      const arrayplants = req.body;
+      arrayplants.map(async (devarray) => {
+        const { dev_uuid, dev_capacity } = devarray;
+
+        await Devices.update(
+          { dev_capacity: dev_capacity},
+
+          { where: { dev_uuid: dev_uuid } }
+        );
       });
-      await Devices.update(
-        { dev_capacity: dev_capacity, dev_email: dev_email },
-
-        { where: { dev_uuid: dev_uuid } }
-      );
-    });
-    return res
-      .status(200)
-      .json({ message: "Dados atualizados com sucesso!"},all);
-  } catch (error) {
-    return res.status(500).json({ message: "Erro ao atualizar dados!" });
+      console.log(all);
+      return res.status(200).json(result);
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+    }
   }
-
- }
 }
 export default new UsersController();

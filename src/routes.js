@@ -76,7 +76,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/updateemail`,
-  checkToken,
+  
   GenerationController.updateEmail
 );
 routes.post(
@@ -155,7 +155,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/updateemaildevice`,
-  checkToken,
+  
   UsersController.updatedeviceEmail
 );
 routes.post(
