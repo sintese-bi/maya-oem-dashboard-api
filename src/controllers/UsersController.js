@@ -1143,34 +1143,42 @@ class UsersController {
   }
   async updatePlants(req, res) {
     try {
-      const { arrayplants, use_uuid } = req.body;
-      const result = await Devices.findAll({
-        attributes: [
-          "dev_email",
-          "dev_name",
-          "dev_brand",
-          "dev_capacity",
-          "dev_uuid",
-          "dev_deleted",
-        ],
-        include: [
-          {
-            association: "brand_login",
-            where: {
-              use_uuid: use_uuid,
-            },
-          },
-        ],
-      });
-      
+      const currentDate = new Date();
+
+      const firstDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      const lastDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
+      const { arrayplants } = req.body;
       arrayplants.map(async (devarray) => {
         const { dev_uuid, dev_capacity, dev_email, ic_city, ic_states } =
           devarray;
-         let a=await IrradiationCoefficient.findOne({
+        let irr = await IrradiationCoefficient.findOne({
           where: { ic_city, ic_states },
           attributes: ["ic_yearly"],
         });
-        console.log(a.dataValues.ic_yearly)
+        console.log(irr.dataValues.ic_yearly);
+        const ic_year = irr.dataValues.ic_yearly;
+        const gen_new = dev_capacity * ic_year * 0.81;
+
+        console.log(dev_capacity * ic_year);
+        await Generation.update(
+          { gen_estimated: gen_new },
+          {
+            where: {
+              dev_uuid: dev_uuid,
+              gen_date: {
+                [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+              },
+            },
+          }
+        );
         await Devices.update(
           { dev_capacity: dev_capacity, dev_email: dev_email },
 
@@ -1180,7 +1188,7 @@ class UsersController {
 
       return res
         .status(200)
-        .json({ message: "Dados atualizados com sucesso!", result});
+        .json({ message: "Dados atualizados com sucesso!" });
     } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
