@@ -110,7 +110,7 @@ class UsersController {
       const newUser = await Users.create({
         use_name: nome_completo,
         use_type_member: true,
-        pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
+        pl_uuid: "049686ee-5d83-4edf-9972-8e432deccf1f",
         use_module_numbers: quantidade_inversores,
         use_email: email,
         use_password: password,
@@ -1085,7 +1085,8 @@ class UsersController {
   }
   async updatedeviceEmail(req, res) {
     try {
-      const arraydevices = req.body;
+      const { arraydevices } = req.body;
+
       arraydevices.map(async (devarray) => {
         const { dev_uuid, dev_capacity, dev_email } = devarray;
 
@@ -1101,7 +1102,7 @@ class UsersController {
     } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
-  } 
+  }
   async csvDownload(req, res) {
     try {
       const { use_uuid } = req.body;
@@ -1122,11 +1123,10 @@ class UsersController {
       console.log(informations);
       const csvWriter = createCsvWriter({
         path: "information.csv",
-        
       });
       console.log(csvWriter);
       csvWriter
-        
+
         .then(() => {
           console.log("CSV file written successfully");
           return res.download("informations.csv");
@@ -1141,31 +1141,57 @@ class UsersController {
       return res.status(500).json({ message: "Não foi possível geral o CSV!" });
     }
   }
- async updatePlants(req,res){
-  try {
-    const {use_uuid}=req.body
-    const arrayplants = req.body;
-    let { ic_city, ic_states } = req.params;
-      ic_states = ic_states.toUpperCase();
-    arrayplants.map(async (devarray) => {
-      const { dev_uuid,dev_capacity,ic_city,ic_states } = devarray;
-      const coefficient = await IrradiationCoefficient.findOne({
-        where: { ic_city, ic_states },
-        attributes: ["ic_yearly"],
-      });
-      await Devices.update(
-        { dev_capacity: dev_capacity, dev_email: dev_email },
+  async updatePlants(req, res) {
+    try {
+      const currentDate = new Date();
 
-        { where: { dev_uuid: dev_uuid } }
+      const firstDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
       );
-    });
-    return res
-      .status(200)
-      .json({ message: "Dados atualizados com sucesso!" });
-  } catch (error) {
-    return res.status(500).json({ message: "Erro ao atualizar dados!" });
-  }
+      const lastDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
+      const { arrayplants } = req.body;
+      arrayplants.map(async (devarray) => {
+        const { dev_uuid, dev_capacity, dev_email, ic_city, ic_states } =
+          devarray;
+        let irr = await IrradiationCoefficient.findOne({
+          where: { ic_city, ic_states },
+          attributes: ["ic_yearly"],
+        });
+        console.log(irr.dataValues.ic_yearly);
+        const ic_year = irr.dataValues.ic_yearly;
+        const gen_new = dev_capacity * ic_year * 0.81;
 
- }
+        console.log(dev_capacity * ic_year);
+        await Generation.update(
+          { gen_estimated: gen_new },
+          {
+            where: {
+              dev_uuid: dev_uuid,
+              gen_date: {
+                [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+              },
+            },
+          }
+        );
+        await Devices.update(
+          { dev_capacity: dev_capacity, dev_email: dev_email },
+
+          { where: { dev_uuid: dev_uuid } }
+        );
+      });
+
+      return res
+        .status(200)
+        .json({ message: "Dados atualizados com sucesso!" });
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+    }
+  }
 }
 export default new UsersController();

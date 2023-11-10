@@ -76,12 +76,12 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/updateemail`,
-  checkToken,
+  
   GenerationController.updateEmail
 );
 routes.post(
   `${apiVersion}/generalreport`,
-  checkToken,
+  
   GenerationController.generalreportEmail
 );
 routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
@@ -149,10 +149,11 @@ routes.post(
   UsersController.portalemailLogins
 );
 routes.post(
-  `${apiVersion}/deviceinfo`,
-  checkToken,
+  `${apiVersion}/deviceinfo/:par?`,
+ checkToken,
   UsersController.deviceInformation
 );
+
 routes.post(
   `${apiVersion}/updateemaildevice`,
   checkToken,
@@ -166,7 +167,7 @@ routes.post(
 //Api da Tabela
 routes.get(
   `${apiVersion}/dashboard/:uuid/:par?`,
-  
+  checkToken,
   UsersController.dashboard
 );
 
