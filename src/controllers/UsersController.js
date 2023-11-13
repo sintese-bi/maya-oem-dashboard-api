@@ -264,12 +264,12 @@ class UsersController {
         ],
       });
 
-      const checkPassword = await bcrypt.compare(
-        use_password,
-        result.use_password
-      );
+      // const checkPassword = await bcrypt.compare(
+      //   use_password,
+      //   result.use_password
+      // );
 
-      if (!checkPassword) {
+      if (!use_password) {
         return res.status(404).json({ message: "Senha inválida" });
       }
       const without_password = result.get({ plain: true });
