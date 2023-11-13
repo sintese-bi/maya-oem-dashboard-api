@@ -1205,6 +1205,9 @@ class UsersController {
 
         { where: { use_uuid: use_uuid } }
       );
+      return res
+      .status(200)
+      .json({ message: "Dados atualizados com sucesso!" });
     } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }

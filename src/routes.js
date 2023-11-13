@@ -169,6 +169,11 @@ routes.post(
   checkToken,
   DevicesControlle.bigNumberSum
 );
+routes.post(
+  `${apiVersion}/deleteuser`,
+  checkToken,
+  UsersController.deleteUser
+);
 //Api da Tabela
 routes.get(
   `${apiVersion}/dashboard/:uuid/:par?`,
