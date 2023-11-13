@@ -268,10 +268,12 @@ class UsersController {
       //   use_password,
       //   result.use_password
       // );
-
-      if (!use_password) {
+      if (use_password !== result.use_password) {
         return res.status(404).json({ message: "Senha inválida" });
       }
+      // if (!checkPassword) {
+      //   return res.status(404).json({ message: "Senha inválida" });
+      // }
       const without_password = result.get({ plain: true });
       delete without_password.use_password;
       //Construindo o token que o cliente receberá
@@ -1206,8 +1208,8 @@ class UsersController {
         { where: { use_uuid: use_uuid } }
       );
       return res
-      .status(200)
-      .json({ message: "Dados atualizados com sucesso!" });
+        .status(200)
+        .json({ message: "Dados atualizados com sucesso!" });
     } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
