@@ -1030,6 +1030,8 @@ class UsersController {
       res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
   }
+  //Essa API atualiza o endereço de e-mail de um usuário usando o UUID fornecido (use_uuid).
+  //Ela verifica se o novo e-mail é válido, se ainda não está em uso por outro usuário e, em seguida, atualiza o e-mail na base de dados.
   async portalemailLogins(req, res) {
     try {
       const { use_uuid, use_email } = req.body;
@@ -1086,6 +1088,8 @@ class UsersController {
         .json({ message: "Erro ao retornar os dados das plantas!" });
     }
   }
+  //Essa API retorna informações específicas de dispositivos associados a um usuário, identificado pelo UUID fornecido (use_uuid).
+  //As informações incluem o e-mail, nome, marca, capacidade, UUID e endereço do dispositivo. Esses dados são filtrados com base na associação do usuário com a marca do dispositivo.
   async updatedeviceEmail(req, res) {
     try {
       const { arraydevices } = req.body;
@@ -1106,6 +1110,8 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
   }
+  //Esta API gera um arquivo CSV com informações de capacidade de dispositivos associados a um usuário, identificado pelo UUID fornecido.
+  //O arquivo inclui a capacidade do dispositivo, o UUID e o nome da marca. Em caso de sucesso, o CSV é baixado como resposta; em caso de erro, uma mensagem é retornada.
   async csvDownload(req, res) {
     try {
       const { use_uuid } = req.body;
@@ -1144,6 +1150,8 @@ class UsersController {
       return res.status(500).json({ message: "Não foi possível geral o CSV!" });
     }
   }
+  //Esta API atualiza informações de dispositivos e geração de energia com base em um conjunto de dados fornecido.
+  // Calcula uma nova estimativa de geração de energia usando coeficientes de irradiação, atualiza registros de geração, e ajusta as capacidades dos dispositivos.
   async updatePlants(req, res) {
     try {
       const currentDate = new Date();
@@ -1160,8 +1168,14 @@ class UsersController {
       );
       const { arrayplants } = req.body;
       arrayplants.map(async (devarray) => {
-        const { dev_uuid, dev_capacity, dev_email, ic_city, ic_states,gen_estimated } =
-          devarray;
+        const {
+          dev_uuid,
+          dev_capacity,
+          dev_email,
+          ic_city,
+          ic_states,
+          gen_estimated,
+        } = devarray;
         let irr = await IrradiationCoefficient.findOne({
           where: { ic_city, ic_states },
           attributes: ["ic_yearly"],
@@ -1171,21 +1185,21 @@ class UsersController {
         const gen_new = dev_capacity * ic_year * 0.81;
 
         console.log(dev_capacity * ic_year);
-        if(gen_estimated==0){
-        await Generation.update(
-          { gen_estimated: gen_new },
-          {
-            where: {
-              dev_uuid: dev_uuid,
-              gen_date: {
-                [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-              },
-            },
-          }
-        );
-        }else{
+        if (gen_estimated == 0) {
           await Generation.update(
-            { gen_estimated: gen_estimated},
+            { gen_estimated: gen_new },
+            {
+              where: {
+                dev_uuid: dev_uuid,
+                gen_date: {
+                  [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                },
+              },
+            }
+          );
+        } else {
+          await Generation.update(
+            { gen_estimated: gen_estimated },
             {
               where: {
                 dev_uuid: dev_uuid,
@@ -1210,6 +1224,8 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
   }
+  //Esta API desativa um usuário, modificando seu tipo de membro para falso e associando-o a um determinado perfil. 
+  //Em caso de sucesso, retorna uma mensagem de atualização bem-sucedida; em caso de erro, retorna uma mensagem de falha.
   async deleteUser(req, res) {
     try {
       const { use_uuid } = req.body;
