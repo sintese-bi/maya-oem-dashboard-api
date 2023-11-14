@@ -161,8 +161,18 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/csvdownload`,
-  
+  checkToken,
   UsersController.csvDownload
+);
+routes.post(
+  `${apiVersion}/bignumbersum`,
+  checkToken,
+  DevicesControlle.bigNumberSum
+);
+routes.post(
+  `${apiVersion}/deleteuser`,
+  checkToken,
+  UsersController.deleteUser
 );
 //Api da Tabela
 routes.get(

@@ -264,14 +264,16 @@ class UsersController {
         ],
       });
 
-      const checkPassword = await bcrypt.compare(
-        use_password,
-        result.use_password
-      );
-
-      if (!checkPassword) {
+      // const checkPassword = await bcrypt.compare(
+      //   use_password,
+      //   result.use_password
+      // );
+      if (use_password !== result.use_password) {
         return res.status(404).json({ message: "Senha inválida" });
       }
+      // if (!checkPassword) {
+      //   return res.status(404).json({ message: "Senha inválida" });
+      // }
       const without_password = result.get({ plain: true });
       delete without_password.use_password;
       //Construindo o token que o cliente receberá
@@ -1065,6 +1067,7 @@ class UsersController {
           "dev_brand",
           "dev_capacity",
           "dev_uuid",
+          "dev_address",
         ],
         include: [
           {
@@ -1186,6 +1189,24 @@ class UsersController {
         );
       });
 
+      return res
+        .status(200)
+        .json({ message: "Dados atualizados com sucesso!" });
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+    }
+  }
+  async deleteUser(req, res) {
+    try {
+      const { use_uuid } = req.body;
+      await Users.update(
+        {
+          use_type_member: false,
+          pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
+        },
+
+        { where: { use_uuid: use_uuid } }
+      );
       return res
         .status(200)
         .json({ message: "Dados atualizados com sucesso!" });
