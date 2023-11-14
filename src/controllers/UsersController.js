@@ -92,8 +92,8 @@ class UsersController {
           .json({ message: "A senha e a confirmação precisam ser iguais." });
       }
 
-      // const saltRounds = 10;
-      // const passwordHash = await bcrypt.hash(password, saltRounds);
+      const saltRounds = 10;
+      const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Criação do novo usuário na tabela Users
 
@@ -113,7 +113,7 @@ class UsersController {
         pl_uuid: "049686ee-5d83-4edf-9972-8e432deccf1f",
         use_module_numbers: quantidade_inversores,
         use_email: email,
-        use_password: password,
+        use_password: passwordHash,
       });
       let bl_url;
       for (const inversor of inversores) {
@@ -264,16 +264,16 @@ class UsersController {
         ],
       });
 
-      // const checkPassword = await bcrypt.compare(
-      //   use_password,
-      //   result.use_password
-      // );
-      if (use_password !== result.use_password) {
-        return res.status(404).json({ message: "Senha inválida" });
-      }
-      // if (!checkPassword) {
+      const checkPassword = await bcrypt.compare(
+        use_password,
+        result.use_password
+      );
+      // if (use_password !== result.use_password) {
       //   return res.status(404).json({ message: "Senha inválida" });
       // }
+      if (!checkPassword) {
+        return res.status(404).json({ message: "Senha inválida" });
+      }
       const without_password = result.get({ plain: true });
       delete without_password.use_password;
       //Construindo o token que o cliente receberá
