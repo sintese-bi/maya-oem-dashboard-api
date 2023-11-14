@@ -1160,7 +1160,7 @@ class UsersController {
       );
       const { arrayplants } = req.body;
       arrayplants.map(async (devarray) => {
-        const { dev_uuid, dev_capacity, dev_email, ic_city, ic_states } =
+        const { dev_uuid, dev_capacity, dev_email, ic_city, ic_states,gen_estimated } =
           devarray;
         let irr = await IrradiationCoefficient.findOne({
           where: { ic_city, ic_states },
@@ -1171,6 +1171,7 @@ class UsersController {
         const gen_new = dev_capacity * ic_year * 0.81;
 
         console.log(dev_capacity * ic_year);
+        if(gen_estimated==0){
         await Generation.update(
           { gen_estimated: gen_new },
           {
@@ -1182,6 +1183,19 @@ class UsersController {
             },
           }
         );
+        }else{
+          await Generation.update(
+            { gen_estimated: gen_estimated},
+            {
+              where: {
+                dev_uuid: dev_uuid,
+                gen_date: {
+                  [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                },
+              },
+            }
+          );
+        }
         await Devices.update(
           { dev_capacity: dev_capacity, dev_email: dev_email },
 
