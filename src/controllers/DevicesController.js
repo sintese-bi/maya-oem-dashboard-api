@@ -138,6 +138,8 @@ class DevicesController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  //Esta API calcula a soma diária de gerações real e estimada para um intervalo de datas específico, considerando apenas dispositivos associados a um usuário. 
+  //Retorna as somas calculadas como resposta. Em caso de sucesso, a mensagem indica o cálculo bem-sucedido; em caso de erro, uma mensagem de falha é retornada.
   async sumGeneration(req, res) {
     try {
       const { startDate, endDate, use_uuid } = req.body;

@@ -92,8 +92,8 @@ class UsersController {
           .json({ message: "A senha e a confirmação precisam ser iguais." });
       }
 
-      // const saltRounds = 10;
-      // const passwordHash = await bcrypt.hash(password, saltRounds);
+      const saltRounds = 10;
+      const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Criação do novo usuário na tabela Users
 
@@ -113,7 +113,7 @@ class UsersController {
         pl_uuid: "049686ee-5d83-4edf-9972-8e432deccf1f",
         use_module_numbers: quantidade_inversores,
         use_email: email,
-        use_password: password,
+        use_password: passwordHash,
       });
       let bl_url;
       for (const inversor of inversores) {
@@ -264,16 +264,16 @@ class UsersController {
         ],
       });
 
-      // const checkPassword = await bcrypt.compare(
-      //   use_password,
-      //   result.use_password
-      // );
-      if (use_password !== result.use_password) {
-        return res.status(404).json({ message: "Senha inválida" });
-      }
-      // if (!checkPassword) {
+      const checkPassword = await bcrypt.compare(
+        use_password,
+        result.use_password
+      );
+      // if (use_password !== result.use_password) {
       //   return res.status(404).json({ message: "Senha inválida" });
       // }
+      if (!checkPassword) {
+        return res.status(404).json({ message: "Senha inválida" });
+      }
       const without_password = result.get({ plain: true });
       delete without_password.use_password;
       //Construindo o token que o cliente receberá
@@ -1030,6 +1030,8 @@ class UsersController {
       res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
   }
+  //Essa API atualiza o endereço de e-mail de um usuário usando o UUID fornecido (use_uuid).
+  //Ela verifica se o novo e-mail é válido, se ainda não está em uso por outro usuário e, em seguida, atualiza o e-mail na base de dados.
   async portalemailLogins(req, res) {
     try {
       const { use_uuid, use_email } = req.body;
@@ -1086,6 +1088,8 @@ class UsersController {
         .json({ message: "Erro ao retornar os dados das plantas!" });
     }
   }
+  //Essa API retorna informações específicas de dispositivos associados a um usuário, identificado pelo UUID fornecido (use_uuid).
+  //As informações incluem o e-mail, nome, marca, capacidade, UUID e endereço do dispositivo. Esses dados são filtrados com base na associação do usuário com a marca do dispositivo.
   async updatedeviceEmail(req, res) {
     try {
       const { arraydevices } = req.body;
@@ -1106,6 +1110,8 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
   }
+  //Esta API gera um arquivo CSV com informações de capacidade de dispositivos associados a um usuário, identificado pelo UUID fornecido.
+  //O arquivo inclui a capacidade do dispositivo, o UUID e o nome da marca. Em caso de sucesso, o CSV é baixado como resposta; em caso de erro, uma mensagem é retornada.
   async csvDownload(req, res) {
     try {
       const { use_uuid } = req.body;
@@ -1144,6 +1150,8 @@ class UsersController {
       return res.status(500).json({ message: "Não foi possível geral o CSV!" });
     }
   }
+  //Esta API atualiza informações de dispositivos e geração de energia com base em um conjunto de dados fornecido.
+  // Calcula uma nova estimativa de geração de energia usando coeficientes de irradiação, atualiza registros de geração, e ajusta as capacidades dos dispositivos.
   async updatePlants(req, res) {
     try {
       const currentDate = new Date();
@@ -1160,8 +1168,14 @@ class UsersController {
       );
       const { arrayplants } = req.body;
       arrayplants.map(async (devarray) => {
-        const { dev_uuid, dev_capacity, dev_email, ic_city, ic_states } =
-          devarray;
+        const {
+          dev_uuid,
+          dev_capacity,
+          dev_email,
+          ic_city,
+          ic_states,
+          gen_estimated,
+        } = devarray;
         let irr = await IrradiationCoefficient.findOne({
           where: { ic_city, ic_states },
           attributes: ["ic_yearly"],
@@ -1171,17 +1185,31 @@ class UsersController {
         const gen_new = dev_capacity * ic_year * 0.81;
 
         console.log(dev_capacity * ic_year);
-        await Generation.update(
-          { gen_estimated: gen_new },
-          {
-            where: {
-              dev_uuid: dev_uuid,
-              gen_date: {
-                [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+        if (gen_estimated == 0) {
+          await Generation.update(
+            { gen_estimated: gen_new },
+            {
+              where: {
+                dev_uuid: dev_uuid,
+                gen_date: {
+                  [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                },
               },
-            },
-          }
-        );
+            }
+          );
+        } else {
+          await Generation.update(
+            { gen_estimated: gen_estimated },
+            {
+              where: {
+                dev_uuid: dev_uuid,
+                gen_date: {
+                  [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                },
+              },
+            }
+          );
+        }
         await Devices.update(
           { dev_capacity: dev_capacity, dev_email: dev_email },
 
@@ -1196,6 +1224,8 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
   }
+  //Esta API desativa um usuário, modificando seu tipo de membro para falso e associando-o a um determinado perfil. 
+  //Em caso de sucesso, retorna uma mensagem de atualização bem-sucedida; em caso de erro, retorna uma mensagem de falha.
   async deleteUser(req, res) {
     try {
       const { use_uuid } = req.body;
