@@ -46,6 +46,7 @@ class Users extends Model {
         use_cnhrg: { type: DataTypes.TEXT, allowNull: true },
         use_proof: { type: DataTypes.TEXT, allowNull: true },
         use_token: { type: DataTypes.TEXT, allowNull: true },
+        use_deleted:{type:DataTypes.BOOLEAN},
       },
       {
         sequelize,

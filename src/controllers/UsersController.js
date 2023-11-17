@@ -299,7 +299,7 @@ class UsersController {
   async users(req, res) {
     try {
       const result = await Users.findAll({
-        attributes: ["use_name", "use_email", "use_uuid"],
+        attributes: ["use_name", "use_email", "use_uuid","use_deleted"],
         include: [
           {
             association: "brand_login",
@@ -1184,7 +1184,6 @@ class UsersController {
         const ic_year = irr.dataValues.ic_yearly;
         const gen_new = dev_capacity * ic_year * 0.81;
 
-        console.log(dev_capacity * ic_year);
         if (gen_estimated == 0) {
           await Generation.update(
             { gen_estimated: gen_new },
@@ -1224,7 +1223,7 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
   }
-  //Esta API desativa um usuário, modificando seu tipo de membro para falso e associando-o a um determinado perfil. 
+  //Esta API desativa um usuário, modificando seu tipo de membro para 'free' e associando-o a um determinado perfil.
   //Em caso de sucesso, retorna uma mensagem de atualização bem-sucedida; em caso de erro, retorna uma mensagem de falha.
   async deleteUser(req, res) {
     try {
@@ -1233,6 +1232,7 @@ class UsersController {
         {
           use_type_member: false,
           pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
+          use_deleted: true
         },
 
         { where: { use_uuid: use_uuid } }
