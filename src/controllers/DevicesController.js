@@ -7,7 +7,7 @@ class DevicesController {
   //Esta função index processa dados de dispositivos, recuperando informações de gerações associadas a eles.
   //Ela inclui a ordenação por data e trata casos onde a geração atual não está disponível, utilizando dados da geração anterior.
   async index(req, res) {
-    // const { brand } = req.query;
+    
     const blUuid = req.params.bl_uuid;
     const pl_name = req.params;
     const date = new Date();
