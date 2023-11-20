@@ -1074,7 +1074,7 @@ class UsersController {
         include: [
           {
             association: "brand_login",
-            attributes: [],
+            attributes: ["bl_uuid"],
             where: {
               use_uuid: use_uuid,
             },
