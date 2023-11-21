@@ -299,7 +299,7 @@ class UsersController {
   async users(req, res) {
     try {
       const result = await Users.findAll({
-        attributes: ["use_name", "use_email", "use_uuid","use_deleted"],
+        attributes: ["use_name", "use_email", "use_uuid", "use_deleted"],
         include: [
           {
             association: "brand_login",
@@ -543,6 +543,7 @@ class UsersController {
               {
                 association: "devices",
                 where: whereCondition,
+
                 attributes: [
                   "dev_uuid",
                   "dev_name",
@@ -560,6 +561,7 @@ class UsersController {
                         [Op.between]: [startOfMonth, endOfMonth],
                       },
                     },
+                    required: false,
                     order: [["gen_date", "DESC"]],
                   },
                   {
@@ -1232,7 +1234,7 @@ class UsersController {
         {
           use_type_member: false,
           pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
-          use_deleted: true
+          use_deleted: true,
         },
 
         { where: { use_uuid: use_uuid } }
