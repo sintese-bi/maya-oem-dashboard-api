@@ -25,8 +25,7 @@ class GenerationController {
   async deviceDataAndLatestTemperature(req, res) {
     const { startDate, endDate, type, devUuid } = req.query;
     const dataNow = moment().format("YYYY-MM-DD");
-    // const now = dataNow.getDate();
-    // const data = moment(now).format("YYYY-MM");
+    
     const firstDay = moment(startDate).format("YYYY-MM-DD");
     const lastDay = moment(endDate).format("YYYY-MM-DD");
 
