@@ -578,6 +578,14 @@ class UsersController {
           },
         ],
       });
+      result.brand_login[0].devices = result.brand_login[0].devices
+        .map((device) => {
+          if (device.generation.length === 0) {
+            return null; // Filtra os dispositivos com array 'generation' vazio
+          }
+          return device;
+        })
+        .filter((device) => device !== null); // Remove entradas nulas do array
 
       return res.status(200).json({ result, brand });
     } catch (error) {
