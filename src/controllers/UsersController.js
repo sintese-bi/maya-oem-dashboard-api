@@ -231,9 +231,8 @@ class UsersController {
     //API  para cliente logar na plataforma(Dashboard)
     try {
       const { use_email, use_password } = req.body;
-      console.log("req ", req);
+      console.log("req", req);
       const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-
       if (!emailRegex.test(use_email)) {
         return res.status(400).json({ message: "O email não é válido." });
       }
@@ -264,6 +263,19 @@ class UsersController {
         ],
       });
 
+      const userDevices = await Devices.findAll({
+        attributes: ["dev_uuid"],
+        include: [
+          {
+            association: "brand_login",
+            attributes: [],
+            where: {
+              use_uuid: result.use_uuid,
+            },
+          },
+        ],
+      });
+
       const checkPassword = await bcrypt.compare(
         use_password,
         result.use_password
@@ -285,9 +297,14 @@ class UsersController {
         secret
       );
 
-      return res
-        .status(200)
-        .json({ message: "Autenticado!", token, result: without_password }); //remove o use_password no retorno do json
+      return res.status(200).json({
+        message: "Autenticado!",
+        token,
+        result: {
+          use_data: without_password,
+          use_devices_amount: userDevices.length,
+        },
+      }); //remove o use_password no retorno do json
     } catch (error) {
       return res
         .status(400)
@@ -578,16 +595,8 @@ class UsersController {
           },
         ],
       });
-      result.brand_login[0].devices = result.brand_login[0].devices
-        .map((device) => {
-          if (device.generation.length === 0) {
-            return null; // Filtra os dispositivos com array 'generation' vazio
-          }
-          return device;
-        })
-        .filter((device) => device !== null); // Remove entradas nulas do array
 
-      return res.status(200).json({ result, brand });
+      return res.status(200).json({ result_2, brand });
     } catch (error) {
       return res
         .status(400)
