@@ -578,7 +578,7 @@ class UsersController {
                         [Op.between]: [startOfMonth, endOfMonth],
                       },
                     },
-                    required: false,
+                    // required: false,
                     order: [["gen_date", "DESC"]],
                   },
                   {
@@ -595,8 +595,19 @@ class UsersController {
           },
         ],
       });
+      // const result_1 = result.brand_login.map((device_0) => {
+      //   brand_login.devices.map((device) => {
+      //     if (device.generation.length == 0) {
+      //       console.log(device.generation);
+      //       delete device.generation;
+      //       console.log(device.generation);
+      //     }
+      //   });
+      // });
 
-      return res.status(200).json({ result_2, brand });
+      // console.log(result.brand_login[0]);
+
+      return res.status(200).json({ result, brand });
     } catch (error) {
       return res
         .status(400)
