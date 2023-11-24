@@ -578,7 +578,7 @@ class UsersController {
                         [Op.between]: [startOfMonth, endOfMonth],
                       },
                     },
-                    // required: false,
+                    required: false,
                     order: [["gen_date", "DESC"]],
                   },
                   {
