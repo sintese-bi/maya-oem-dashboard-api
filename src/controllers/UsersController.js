@@ -1207,8 +1207,7 @@ class UsersController {
           ic_states,
           gen_estimated,
         } = devarray;
-        if (ic_city === "" && gen_estimated == 0 ) {
-          
+        if (ic_city === "" && gen_estimated == 0) {
           return;
         }
         console.log("teste");
@@ -1244,11 +1243,15 @@ class UsersController {
             }
           );
         }
-        await Devices.update(
-          { dev_capacity: dev_capacity, dev_email: dev_email },
+        if (dev_email != "") {
+          await Devices.update(
+            { dev_capacity: dev_capacity, dev_email: dev_email },
 
-          { where: { dev_uuid: dev_uuid } }
-        );
+            { where: { dev_uuid: dev_uuid } }
+          );
+        } else {
+          return;
+        }
       });
 
       return res
