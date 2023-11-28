@@ -1207,10 +1207,10 @@ class UsersController {
           ic_states,
           gen_estimated,
         } = devarray;
-        if (ic_city === "" && gen_estimated == 0) {
+        if ((dev_capacity == 0 || ic_city === "") && gen_estimated == 0) {
           return;
         }
-        console.log("teste");
+        console.log(dev_capacity);
         if (gen_estimated == 0) {
           let irr = await IrradiationCoefficient.findOne({
             where: { ic_city, ic_states },
@@ -1243,6 +1243,7 @@ class UsersController {
             }
           );
         }
+
         if (dev_email != "") {
           await Devices.update(
             { dev_capacity: dev_capacity, dev_email: dev_email },
