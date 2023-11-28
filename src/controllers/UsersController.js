@@ -1196,6 +1196,7 @@ class UsersController {
         currentDate.getMonth() + 1,
         0
       );
+
       const { arrayplants } = req.body;
       arrayplants.map(async (devarray) => {
         const {
@@ -1206,15 +1207,19 @@ class UsersController {
           ic_states,
           gen_estimated,
         } = devarray;
-        let irr = await IrradiationCoefficient.findOne({
-          where: { ic_city, ic_states },
-          attributes: ["ic_yearly"],
-        });
-        console.log(irr.dataValues.ic_yearly);
-        const ic_year = irr.dataValues.ic_yearly;
-        const gen_new = dev_capacity * ic_year * 0.81;
-
+        if (ic_city === "" && gen_estimated == 0 ) {
+          
+          return;
+        }
+        console.log("teste");
         if (gen_estimated == 0) {
+          let irr = await IrradiationCoefficient.findOne({
+            where: { ic_city, ic_states },
+            attributes: ["ic_yearly"],
+          });
+          console.log(irr.dataValues.ic_yearly);
+          const ic_year = irr.dataValues.ic_yearly;
+          const gen_new = dev_capacity * ic_year * 0.81;
           await Generation.update(
             { gen_estimated: gen_new },
             {
