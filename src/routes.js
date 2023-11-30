@@ -76,7 +76,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/updateemail`,
-  
+  checkToken,
   GenerationController.updateEmail
 );
 routes.post(

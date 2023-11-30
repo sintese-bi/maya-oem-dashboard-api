@@ -578,7 +578,7 @@ class UsersController {
                         [Op.between]: [startOfMonth, endOfMonth],
                       },
                     },
-                    // required: false,
+                    required: false,
                     order: [["gen_date", "DESC"]],
                   },
                   {
@@ -595,17 +595,17 @@ class UsersController {
           },
         ],
       });
-      // const result_1 = result.brand_login.map((device_0) => {
-      //   brand_login.devices.map((device) => {
-      //     if (device.generation.length == 0) {
-      //       console.log(device.generation);
-      //       delete device.generation;
-      //       console.log(device.generation);
-      //     }
-      //   });
-      // });
+      const result_1 = result.brand_login.map((device_0) => {
+        brand_login.devices.map((device) => {
+          if (device.generation.length == 0) {
+            console.log(device.generation);
+            delete device.generation;
+            console.log(device.generation);
+          }
+        });
+      });
 
-      // console.log(result.brand_login[0]);
+      console.log(result.brand_login[0]);
 
       return res.status(200).json({ result, brand });
     } catch (error) {
@@ -1196,6 +1196,7 @@ class UsersController {
         currentDate.getMonth() + 1,
         0
       );
+
       const { arrayplants } = req.body;
       arrayplants.map(async (devarray) => {
         const {
@@ -1206,15 +1207,18 @@ class UsersController {
           ic_states,
           gen_estimated,
         } = devarray;
-        let irr = await IrradiationCoefficient.findOne({
-          where: { ic_city, ic_states },
-          attributes: ["ic_yearly"],
-        });
-        console.log(irr.dataValues.ic_yearly);
-        const ic_year = irr.dataValues.ic_yearly;
-        const gen_new = dev_capacity * ic_year * 0.81;
-
+        if ((dev_capacity == 0 || ic_city === "") && gen_estimated == 0) {
+          return;
+        }
+        console.log(dev_capacity);
         if (gen_estimated == 0) {
+          let irr = await IrradiationCoefficient.findOne({
+            where: { ic_city, ic_states },
+            attributes: ["ic_yearly"],
+          });
+          console.log(irr.dataValues.ic_yearly);
+          const ic_year = irr.dataValues.ic_yearly;
+          const gen_new = dev_capacity * ic_year * 0.81;
           await Generation.update(
             { gen_estimated: gen_new },
             {
@@ -1239,11 +1243,16 @@ class UsersController {
             }
           );
         }
-        await Devices.update(
-          { dev_capacity: dev_capacity, dev_email: dev_email },
 
-          { where: { dev_uuid: dev_uuid } }
-        );
+        if (dev_email != "") {
+          await Devices.update(
+            { dev_capacity: dev_capacity, dev_email: dev_email },
+
+            { where: { dev_uuid: dev_uuid } }
+          );
+        } else {
+          return;
+        }
       });
 
       return res
