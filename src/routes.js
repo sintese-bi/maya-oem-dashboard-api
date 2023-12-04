@@ -121,7 +121,7 @@ routes.patch(
 ); // NAO TA SENDO USADA
 routes.get(
   `${apiVersion}/devices/:bl_uuid`,
-  checkToken,
+  
   DevicesControlle.index
 );
 routes.patch(

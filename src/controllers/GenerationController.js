@@ -48,6 +48,7 @@ class GenerationController {
                 [Op.between]: [firstDay, lastDay],
               },
             },
+            required: false,
             order: [["gen_date", "ASC"]],
           },
         ],
@@ -69,6 +70,7 @@ class GenerationController {
       });
 
       deviceData.forEach((dev) => {
+        
         const generation = dev.generation.find(
           (gen) => gen.gen_date === dataNow
         );
