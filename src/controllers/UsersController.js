@@ -762,20 +762,25 @@ class UsersController {
   //A API verifica se o dispositivo já está associado ao usuário, e se não estiver, cria um novo dispositivo na tabela Brand e associa a ele um novo registro na tabela Devices.
   async newDevice(req, res) {
     try {
-      const { use_uuid, bl_login, bl_name, bl_password } = req.body;
-      // const search = await Brand.findOne({
-      //   where: { use_uuid: use_uuid, bl_name: bl_name },
-      // });
-      // if (search) {
-      //   return res
-      //     .status(400)
-      //     .json({ message: "Você já inseriu esse device!" });
+      const { use_uuid, bl_login, bl_name, bl_password,bl_url } = req.body;
+      // // const search = await Brand.findOne({
+      // //   where: { use_uuid: use_uuid, bl_name: bl_name },
+      // // });
+      // // if (search) {
+      // //   return res
+      // //     .status(400)
+      // //     .json({ message: "Você já inseriu esse device!" });
       // }
-      const device = await Brand.update(
-        { bl_login: bl_login, bl_password: bl_password },
-        { where: { bl_name: bl_name, use_uuid: use_uuid } }
-      );
-      
+      const device = await Brand.create({
+        use_uuid: use_uuid,
+        bl_login: bl_login,
+        bl_password: bl_password,
+        bl_name: bl_name,
+        bl_url:bl_url
+      });
+      // await Devices.create({
+      //   bl_uuid: device.bl_uuid,
+      // });
       return res
         .status(201)
         .json({ message: "Login/device criado com sucesso!" });
