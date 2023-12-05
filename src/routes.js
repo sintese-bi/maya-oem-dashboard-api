@@ -101,9 +101,11 @@ routes.get(
 
   GenerationController.deviceDataAndLatestTemperature
 );
+
 routes.post(`${apiVersion}/sendingemail`, UsersController.sendEmail);
 routes.post(`${apiVersion}/passrecover`, UsersController.passwordRecover);
 routes.post(`${apiVersion}/devicelogin`, checkToken, UsersController.newDevice);
+routes.post(`${apiVersion}/updatebrands`, checkToken, UsersController.updateBrands);
 routes.get(
   `${apiVersion}/alerts`,
   checkToken,
