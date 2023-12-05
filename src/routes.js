@@ -103,7 +103,7 @@ routes.get(
 );
 routes.post(`${apiVersion}/sendingemail`, UsersController.sendEmail);
 routes.post(`${apiVersion}/passrecover`, UsersController.passwordRecover);
-routes.post(`${apiVersion}/deviceLogin`,  UsersController.newDevice);
+routes.post(`${apiVersion}/deviceLogin`, checkToken, UsersController.newDevice);
 routes.get(
   `${apiVersion}/alerts`,
   checkToken,
