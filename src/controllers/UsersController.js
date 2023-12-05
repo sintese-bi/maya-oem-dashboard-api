@@ -763,14 +763,14 @@ class UsersController {
   async newDevice(req, res) {
     try {
       const { use_uuid, bl_login, bl_name, bl_password,bl_url } = req.body;
-      // // const search = await Brand.findOne({
-      // //   where: { use_uuid: use_uuid, bl_name: bl_name },
-      // // });
-      // // if (search) {
-      // //   return res
-      // //     .status(400)
-      // //     .json({ message: "Você já inseriu esse device!" });
-      // }
+      const search = await Brand.findOne({
+        where: { use_uuid: use_uuid, bl_login:bl_login },
+      });
+      if (search) {
+        return res
+          .status(400)
+          .json({ message: "Você já inseriu esse device!" });
+      }
       const device = await Brand.create({
         use_uuid: use_uuid,
         bl_login: bl_login,
