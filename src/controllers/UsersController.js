@@ -794,19 +794,40 @@ class UsersController {
   async updateBrands(req, res) {
     try {
       const { use_uuid, bl_name, bl_login, bl_password, bl_url } = req.body;
+
       const result = await Brand.findOne({
         where: { use_uuid: use_uuid, bl_name: bl_name, bl_login: bl_login },
       });
+
       if (result) {
-        const update = await Brand.update(
-          {
-            bl_password: bl_password,
-            bl_url: bl_url,
-          },
-          {
-            where: { use_uuid: use_uuid, bl_name: bl_name, bl_login: bl_login },
-          }
-        );
+        if (bl_url == "") {
+          const update0 = await Brand.update(
+            {
+              bl_password: bl_password,
+            },
+            {
+              where: {
+                use_uuid: use_uuid,
+                bl_name: bl_name,
+                bl_login: bl_login,
+              },
+            }
+          );
+        } else {
+          const update1 = await Brand.update(
+            {
+              bl_password: bl_password,
+              bl_url: bl_url,
+            },
+            {
+              where: {
+                use_uuid: use_uuid,
+                bl_name: bl_name,
+                bl_login: bl_login,
+              },
+            }
+          );
+        }
       } else {
         return res.status(400).json({
           message: "Esse login não existe em nosso banco de dados!",
