@@ -762,24 +762,25 @@ class UsersController {
   //A API verifica se o dispositivo já está associado ao usuário, e se não estiver, cria um novo dispositivo na tabela Brand e associa a ele um novo registro na tabela Devices.
   async newDevice(req, res) {
     try {
-      const { use_uuid, bl_login, bl_name, bl_password } = req.body;
+      const { use_uuid, bl_login, bl_name, bl_password, bl_url } = req.body;
       const search = await Brand.findOne({
-        where: { use_uuid: use_uuid, bl_name: bl_name },
+        where: { use_uuid: use_uuid, bl_name: bl_name, bl_login: bl_login },
       });
       if (search) {
-        return res
-          .status(400)
-          .json({ message: "Você já inseriu esse device!" });
+        return res.status(400).json({
+          message: "Você já inseriu um login de mesmo nome para essa marca!",
+        });
       }
       const device = await Brand.create({
         use_uuid: use_uuid,
         bl_login: bl_login,
         bl_password: bl_password,
         bl_name: bl_name,
+        bl_url: bl_url,
       });
-      await Devices.create({
-        bl_uuid: device.bl_uuid,
-      });
+      // await Devices.create({
+      //   bl_uuid: device.bl_uuid,
+      // });
       return res
         .status(201)
         .json({ message: "Login/device criado com sucesso!" });
@@ -788,6 +789,56 @@ class UsersController {
       return res
         .status(500)
         .json({ message: `Erro ao criar o Login/device: ${error.message}` });
+    }
+  }
+  async updateBrands(req, res) {
+    try {
+      const { use_uuid, bl_name, bl_login, bl_password, bl_url } = req.body;
+
+      const result = await Brand.findOne({
+        where: { use_uuid: use_uuid, bl_name: bl_name, bl_login: bl_login },
+      });
+
+      if (result) {
+        if (bl_url == "") {
+          const update0 = await Brand.update(
+            {
+              bl_password: bl_password,
+            },
+            {
+              where: {
+                use_uuid: use_uuid,
+                bl_name: bl_name,
+                bl_login: bl_login,
+              },
+            }
+          );
+        } else {
+          const update1 = await Brand.update(
+            {
+              bl_password: bl_password,
+              bl_url: bl_url,
+            },
+            {
+              where: {
+                use_uuid: use_uuid,
+                bl_name: bl_name,
+                bl_login: bl_login,
+              },
+            }
+          );
+        }
+      } else {
+        return res.status(400).json({
+          message: "Esse login não existe em nosso banco de dados!",
+        });
+      }
+      return res.status(201).json({ message: "Senha atualizada com sucesso!" });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ message: `Erro ao atualizar a senha: ${error.message}` });
     }
   }
   //Essa API cria um novo dispositivo de marca associado a um usuário específico. Ela recebe informações como o UUID do usuário, login, nome e senha do dispositivo.

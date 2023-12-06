@@ -71,7 +71,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/updateplants`,
-  
+
   UsersController.updatePlants
 );
 routes.post(
@@ -81,7 +81,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/generalreport`,
-  
+
   GenerationController.generalreportEmail
 );
 routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
@@ -98,12 +98,14 @@ routes.post(
 );
 routes.get(
   `${apiVersion}/generationandtemperature`,
-  checkToken,
+
   GenerationController.deviceDataAndLatestTemperature
 );
+
 routes.post(`${apiVersion}/sendingemail`, UsersController.sendEmail);
 routes.post(`${apiVersion}/passrecover`, UsersController.passwordRecover);
-routes.post(`${apiVersion}/deviceLogin`, checkToken, UsersController.newDevice);
+routes.post(`${apiVersion}/devicelogin`, checkToken, UsersController.newDevice);
+routes.post(`${apiVersion}/updatebrands`, checkToken, UsersController.updateBrands);
 routes.get(
   `${apiVersion}/alerts`,
   checkToken,
@@ -121,7 +123,7 @@ routes.patch(
 ); // NAO TA SENDO USADA
 routes.get(
   `${apiVersion}/devices/:bl_uuid`,
-  checkToken,
+
   DevicesControlle.index
 );
 routes.patch(
@@ -150,7 +152,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/deviceinfo/:par?`,
- checkToken,
+  checkToken,
   UsersController.deviceInformation
 );
 
@@ -169,11 +171,7 @@ routes.post(
   checkToken,
   DevicesControlle.bigNumberSum
 );
-routes.post(
-  `${apiVersion}/deleteuser`,
-  checkToken,
-  UsersController.deleteUser
-);
+routes.post(`${apiVersion}/deleteuser`, checkToken, UsersController.deleteUser);
 //Api da Tabela
 routes.get(
   `${apiVersion}/dashboard/:uuid/:par?`,
