@@ -114,6 +114,7 @@ class UsersController {
         use_module_numbers: quantidade_inversores,
         use_email: email,
         use_password: passwordHash,
+        use_deleted: false,
       });
       let bl_url;
       for (const inversor of inversores) {
