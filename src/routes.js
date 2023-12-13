@@ -107,8 +107,8 @@ routes.post(`${apiVersion}/passrecover`, UsersController.passwordRecover);
 routes.post(`${apiVersion}/devicelogin`, checkToken,UsersController.newDevice);
 routes.post(`${apiVersion}/updatebrands`, checkToken, UsersController.updateBrands);
 routes.get(
-  `${apiVersion}/alerts`,
-  checkToken,
+  `${apiVersion}/alerts/:devUuid`,
+  
   GenerationController.recentAlerts
 );
 routes.get(
