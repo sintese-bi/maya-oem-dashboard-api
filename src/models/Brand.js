@@ -14,6 +14,7 @@ class Brand extends Model {
         bl_password: { type: DataTypes.STRING },
         bl_url: { type: DataTypes.STRING },
         bl_check:{ type: DataTypes.STRING },
+        bl_quant: { type: DataTypes.FLOAT },
         use_uuid: { type: DataTypes.UUIDV4 },
       },
       {

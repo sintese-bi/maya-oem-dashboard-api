@@ -25,7 +25,7 @@ class GenerationController {
   async deviceDataAndLatestTemperature(req, res) {
     const { startDate, endDate, type, devUuid } = req.query;
     const dataNow = moment().format("YYYY-MM-DD");
-    
+
     const firstDay = moment(startDate).format("YYYY-MM-DD");
     const lastDay = moment(endDate).format("YYYY-MM-DD");
 
@@ -70,7 +70,6 @@ class GenerationController {
       });
 
       deviceData.forEach((dev) => {
-        
         const generation = dev.generation.find(
           (gen) => gen.gen_date === dataNow
         );
@@ -102,7 +101,7 @@ class GenerationController {
   //Esta recupera alertas recentes de um dispositivo específico dentro da última hora.
   //Ela retorna os dados em formato JSON, incluindo o nome do dispositivo e os detalhes dos alertas (como o tipo de alerta e o inversor associado, se houver). Se houver um erro durante o processo, a função retorna uma mensagem de erro no formato JSON.
   async recentAlerts(req, res) {
-    const { devUuid } = req.query;
+    const { devUuid } = req.params;
 
     try {
       const recentAlerts = await Devices.findAll({
@@ -113,7 +112,7 @@ class GenerationController {
         include: [
           {
             association: "alerts",
-            attributes: ["al_alerts", "al_inv"],
+            attributes: ["al_alerts", "al_inv", "alert_created_at"],
             where: {
               alert_created_at: {
                 [Op.between]: [
@@ -125,7 +124,7 @@ class GenerationController {
           },
         ],
       });
-
+      console.log(recentAlerts)
       return res.json(recentAlerts);
     } catch (error) {
       console.error(error);
