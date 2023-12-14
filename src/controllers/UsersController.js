@@ -15,7 +15,7 @@ import Devices from "../models/Devices";
 import nodemailer from "nodemailer";
 import csvParser from "csv-parser";
 import createCsvWriter from "csv-writer";
-
+import Reports from "../models/Reports";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 //Configuração das credenciais do email de envio
@@ -763,7 +763,8 @@ class UsersController {
   //A API verifica se o dispositivo já está associado ao usuário, e se não estiver, cria um novo dispositivo na tabela Brand e associa a ele um novo registro na tabela Devices.
   async newDevice(req, res) {
     try {
-      const { use_uuid, bl_login, bl_name, bl_password, bl_url, bl_quant } = req.body;
+      const { use_uuid, bl_login, bl_name, bl_password, bl_url, bl_quant } =
+        req.body;
       const search = await Brand.findOne({
         where: { use_uuid: use_uuid, bl_name: bl_name, bl_login: bl_login },
       });
@@ -778,7 +779,7 @@ class UsersController {
         bl_password: bl_password,
         bl_name: bl_name,
         bl_url: bl_url,
-        bl_quant:bl_quant
+        bl_quant: bl_quant,
       });
       // await Devices.create({
       //   bl_uuid: device.bl_uuid,
@@ -1333,6 +1334,31 @@ class UsersController {
         .status(200)
         .json({ message: "Dados atualizados com sucesso!" });
     } catch (error) {
+      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+    }
+  }
+  async reportCounting(req, res) {
+    try {
+      const { devUUID } = req.body;
+
+      const existingDevice = await Devices.findOne({
+        where: { dev_uuid: devUUID },
+      });
+
+      if (!existingDevice) {
+        return res.status(404).json({ message: "Dispositivo não encontrado!" });
+      }
+
+      await Reports.create({
+        port_check: false,
+        dev_uuid: devUUID,
+      });
+
+      return res
+        .status(200)
+        .json({ message: "Dados atualizados com sucesso!" });
+    } catch (error) {
+      console.error(error);
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
   }
