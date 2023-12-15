@@ -171,6 +171,7 @@ class UsersController {
           bl_login: loginSemAspas,
           bl_password: inversor.senha,
           bl_url: bl_url,
+          bl_check:"x"
         });
         //console.log('bl_name:', inversor.brand);
         brandUuids.push({
@@ -1339,19 +1340,18 @@ class UsersController {
   }
   async reportCounting(req, res) {
     try {
-      const { devUUID } = req.body;
+      const { devUuid } = req.body;
 
-      const existingDevice = await Devices.findOne({
-        where: { dev_uuid: devUUID },
+      const existingDevice = await Reports.findOne({
+        attributes: ["port_check"],
+        where: { dev_uuid: devUuid },
       });
+      console.log(existingDevice);
 
-      if (!existingDevice) {
-        return res.status(404).json({ message: "Dispositivo não encontrado!" });
-      }
+      await Reports.update({
+        port_check: true,
 
-      await Reports.create({
-        port_check: false,
-        dev_uuid: devUUID,
+        where: { dev_uuid: devUuid },
       });
 
       return res
