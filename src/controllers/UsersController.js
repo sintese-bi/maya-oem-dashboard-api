@@ -1377,13 +1377,11 @@ class UsersController {
       });
 
       // Conta o número total de dev_uuid distintos
-      const totalCount = uniqueDevUuids.length;
-
-      console.log("Contagem total de dev_uuid distintos:", totalCount);
+      const Contagem = uniqueDevUuids.length;
 
       return res
         .status(200)
-        .json({ message: "Dados atualizados com sucesso!", totalCount });
+        .json({ message: "Dados atualizados com sucesso!", Contagem });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
