@@ -171,7 +171,7 @@ class UsersController {
           bl_login: loginSemAspas,
           bl_password: inversor.senha,
           bl_url: bl_url,
-          bl_check:"x"
+          bl_check: "x",
         });
         //console.log('bl_name:', inversor.brand);
         brandUuids.push({
@@ -570,6 +570,8 @@ class UsersController {
                   "dev_deleted",
                   "dev_capacity",
                   "dev_address",
+                  "dev_lat",
+                  "dev_long",
                 ],
                 include: [
                   {
@@ -1338,29 +1340,55 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
   }
+
   async reportCounting(req, res) {
     try {
       const { devUuid } = req.body;
 
-      const existingDevice = await Reports.findOne({
-        attributes: ["port_check"],
-        where: { dev_uuid: devUuid },
-      });
-      console.log(existingDevice);
+      // Cria o registro no banco de dados
+      await Reports.create({ port_check: true, dev_uuid: devUuid });
 
-      await Reports.update({
-        port_check: true,
+      // Verifica o mês atual
+      const currentDate = new Date();
+      const startOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      const endOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
 
-        where: { dev_uuid: devUuid },
+      // Consulta o banco de dados para obter dev_uuid distintos inseridos no mês atual
+      const uniqueDevUuids = await Reports.findAll({
+        attributes: [
+          [
+            Reports.sequelize.fn("DISTINCT", Reports.sequelize.col("dev_uuid")),
+            "dev_uuid",
+          ],
+        ],
+        where: {
+          createdAt: {
+            [Op.between]: [startOfMonth, endOfMonth],
+          },
+        },
       });
+
+      // Conta o número total de dev_uuid distintos
+      const totalCount = uniqueDevUuids.length;
+
+      console.log("Contagem total de dev_uuid distintos:", totalCount);
 
       return res
         .status(200)
-        .json({ message: "Dados atualizados com sucesso!" });
+        .json({ message: "Dados atualizados com sucesso!", totalCount });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
   }
 }
+
 export default new UsersController();
