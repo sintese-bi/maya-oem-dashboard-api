@@ -15,7 +15,7 @@ import Devices from "../models/Devices";
 import nodemailer from "nodemailer";
 import csvParser from "csv-parser";
 import createCsvWriter from "csv-writer";
-
+import Reports from "../models/Reports";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 //Configuração das credenciais do email de envio
@@ -171,7 +171,11 @@ class UsersController {
           bl_login: loginSemAspas,
           bl_password: inversor.senha,
           bl_url: bl_url,
-          bl_check:"x"
+
+          bl_check: "x",
+
+          
+
         });
         //console.log('bl_name:', inversor.brand);
         brandUuids.push({
@@ -570,6 +574,8 @@ class UsersController {
                   "dev_deleted",
                   "dev_capacity",
                   "dev_address",
+                  "dev_lat",
+                  "dev_long",
                 ],
                 include: [
                   {
@@ -764,7 +770,8 @@ class UsersController {
   //A API verifica se o dispositivo já está associado ao usuário, e se não estiver, cria um novo dispositivo na tabela Brand e associa a ele um novo registro na tabela Devices.
   async newDevice(req, res) {
     try {
-      const { use_uuid, bl_login, bl_name, bl_password, bl_url, bl_quant } = req.body;
+      const { use_uuid, bl_login, bl_name, bl_password, bl_url, bl_quant } =
+        req.body;
       const search = await Brand.findOne({
         where: { use_uuid: use_uuid, bl_name: bl_name, bl_login: bl_login },
       });
@@ -779,7 +786,7 @@ class UsersController {
         bl_password: bl_password,
         bl_name: bl_name,
         bl_url: bl_url,
-        bl_quant:bl_quant
+        bl_quant: bl_quant,
       });
       // await Devices.create({
       //   bl_uuid: device.bl_uuid,
@@ -1337,5 +1344,53 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
   }
+
+  async reportCounting(req, res) {
+    try {
+      const { devUuid } = req.body;
+
+      // Cria o registro no banco de dados
+      await Reports.create({ port_check: true, dev_uuid: devUuid });
+
+      // Verifica o mês atual
+      const currentDate = new Date();
+      const startOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      const endOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
+
+      // Consulta o banco de dados para obter dev_uuid distintos inseridos no mês atual
+      const uniqueDevUuids = await Reports.findAll({
+        attributes: [
+          [
+            Reports.sequelize.fn("DISTINCT", Reports.sequelize.col("dev_uuid")),
+            "dev_uuid",
+          ],
+        ],
+        where: {
+          createdAt: {
+            [Op.between]: [startOfMonth, endOfMonth],
+          },
+        },
+      });
+
+      // Conta o número total de dev_uuid distintos
+      const Contagem = uniqueDevUuids.length;
+
+      return res
+        .status(200)
+        .json({ message: "Dados atualizados com sucesso!", Contagem });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+    }
+  }
 }
+
 export default new UsersController();
