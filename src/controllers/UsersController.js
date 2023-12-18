@@ -171,7 +171,11 @@ class UsersController {
           bl_login: loginSemAspas,
           bl_password: inversor.senha,
           bl_url: bl_url,
+
           bl_check: "x",
+
+          
+
         });
         //console.log('bl_name:', inversor.brand);
         brandUuids.push({
