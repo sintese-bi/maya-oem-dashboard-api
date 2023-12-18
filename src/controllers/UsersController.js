@@ -171,11 +171,7 @@ class UsersController {
           bl_login: loginSemAspas,
           bl_password: inversor.senha,
           bl_url: bl_url,
-
           bl_check: "x",
-
-          
-
         });
         //console.log('bl_name:', inversor.brand);
         brandUuids.push({
@@ -206,8 +202,6 @@ class UsersController {
       <p>Agradecemos pela confiança em nossos serviços.</p>
                       
       <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
-      <p><img src="" alt="Logo da MAYA WATCH"></p>
-      
                   `;
       await new Promise((resolve) => setTimeout(resolve, 3000));
       const mailOptions = {
