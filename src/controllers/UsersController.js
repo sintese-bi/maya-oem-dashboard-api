@@ -1343,11 +1343,6 @@ class UsersController {
 
   async reportCounting(req, res) {
     try {
-      const { devUuid } = req.body;
-
-      // Cria o registro no banco de dados
-      await Reports.create({ port_check: true, dev_uuid: devUuid });
-
       // Verifica o mês atual
       const currentDate = new Date();
       const startOfMonth = new Date(
@@ -1381,7 +1376,22 @@ class UsersController {
 
       return res
         .status(200)
-        .json({ message: "Dados atualizados com sucesso!", Contagem });
+        .json({ "Quantidade de relatórios distintos baixados:": Contagem });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+    }
+  }
+  async storeReport(req, res) {
+    try {
+      const { devUuid } = req.body;
+      console.log(devUuid);
+      // Cria o registro no banco de dados
+      await Reports.create({ port_check: true, dev_uuid: devUuid });
+
+      return res
+        .status(200)
+        .json({ message: "Dados atualizados com sucesso!" });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
