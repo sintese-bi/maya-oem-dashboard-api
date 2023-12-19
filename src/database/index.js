@@ -10,6 +10,7 @@ import TypePlans from "../models/TypePlans";
 import Alerts from "../models/Alerts";
 import Temperature from "../models/Temperature";
 import Status from "../models/Status";
+import Invoice from "../models/Invoice";
 import Address from "../models/Address";
 import Proposal from "../models/Proposal";
 import Reports from "../models/Reports";
@@ -22,6 +23,7 @@ const modelsDbMayaEnergy = [
   Reports,
   TypePlans,
   ProfileLevel,
+  Invoice,
   Brand,
   Status,
   Users,

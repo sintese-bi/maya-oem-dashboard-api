@@ -69,6 +69,11 @@ routes.post(
   checkToken,
   UsersController.storeReport
 );
+routes.post(
+  `${apiVersion}/invoice`,
+  checkToken,
+  UsersController.Invoice
+);
 routes.get(
   `${apiVersion}/reportcounting`,
   checkToken,

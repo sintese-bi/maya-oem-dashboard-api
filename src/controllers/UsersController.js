@@ -13,6 +13,7 @@ import Users from "../models/Users";
 import Generation from "../models/Generation";
 import Devices from "../models/Devices";
 import nodemailer from "nodemailer";
+import Invoice from "../models/Invoice";
 import csvParser from "csv-parser";
 import createCsvWriter from "csv-writer";
 import Reports from "../models/Reports";
@@ -1390,6 +1391,30 @@ class UsersController {
       return res
         .status(200)
         .json({ message: "Dados atualizados com sucesso!" });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+    }
+  }
+  async Invoice(req, res) {
+    try {
+      const {
+        use_uuid,
+        voice_login,
+        voice_password,
+        voice_install,
+        voice_client,
+        voice_company,
+      } = req.body;
+      const result = await Invoice.create({
+        use_uuid: use_uuid,
+        voice_login: voice_login,
+        voice_password: voice_password,
+        voice_install: voice_install,
+        voice_client: voice_client,
+        voice_company: voice_company,
+      });
+      return res.status(200).json({ message: "Feito!" });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
