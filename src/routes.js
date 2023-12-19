@@ -64,8 +64,12 @@ routes.post(
   checkToken,
   GenerationController.reportgenerationEmail
 );
-
 routes.post(
+  `${apiVersion}/storereport`,
+  checkToken,
+  UsersController.storeReport
+);
+routes.get(
   `${apiVersion}/reportcounting`,
   checkToken,
   UsersController.reportCounting
@@ -87,7 +91,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/generalreport`,
-
+  checkToken,
   GenerationController.generalreportEmail
 );
 routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
