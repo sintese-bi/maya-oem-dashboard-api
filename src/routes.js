@@ -64,6 +64,11 @@ routes.post(
   checkToken,
   GenerationController.reportgenerationEmail
 );
+routes.get(
+  `${apiVersion}/emailalert/:uuid`,
+  
+  UsersController.emailAlert
+);
 routes.post(
   `${apiVersion}/storereport`,
   checkToken,

@@ -1420,6 +1420,57 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
   }
+  async emailAlert(req, res) {
+    try {
+      const use = req.params.uuid;
+
+      const result = await Users.findByPk(use, {
+        attributes: ["use_name"],
+        include: [
+          {
+            association: "brand_login",
+            attributes: ["bl_name", "bl_uuid"],
+            include: [
+              {
+                association: "devices",
+                attributes: ["dev_uuid", "dev_name", "dev_brand"],
+                include: [
+                  {
+                    association: "generation",
+                    attributes: ["gen_real"],
+                    order: [["gen_updated_at", "DESC"]],
+                    limit: 1,
+                  },
+                  {
+                    association: "temperature",
+                    attributes: ["temp_temperature"],
+                    order: [["temp_created_at", "DESC"]],
+                    limit: 1,
+                  },
+                  {
+                    association: "alerts",
+                    attributes: ["al_alerts", "al_inv"],
+                    where: {
+                      alert_created_at: {
+                        [Op.between]: [
+                          moment().subtract(1, "hour").toDate(),
+                          moment().toDate(),
+                        ],
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+      return res.status(200).json({ message: result });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+    }
+  }
 }
 
 export default new UsersController();
