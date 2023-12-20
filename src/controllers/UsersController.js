@@ -17,6 +17,7 @@ import Invoice from "../models/Invoice";
 import csvParser from "csv-parser";
 import createCsvWriter from "csv-writer";
 import Reports from "../models/Reports";
+import cron from "node-cron";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 //Configuração das credenciais do email de envio
@@ -31,7 +32,7 @@ const transporter = nodemailer.createTransport({
     pass: "xbox ejjd wokp ystv",
   },
   tls: {
-    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
+    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
   },
 });
 
@@ -1422,31 +1423,17 @@ class UsersController {
   }
   async emailAlert(req, res) {
     try {
-      const use = req.params.uuid;
-
-      const result = await Users.findByPk(use, {
-        attributes: ["use_name"],
+      const result = await Users.findAll({
+        attributes: ["use_name", "use_email"],
         include: [
           {
             association: "brand_login",
-            attributes: ["bl_name", "bl_uuid"],
+            attributes: ["bl_name"],
             include: [
               {
                 association: "devices",
-                attributes: ["dev_uuid", "dev_name", "dev_brand"],
+                attributes: ["dev_name"],
                 include: [
-                  {
-                    association: "generation",
-                    attributes: ["gen_real"],
-                    order: [["gen_updated_at", "DESC"]],
-                    limit: 1,
-                  },
-                  {
-                    association: "temperature",
-                    attributes: ["temp_temperature"],
-                    order: [["temp_created_at", "DESC"]],
-                    limit: 1,
-                  },
                   {
                     association: "alerts",
                     attributes: ["al_alerts", "al_inv"],
@@ -1465,12 +1452,79 @@ class UsersController {
           },
         ],
       });
-      return res.status(200).json({ message: result });
+
+      for (const user of result) {
+        const userEmail = user.use_email;
+
+        // Verifica se a associação brand_login existe
+        if (user.brand_login) {
+          // Verifica se pelo menos uma marca tem pelo menos um dispositivo com alertas
+          const hasAlerts = user.brand_login.some((brand) => {
+            return (
+              brand.devices &&
+              brand.devices.some((device) => {
+                return device.alerts && device.alerts.length > 0;
+              })
+            );
+          });
+
+          if (hasAlerts) {
+            // Se há alertas, monte o corpo do e-mail com base nos alertas
+            const alertEmailBody = user.brand_login
+              .filter((brand) => brand.devices && brand.devices.length > 0)
+              .map((brand) => {
+                const brandName = brand.bl_name;
+                const devicesWithAlerts = brand.devices.filter(
+                  (device) => device.alerts && device.alerts.length > 0
+                );
+
+                const deviceAlerts = devicesWithAlerts.map((device) => {
+                  const devName = device.dev_name;
+                  const deviceAlertList = device.alerts.map((alert) => {
+                    return `<p>Device: ${devName}, Alert: ${alert.al_alerts}, Inverter: ${alert.al_inv}</p>`;
+                  });
+
+                  return deviceAlertList.join("");
+                });
+
+                return `<h3>${brandName}</h3>${deviceAlerts.join("")}`;
+              })
+              .join("");
+
+            const mailOptions = {
+              from: '"noreplymayawatch@gmail.com"',
+              to: ["eloymjunior00@gmail.com"],
+              subject: "Alertas dos dispositivos de geração",
+              text: "Lista de alertas",
+              html: alertEmailBody,
+            };
+
+            transporter.sendMail(mailOptions, (error, info) => {
+              if (error) {
+                console.log(`Erro ao enviar para ${userEmail}!`);
+                console.error(error);
+              } else {
+                console.log(`Email enviado com sucesso para ${userEmail}!`);
+              }
+            });
+          } else {
+            console.log(`${userEmail} does not have alerts`);
+          }
+        } else {
+          console.log(`${userEmail} does not have brand_login`);
+        }
+      }
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
   }
+  agendarVerificacaoDeAlertas() {
+    // Agende a função para ser executada a cada minuto
+    cron.schedule("* * * * *", async () => {
+      await this.emailAlert();
+    });
+  }
 }
-
+const usersController = new UsersController();
+// usersController.agendarVerificacaoDeAlertas();
 export default new UsersController();

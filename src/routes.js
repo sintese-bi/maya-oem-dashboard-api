@@ -65,8 +65,8 @@ routes.post(
   GenerationController.reportgenerationEmail
 );
 routes.get(
-  `${apiVersion}/emailalert/:uuid`,
-  
+  `${apiVersion}/emailalert`,
+  checkToken,
   UsersController.emailAlert
 );
 routes.post(
@@ -91,7 +91,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/updateplants`,
-
+  checkToken,
   UsersController.updatePlants
 );
 routes.post(
@@ -128,7 +128,7 @@ routes.post(`${apiVersion}/devicelogin`, checkToken,UsersController.newDevice);
 routes.post(`${apiVersion}/updatebrands`, checkToken, UsersController.updateBrands);
 routes.get(
   `${apiVersion}/alerts/:devUuid`,
-  checkToken,
+  
   GenerationController.recentAlerts
 );
 routes.get(
