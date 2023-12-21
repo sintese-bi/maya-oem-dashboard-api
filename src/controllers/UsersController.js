@@ -31,9 +31,9 @@ const transporter = nodemailer.createTransport({
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
-  tls: {
-    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
-  },
+  // tls: {
+  //   rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
+  // },
 });
 
 class UsersController {
@@ -1432,11 +1432,11 @@ class UsersController {
             include: [
               {
                 association: "devices",
-                attributes: ["dev_name"],
+                attributes: ["dev_name", "dev_deleted"],
                 include: [
                   {
                     association: "alerts",
-                    attributes: ["al_alerts", "al_inv"],
+                    attributes: ["al_alerts", "al_inv", "alert_created_at"],
                     where: {
                       alert_created_at: {
                         [Op.between]: [
@@ -1456,57 +1456,87 @@ class UsersController {
       for (const user of result) {
         const userEmail = user.use_email;
 
-        // Verifica se a associação brand_login existe
         if (user.brand_login) {
-          // Verifica se pelo menos uma marca tem pelo menos um dispositivo com alertas
           const hasAlerts = user.brand_login.some((brand) => {
             return (
               brand.devices &&
               brand.devices.some((device) => {
-                return device.alerts && device.alerts.length > 0;
+                return (
+                  device.alerts &&
+                  device.alerts.length > 0 &&
+                  (device.dev_deleted === false || device.dev_deleted === null)
+                );
               })
             );
           });
 
           if (hasAlerts) {
-            // Se há alertas, monte o corpo do e-mail com base nos alertas
             const alertEmailBody = user.brand_login
               .filter((brand) => brand.devices && brand.devices.length > 0)
               .map((brand) => {
                 const brandName = brand.bl_name;
                 const devicesWithAlerts = brand.devices.filter(
-                  (device) => device.alerts && device.alerts.length > 0
+                  (device) =>
+                    device.alerts &&
+                    device.alerts.length > 0 &&
+                    (device.dev_deleted === false ||
+                      device.dev_deleted === null)
                 );
 
-                const deviceAlerts = devicesWithAlerts.map((device) => {
-                  const devName = device.dev_name;
-                  const deviceAlertList = device.alerts.map((alert) => {
-                    return `<p>Device: ${devName}, Alert: ${alert.al_alerts}, Inverter: ${alert.al_inv}</p>`;
+                if (devicesWithAlerts.length > 0) {
+                  const deviceAlerts = devicesWithAlerts.map((device) => {
+                    const devName = device.dev_name;
+                    const deviceAlertList = device.alerts.map((alert) => {
+                      return `<p>
+                                            Nome do dispositivo: ${devName},<br>
+                                            Alerta: ${alert.al_alerts},<br>
+                                            Inversor: ${alert.al_inv},<br>
+                                            Horário do alerta: ${moment(
+                                              alert.alert_created_at
+                                            ).format("YYYY-MM-DD HH:mm:ss")}
+                                            </p>`;
+                    });
+
+                    return deviceAlertList.join("");
                   });
 
-                  return deviceAlertList.join("");
-                });
-
-                return `<h3>${brandName}</h3>${deviceAlerts.join("")}`;
+                  return `<h3>${brandName}</h3>${deviceAlerts.join("")}`;
+                } else {
+                  return ""; // Se não houver dispositivos com alertas, retorna uma string vazia
+                }
               })
+              .filter((brandBody) => brandBody !== "") // Filtra marcas sem dispositivos com alertas
               .join("");
 
-            const mailOptions = {
-              from: '"noreplymayawatch@gmail.com"',
-              to: ["eloymjunior00@gmail.com"],
-              subject: "Alertas dos dispositivos de geração",
-              text: "Lista de alertas",
-              html: alertEmailBody,
-            };
+            if (alertEmailBody !== "") {
+              const additionalText =
+                "<p><strong>Alertas dos dispositivos:</strong></p>";
 
-            transporter.sendMail(mailOptions, (error, info) => {
-              if (error) {
-                console.log(`Erro ao enviar para ${userEmail}!`);
-                console.error(error);
+              if (userEmail) {
+                const mailOptions = {
+                  from: '"noreplymayawatch@gmail.com"',
+                  to: [userEmail,"eloymjunior00@gmail.com"],
+                  subject: "Alertas dos dispositivos de geração",
+                  text: "Lista de alertas apenas teste",
+                  html: additionalText + alertEmailBody,
+                };
+
+                transporter.sendMail(mailOptions, (error, info) => {
+                  if (error) {
+                    console.log(`Erro ao enviar para ${userEmail}!`);
+                    console.error(error);
+                  } else {
+                    console.log(`Email enviado com sucesso para ${userEmail}!`);
+                  }
+                });
               } else {
-                console.log(`Email enviado com sucesso para ${userEmail}!`);
+                console.log(
+                  `Não há endereço de e-mail para o usuário ${user.use_name}.`
+                );
               }
-            });
+            } else {
+              console.log(`${userEmail} does not have alerts`);
+            }
           } else {
             console.log(`${userEmail} does not have alerts`);
           }
@@ -1518,13 +1548,18 @@ class UsersController {
       console.error(error);
     }
   }
+
   agendarVerificacaoDeAlertas() {
     // Agende a função para ser executada a cada minuto
-    cron.schedule("* * * * *", async () => {
-      await this.emailAlert();
+    cron.schedule("39 * * * *", async () => {
+      try {
+        await this.emailAlert();
+      } catch (error) {
+        console.error("Erro durante a verificação de alertas:", error);
+      }
     });
   }
 }
 const usersController = new UsersController();
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarVerificacaoDeAlertas();
 export default new UsersController();
