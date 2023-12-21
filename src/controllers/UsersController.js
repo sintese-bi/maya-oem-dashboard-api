@@ -1421,6 +1421,23 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao atualizar dados!" });
     }
   }
+
+  async invoiceReturn(req, res) {
+    try {
+      const result = await Invoice.findAll({
+        attributes: [
+          "voice_login",
+          "voice_password",
+          "voice_install",
+          "voice_client",
+          "voice_company",
+        ],
+      });
+      return res.status(200).json({ message: result });
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao retornar os dados!" });
+    }
+  }
   async emailAlert(req, res) {
     try {
       const result = await Users.findAll({
@@ -1515,7 +1532,7 @@ class UsersController {
               if (userEmail) {
                 const mailOptions = {
                   from: '"noreplymayawatch@gmail.com"',
-                  to: [userEmail,"eloymun00@gmail.com"],
+                  to: [userEmail, "eloymun00@gmail.com"],
                   subject: "Alertas dos dispositivos de geração",
                   text: "Lista de alertas apenas teste",
                   html: additionalText + alertEmailBody,
@@ -1561,5 +1578,5 @@ class UsersController {
   }
 }
 const usersController = new UsersController();
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarVerificacaoDeAlertas();
 export default new UsersController();
