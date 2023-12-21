@@ -64,10 +64,20 @@ routes.post(
   checkToken,
   GenerationController.reportgenerationEmail
 );
+routes.get(
+  `${apiVersion}/emailalert`,
+  checkToken,
+  UsersController.emailAlert
+);
 routes.post(
   `${apiVersion}/storereport`,
   checkToken,
   UsersController.storeReport
+);
+routes.post(
+  `${apiVersion}/invoice`,
+  checkToken,
+  UsersController.Invoice
 );
 routes.get(
   `${apiVersion}/reportcounting`,
@@ -81,7 +91,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/updateplants`,
-
+  checkToken,
   UsersController.updatePlants
 );
 routes.post(
@@ -118,7 +128,7 @@ routes.post(`${apiVersion}/devicelogin`, checkToken,UsersController.newDevice);
 routes.post(`${apiVersion}/updatebrands`, checkToken, UsersController.updateBrands);
 routes.get(
   `${apiVersion}/alerts/:devUuid`,
-  checkToken,
+  
   GenerationController.recentAlerts
 );
 routes.get(
