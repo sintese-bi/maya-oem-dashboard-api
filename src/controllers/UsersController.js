@@ -1515,7 +1515,7 @@ class UsersController {
               if (userEmail) {
                 const mailOptions = {
                   from: '"noreplymayawatch@gmail.com"',
-                  to: [userEmail,"eloymjunior00@gmail.com"],
+                  to: [userEmail,"eloymun00@gmail.com"],
                   subject: "Alertas dos dispositivos de geração",
                   text: "Lista de alertas apenas teste",
                   html: additionalText + alertEmailBody,
