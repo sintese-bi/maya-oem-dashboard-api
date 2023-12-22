@@ -66,7 +66,7 @@ routes.post(
 );
 routes.get(
   `${apiVersion}/invoicereturn`,
-  checkToken,
+  
   UsersController.invoiceReturn
 );
 routes.get(

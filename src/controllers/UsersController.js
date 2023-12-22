@@ -1424,20 +1424,36 @@ class UsersController {
 
   async invoiceReturn(req, res) {
     try {
-      const result = await Invoice.findAll({
-        attributes: [
-          "voice_login",
-          "voice_password",
-          "voice_install",
-          "voice_client",
-          "voice_company",
-        ],
-      });
-      return res.status(200).json({ message: result });
+      const clientToken = req.headers.authorization;
+      
+      if (!clientToken) {
+        return res.status(401).json({ message: "Token não fornecido." });
+      }
+
+      const expectedToken = process.env.TOKEN;
+      
+      if (clientToken == `Bearer ${expectedToken}`) {
+        const result = await Invoice.findAll({
+          attributes: [
+            "voice_login",
+            "voice_password",
+            "voice_install",
+            "voice_client",
+            "voice_company",
+          ],
+        });
+
+        return res.status(200).json({ message: result });
+      } else {
+        return res
+          .status(401)
+          .json({ message: "Falha na autenticação: Token inválido." });
+      }
     } catch (error) {
       return res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
   }
+
   async emailAlert(req, res) {
     try {
       const result = await Users.findAll({
