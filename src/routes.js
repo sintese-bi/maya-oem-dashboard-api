@@ -65,6 +65,11 @@ routes.post(
   GenerationController.reportgenerationEmail
 );
 routes.get(
+  `${apiVersion}/invoicereturn`,
+  checkToken,
+  UsersController.invoiceReturn
+);
+routes.get(
   `${apiVersion}/emailalert`,
   checkToken,
   UsersController.emailAlert
