@@ -1384,10 +1384,10 @@ class UsersController {
   }
   async storeReport(req, res) {
     try {
-      const { devUuid } = req.body;
-      console.log(devUuid);
+      const { dev_uuid } = req.body;
+      
       // Cria o registro no banco de dados
-      await Reports.create({ port_check: true, dev_uuid: devUuid });
+      await Reports.create({ port_check: true, dev_uuid: dev_uuid});
 
       return res
         .status(200)
