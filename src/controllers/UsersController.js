@@ -1385,9 +1385,9 @@ class UsersController {
   async storeReport(req, res) {
     try {
       const { dev_uuid } = req.body;
-      
+
       // Cria o registro no banco de dados
-      await Reports.create({ port_check: true, dev_uuid: dev_uuid});
+      await Reports.create({ port_check: true, dev_uuid: dev_uuid });
 
       return res
         .status(200)
@@ -1425,13 +1425,13 @@ class UsersController {
   async invoiceReturn(req, res) {
     try {
       const clientToken = req.headers.authorization;
-      
+
       if (!clientToken) {
         return res.status(401).json({ message: "Token não fornecido." });
       }
 
       const expectedToken = process.env.TOKEN;
-      
+
       if (clientToken == `Bearer ${expectedToken}`) {
         const result = await Invoice.findAll({
           attributes: [
@@ -1521,13 +1521,13 @@ class UsersController {
                     const devName = device.dev_name;
                     const deviceAlertList = device.alerts.map((alert) => {
                       return `<p>
-                                            Nome do dispositivo: ${devName},<br>
-                                            Alerta: ${alert.al_alerts},<br>
-                                            Inversor: ${alert.al_inv},<br>
-                                            Horário do alerta: ${moment(
-                                              alert.alert_created_at
-                                            ).format("YYYY-MM-DD HH:mm:ss")}
-                                            </p>`;
+                      Nome do dispositivo: ${devName},<br>
+                      Alerta: ${alert.al_alerts},<br>
+                      Inversor: ${alert.al_inv},<br>
+                      Horário do alerta: ${moment(alert.alert_created_at)
+                        .tz("America/Sao_Paulo")
+                        .format("YYYY-MM-DD HH:mm:ss")}
+                    </p>`;
                     });
 
                     return deviceAlertList.join("");
@@ -1548,7 +1548,7 @@ class UsersController {
               if (userEmail) {
                 const mailOptions = {
                   from: '"noreplymayawatch@gmail.com"',
-                  to: [userEmail, "eloymun00@gmail.com"],
+                  to: [userEmail,"eloymjunior00@gmail.com"],
                   subject: "Alertas dos dispositivos de geração",
                   text: "Lista de alertas apenas teste",
                   html: additionalText + alertEmailBody,
