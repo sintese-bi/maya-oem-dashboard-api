@@ -1425,13 +1425,13 @@ class UsersController {
   async invoiceReturn(req, res) {
     try {
       const clientToken = req.headers.authorization;
-
+      
       if (!clientToken) {
         return res.status(401).json({ message: "Token não fornecido." });
       }
 
       const expectedToken = process.env.TOKEN;
-
+      
       if (clientToken == `Bearer ${expectedToken}`) {
         const result = await Invoice.findAll({
           attributes: [
@@ -1594,5 +1594,5 @@ class UsersController {
   }
 }
 const usersController = new UsersController();
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarVerificacaoDeAlertas();
 export default new UsersController();
