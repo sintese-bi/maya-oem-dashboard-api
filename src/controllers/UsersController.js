@@ -1407,6 +1407,10 @@ class UsersController {
         voice_client,
         voice_company,
       } = req.body;
+      const register = await Users.findOne({ where: { use_uuid: use_uuid } });
+      if (register) {
+        return res.status(500).json({ message: "Esse cadastro já existe!" });
+      }
       const result = await Invoice.create({
         use_uuid: use_uuid,
         voice_login: voice_login,
@@ -1425,13 +1429,13 @@ class UsersController {
   async invoiceReturn(req, res) {
     try {
       const clientToken = req.headers.authorization;
-      
+
       if (!clientToken) {
         return res.status(401).json({ message: "Token não fornecido." });
       }
 
       const expectedToken = process.env.TOKEN;
-      
+
       if (clientToken == `Bearer ${expectedToken}`) {
         const result = await Invoice.findAll({
           attributes: [
@@ -1548,7 +1552,7 @@ class UsersController {
               if (userEmail) {
                 const mailOptions = {
                   from: '"noreplymayawatch@gmail.com"',
-                  to: [userEmail,"eloymjunior00@gmail.com"],
+                  to: [userEmail, "eloymjunior00@gmail.com"],
                   subject: "Alertas dos dispositivos de geração",
                   text: "Lista de alertas apenas teste",
                   html: additionalText + alertEmailBody,
