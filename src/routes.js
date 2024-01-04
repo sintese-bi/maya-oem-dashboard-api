@@ -66,24 +66,17 @@ routes.post(
 );
 routes.get(
   `${apiVersion}/invoicereturn`,
-  
+
   UsersController.invoiceReturn
 );
-routes.get(
-  `${apiVersion}/emailalert`,
-  checkToken,
-  UsersController.emailAlert
-);
+routes.get(`${apiVersion}/emailalert`, checkToken, UsersController.emailAlert);
+routes.get(`${apiVersion}/brandinfo`, UsersController.brandInformation);
 routes.post(
   `${apiVersion}/storereport`,
   checkToken,
   UsersController.storeReport
 );
-routes.post(
-  `${apiVersion}/invoice`,
-  checkToken,
-  UsersController.Invoice
-);
+routes.post(`${apiVersion}/invoice`, checkToken, UsersController.Invoice);
 routes.get(
   `${apiVersion}/reportcounting`,
   checkToken,
@@ -129,11 +122,15 @@ routes.get(
 
 routes.post(`${apiVersion}/sendingemail`, UsersController.sendEmail);
 routes.post(`${apiVersion}/passrecover`, UsersController.passwordRecover);
-routes.post(`${apiVersion}/devicelogin`, checkToken,UsersController.newDevice);
-routes.post(`${apiVersion}/updatebrands`, checkToken, UsersController.updateBrands);
+routes.post(`${apiVersion}/devicelogin`, checkToken, UsersController.newDevice);
+routes.post(
+  `${apiVersion}/updatebrands`,
+  checkToken,
+  UsersController.updateBrands
+);
 routes.get(
   `${apiVersion}/alerts/:devUuid`,
-  
+
   GenerationController.recentAlerts
 );
 routes.get(

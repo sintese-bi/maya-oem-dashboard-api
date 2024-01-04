@@ -18,6 +18,7 @@ import csvParser from "csv-parser";
 import createCsvWriter from "csv-writer";
 import Reports from "../models/Reports";
 import cron from "node-cron";
+import Brand_Info from "../models/Brand_info";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 //Configuração das credenciais do email de envio
@@ -1457,6 +1458,21 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
   }
+  async brandInformation(req, res) {
+    try {
+        const result = await Brand_Info.findAll({
+            attributes: ["bl_name", "bl_url"],
+        });
+        const modifiedResult = result.map(item => ({
+            bl_name: item.bl_name.toUpperCase(),
+            bl_url: item.bl_url,
+        }));
+
+        return res.status(200).json(modifiedResult);
+    } catch (error) {
+        return res.status(500).json({ message: "Erro ao retornar os dados!" });
+    }
+}
 
   async emailAlert(req, res) {
     try {
@@ -1552,7 +1568,7 @@ class UsersController {
               if (userEmail) {
                 const mailOptions = {
                   from: '"noreplymayawatch@gmail.com"',
-                  to: [userEmail, "bisintese@gmail.com","eloymun00@gmail.com"],
+                  to: [userEmail, "bisintese@gmail.com", "eloymun00@gmail.com"],
                   subject: "Alertas dos dispositivos de geração",
                   text: "Lista de alertas apenas teste",
                   html: additionalText + alertEmailBody,
