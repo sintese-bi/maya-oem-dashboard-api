@@ -70,7 +70,11 @@ routes.get(
   UsersController.invoiceReturn
 );
 routes.get(`${apiVersion}/emailalert`, checkToken, UsersController.emailAlert);
-routes.get(`${apiVersion}/brandinfo`, UsersController.brandInformation);
+routes.get(
+  `${apiVersion}/brandinfo`,
+  checkToken,
+  UsersController.brandInformation
+);
 routes.post(
   `${apiVersion}/storereport`,
   checkToken,
