@@ -1409,7 +1409,7 @@ class UsersController {
         voice_client,
         voice_company,
       } = req.body;
-      const register = await Users.findOne({ where: { use_uuid: use_uuid } });
+      const register = await Invoice.findOne({ where: { use_uuid: use_uuid } });
       if (register) {
         return res.status(500).json({ message: "Esse cadastro já existe!" });
       }
@@ -1564,7 +1564,7 @@ class UsersController {
 
             if (alertEmailBody !== "") {
               const additionalText =
-                "<p><strong>A seguir, temos os alertas dos dispositivos de geração, eles são enviados de hora em hora.</strong></p>";
+                "<p><strong>A seguir, temos os alertas dos dispositivos de geração, eles são enviados de hora em hora. </strong></p>";
 
               if (userEmail) {
                 const mailOptions = {
