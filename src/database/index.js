@@ -11,12 +11,14 @@ import Alerts from "../models/Alerts";
 import Temperature from "../models/Temperature";
 import Status from "../models/Status";
 import Invoice from "../models/Invoice";
+import Brand_Info from "../models/Brand_info";
 import Address from "../models/Address";
 import Proposal from "../models/Proposal";
 import Reports from "../models/Reports";
 //Este código configura uma conexão com o banco de dados usando o Sequelize, um ORM.
 const modelsDbMayaEnergy = [
   Temperature,
+  Brand_Info,
   Alerts,
   Address,
   Proposal,
