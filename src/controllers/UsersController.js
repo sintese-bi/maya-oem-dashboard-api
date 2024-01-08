@@ -1564,14 +1564,14 @@ class UsersController {
 
             if (alertEmailBody !== "") {
               const additionalText =
-                "<p><strong>Alertas dos dispositivos:</strong></p>";
+                "<p><strong>A seguir, temos os alertas dos dispositivos de geração, eles são enviados de hora em hora.</strong></p>";
 
               if (userEmail) {
                 const mailOptions = {
                   from: '"noreplymayawatch@gmail.com"',
                   to: [userEmail, "bisintese@gmail.com", "eloymun00@gmail.com"],
                   subject: "Alertas dos dispositivos de geração",
-                  text: "Lista de alertas apenas teste",
+                  text: "Lista de alertas",
                   html: additionalText + alertEmailBody,
                 };
 
