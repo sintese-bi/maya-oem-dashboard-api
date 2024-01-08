@@ -573,6 +573,7 @@ class UsersController {
                   "dev_address",
                   "dev_lat",
                   "dev_long",
+                  "dev_email"
                 ],
                 include: [
                   {
