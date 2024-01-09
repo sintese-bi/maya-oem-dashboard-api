@@ -18,6 +18,7 @@ import csvParser from "csv-parser";
 import createCsvWriter from "csv-writer";
 import Reports from "../models/Reports";
 import cron from "node-cron";
+import Invoice_received from "../models/Invoice_received"
 import Brand_Info from "../models/Brand_info";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
