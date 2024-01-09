@@ -69,6 +69,11 @@ routes.get(
 
   UsersController.invoiceReturn
 );
+routes.post(
+  `${apiVersion}/invoicereceived`,
+
+  UsersController.InvoiceReceived
+);
 routes.get(`${apiVersion}/emailalert`, checkToken, UsersController.emailAlert);
 routes.get(
   `${apiVersion}/brandinfo`,
