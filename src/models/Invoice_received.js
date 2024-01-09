@@ -61,7 +61,7 @@ class Invoice_Received extends Model {
           type: DataTypes.FLOAT,
           allowNull: true,
         },
-        dev_uuid: { type: DataTypes.UUIDV4 },
+        voice_uuid: { type: DataTypes.UUIDV4 },
         ir_created_at: {
           type: DataTypes.DATE,
           defaultValue: DataTypes.NOW,
