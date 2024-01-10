@@ -25,7 +25,7 @@ class Invoice extends Model {
           type: DataTypes.STRING,
         },
         use_uuid: { type: DataTypes.UUIDV4 },
-        voice_created_at: {
+        alert_created_at: {
           type: DataTypes.DATE,
           defaultValue: DataTypes.NOW,
         },
