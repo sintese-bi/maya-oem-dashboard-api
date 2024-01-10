@@ -75,7 +75,7 @@ routes.post(
   UsersController.InvoiceReceived
 );
 routes.get(`${apiVersion}/emailalert`, checkToken, UsersController.emailAlert);
-routes.get(
+routes.post(
   `${apiVersion}/brandinfo`,
   checkToken,
   UsersController.brandInformation

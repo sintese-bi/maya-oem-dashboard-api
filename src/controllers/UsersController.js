@@ -1468,20 +1468,6 @@ class UsersController {
         return res.status(401).json({ message: "Token não fornecido." });
       }
       const expectedToken = process.env.TOKEN;
-
-      
-
-
-
-
-
-
-
-
-
-
-
-
     } catch (error) {
       return res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
@@ -1489,6 +1475,13 @@ class UsersController {
 
   async brandInformation(req, res) {
     try {
+      const { use_uuid } = req.body;
+
+      const infoBrand = await Brand.findAll({
+        attributes: ["bl_login", "bl_password", "bl_check"],
+        where: { use_uuid: use_uuid },
+      });
+
       const result = await Brand_Info.findAll({
         attributes: ["bl_name", "bl_url"],
       });
@@ -1497,7 +1490,7 @@ class UsersController {
         bl_url: item.bl_url,
       }));
 
-      return res.status(200).json(modifiedResult);
+      return res.status(200).json({ message: [modifiedResult, infoBrand] });
     } catch (error) {
       return res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
