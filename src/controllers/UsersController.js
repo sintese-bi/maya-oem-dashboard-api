@@ -18,6 +18,7 @@ import csvParser from "csv-parser";
 import createCsvWriter from "csv-writer";
 import Reports from "../models/Reports";
 import cron from "node-cron";
+import Invoice_received from "../models/Invoice_received";
 import Brand_Info from "../models/Brand_info";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
@@ -573,7 +574,7 @@ class UsersController {
                   "dev_address",
                   "dev_lat",
                   "dev_long",
-                  "dev_email"
+                  "dev_email",
                 ],
                 include: [
                   {
@@ -1459,21 +1460,41 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
   }
+
+  async InvoiceReceived(req, res) {
+    try {
+      const clientToken = req.headers.authorization;
+      if (!clientToken) {
+        return res.status(401).json({ message: "Token não fornecido." });
+      }
+      const expectedToken = process.env.TOKEN;
+    } catch (error) {
+      return res.status(500).json({ message: "Erro ao retornar os dados!" });
+    }
+  }
+
   async brandInformation(req, res) {
     try {
-        const result = await Brand_Info.findAll({
-            attributes: ["bl_name", "bl_url"],
-        });
-        const modifiedResult = result.map(item => ({
-            bl_name: item.bl_name.toUpperCase(),
-            bl_url: item.bl_url,
-        }));
+      const { use_uuid } = req.body;
 
-        return res.status(200).json(modifiedResult);
+      const infoBrand = await Brand.findAll({
+        attributes: ["bl_login", "bl_password", "bl_check"],
+        where: { use_uuid: use_uuid },
+      });
+
+      const result = await Brand_Info.findAll({
+        attributes: ["bl_name", "bl_url"],
+      });
+      const modifiedResult = result.map((item) => ({
+        bl_name: item.bl_name.toUpperCase(),
+        bl_url: item.bl_url,
+      }));
+
+      return res.status(200).json({ message: [modifiedResult, infoBrand] });
     } catch (error) {
-        return res.status(500).json({ message: "Erro ao retornar os dados!" });
+      return res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
-}
+  }
 
   async emailAlert(req, res) {
     try {
@@ -1615,5 +1636,5 @@ class UsersController {
   }
 }
 const usersController = new UsersController();
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarVerificacaoDeAlertas();
 export default new UsersController();
