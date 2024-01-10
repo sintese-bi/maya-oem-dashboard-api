@@ -1478,14 +1478,16 @@ class UsersController {
       ir_valorKWH,
       voice_uuid,
     } = req.body;
+    console.log(req);
     try {
       const clientToken = req.headers.authorization;
       if (!clientToken) {
         return res.status(401).json({ message: "Token não fornecido." });
       }
       const expectedToken = process.env.TOKEN;
+      console.log(expectedToken);
       if (clientToken == `Bearer ${expectedToken}`) {
-        await Invoice_Received.create({
+        await Invoice_received.create({
           ir_periodo: ir_periodo,
           ir_modalidade: ir_modalidade,
           ir_instalacao: ir_instalacao,
@@ -1501,7 +1503,12 @@ class UsersController {
           ir_valorKWH: ir_valorKWH,
           voice_uuid: voice_uuid,
         });
+
         return res.status(200).json({ message: "Dados criados com sucesso!" });
+      } else {
+        return res
+          .status(401)
+          .json({ message: "Falha na autenticação: Token inválido." });
       }
     } catch (error) {
       return res.status(500).json({ message: "Erro ao retornar os dados!" });
