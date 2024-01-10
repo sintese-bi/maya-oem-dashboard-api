@@ -1462,12 +1462,47 @@ class UsersController {
   }
 
   async InvoiceReceived(req, res) {
+    const {
+      ir_periodo,
+      ir_modalidade,
+      ir_instalacao,
+      ir_quota,
+      ir_postoHorario,
+      ir_qtdConsumo,
+      ir_qtdGeracao,
+      ir_qtdCompensacao,
+      ir_qtdSaldoAnt,
+      ir_qtdTransferencia,
+      ir_qtdRecebimento,
+      ir_qtdSaldoAtual,
+      ir_valorKWH,
+      voice_uuid,
+    } = req.body;
     try {
       const clientToken = req.headers.authorization;
       if (!clientToken) {
         return res.status(401).json({ message: "Token não fornecido." });
       }
       const expectedToken = process.env.TOKEN;
+      if (clientToken == `Bearer ${expectedToken}`) {
+        await Invoice_Received.create({
+          ir_periodo: ir_periodo,
+          ir_modalidade: ir_modalidade,
+          ir_instalacao: ir_instalacao,
+          ir_quota: ir_quota,
+          ir_postoHorario: ir_postoHorario,
+          ir_qtdConsumo: ir_qtdConsumo,
+          ir_qtdGeracao: ir_qtdGeracao,
+          ir_qtdCompensacao: ir_qtdCompensacao,
+          ir_qtdSaldoAnt: ir_qtdSaldoAnt,
+          ir_qtdTransferencia: ir_qtdTransferencia,
+          ir_qtdRecebimento: ir_qtdRecebimento,
+          ir_qtdSaldoAtual: ir_qtdSaldoAtual,
+          ir_valorKWH: ir_valorKWH,
+          voice_uuid: voice_uuid,
+        });
+        return res.status(200).json({ message: "Dados criados com sucesso!" });
+      }
     } catch (error) {
       return res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
