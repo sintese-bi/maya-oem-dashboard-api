@@ -1447,7 +1447,7 @@ class UsersController {
             "voice_install",
             "voice_client",
             "voice_company",
-            "voice_uuid"
+            "voice_uuid",
           ],
         });
 
@@ -1463,24 +1463,24 @@ class UsersController {
   }
 
   async InvoiceReceived(req, res) {
-    const {
-      ir_periodo,
-      ir_modalidade,
-      ir_instalacao,
-      ir_quota,
-      ir_postohorario,
-      ir_qtdconsumo,
-      ir_qtdgeracao,
-      ir_qtdcompensacao,
-      ir_qtdsaldoant,
-      ir_qtdtransferencia,
-      ir_qtdrecebimento,
-      ir_qtdsaldoatual,
-      ir_valorkwh,
-      voice_uuid,
-    } = req.body;
-    console.log(req);
     try {
+      const {
+        ir_periodo,
+        ir_modalidade,
+        ir_instalacao,
+        ir_quota,
+        ir_postohorario,
+        ir_qtdconsumo,
+        ir_qtdgeracao,
+        ir_qtdcompensacao,
+        ir_qtdsaldoant,
+        ir_qtdtransferencia,
+        ir_qtdrecebimento,
+        ir_qtdsaldoatual,
+        ir_valorkwh,
+        voice_uuid,
+      } = req.body;
+
       const clientToken = req.headers.authorization;
       if (!clientToken) {
         return res.status(401).json({ message: "Token não fornecido." });
@@ -1491,31 +1491,33 @@ class UsersController {
         const result = await Invoice.findOne({
           where: { voice_uuid: voice_uuid },
         });
+        // console.log(result.voice_uuid)
         if (!result) {
-          return res
-            .status(404)
-            .json({
-              message: "Não existe registro de usuário com esse voice_uuid!",
-            });
-        }
-        await Invoice_received.create({
-          ir_periodo: ir_periodo,
-          ir_modalidade: ir_modalidade,
-          ir_instalacao: ir_instalacao,
-          ir_quota: ir_quota,
-          ir_postohorario: ir_postohorario,
-          ir_qtdconsumo: ir_qtdconsumo,
-          ir_qtdgeracao: ir_qtdgeracao,
-          ir_qtdcompensacao: ir_qtdcompensacao,
-          ir_qtdsaldoant: ir_qtdsaldoant,
-          ir_qtdtransferencia: ir_qtdtransferencia,
-          ir_qtdrecebimento: ir_qtdrecebimento,
-          ir_qtdsaldoatual: ir_qtdsaldoatual,
-          ir_valorkwh: ir_valorkwh,
-          voice_uuid: voice_uuid,
-        });
+          return res.status(404).json({
+            message: "Não existe registro de usuário com esse voice_uuid!",
+          });
+        } else {
+          await Invoice_received.create({
+            ir_periodo: ir_periodo,
+            ir_modalidade: ir_modalidade,
+            ir_instalacao: ir_instalacao,
+            ir_quota: ir_quota,
+            ir_postohorario: ir_postohorario,
+            ir_qtdconsumo: ir_qtdconsumo,
+            ir_qtdgeracao: ir_qtdgeracao,
+            ir_qtdcompensacao: ir_qtdcompensacao,
+            ir_qtdsaldoant: ir_qtdsaldoant,
+            ir_qtdtransferencia: ir_qtdtransferencia,
+            ir_qtdrecebimento: ir_qtdrecebimento,
+            ir_qtdsaldoatual: ir_qtdsaldoatual,
+            ir_valorkwh: ir_valorkwh,
+            voice_uuid: voice_uuid,
+          });
 
-        return res.status(200).json({ message: "Dados criados com sucesso!" });
+          return res
+            .status(200)
+            .json({ message: "Dados criados com sucesso!" });
+        }
       } else {
         return res
           .status(401)
