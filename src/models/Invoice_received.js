@@ -25,39 +25,39 @@ class Invoice_Received extends Model {
           type: DataTypes.INTEGER,
           allowNull: true,
         },
-        ir_postoHorario: {
+        ir_postohorario: {
           type: DataTypes.STRING,
           allowNull: true,
         },
-        ir_qtdConsumo: {
+        ir_qtdconsumo: {
           type: DataTypes.INTEGER,
           allowNull: true,
         },
-        ir_qtdGeracao: {
+        ir_qtdgeracao: {
           type: DataTypes.INTEGER,
           allowNull: true,
         },
-        ir_qtdCompensacao: {
+        ir_qtdcompensacao: {
           type: DataTypes.INTEGER,
           allowNull: true,
         },
-        ir_qtdSaldoAnt: {
+        ir_qtdsaldoant: {
           type: DataTypes.INTEGER,
           allowNull: true,
         },
-        ir_qtdTransferencia: {
+        ir_qtdtransferencia: {
           type: DataTypes.INTEGER,
           allowNull: true,
         },
-        ir_qtdRecebimento: {
+        ir_qtdrecebimento: {
           type: DataTypes.INTEGER,
           allowNull: true,
         },
-        ir_qtdSaldoAtual: {
+        ir_qtdsaldoatual: {
           type: DataTypes.INTEGER,
           allowNull: true,
         },
-        ir_valorKWH: {
+        ir_valorkwh: {
           type: DataTypes.FLOAT,
           allowNull: true,
         },
@@ -76,7 +76,7 @@ class Invoice_Received extends Model {
         schema: "public",
         freezeTableName: true,
         tableName: "invoice_received",
-        timestamps: true,
+        timestamps: false,
       }
     );
     return this;
@@ -85,9 +85,7 @@ class Invoice_Received extends Model {
   static associate(models) {
     this.belongsTo(models.Invoice, {
       foreignKey: "voice_uuid",
-      targetKey: "voice_uuid",
-      as: "invoice_received",
-      onDelete: "CASCADE",
+      as: "invoice",
     });
   }
 }
