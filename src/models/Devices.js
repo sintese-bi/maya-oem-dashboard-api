@@ -36,6 +36,9 @@ class Devices extends Model {
         dev_email: {
           type: DataTypes.STRING,
         },
+        dev_image: {
+          type: DataTypes.TEXT,
+        },
         sta_uuid: { type: DataTypes.UUIDV4 },
       },
       {

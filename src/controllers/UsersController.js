@@ -1266,6 +1266,7 @@ class UsersController {
           ic_city,
           ic_states,
           gen_estimated,
+          dev_image,
         } = devarray;
         if ((dev_capacity == 0 || ic_city === "") && gen_estimated == 0) {
           return;
@@ -1306,7 +1307,11 @@ class UsersController {
 
         if (dev_email != "") {
           await Devices.update(
-            { dev_capacity: dev_capacity, dev_email: dev_email },
+            {
+              dev_capacity: dev_capacity,
+              dev_email: dev_email,
+              dev_image: dev_image,
+            },
 
             { where: { dev_uuid: dev_uuid } }
           );
