@@ -575,6 +575,7 @@ class UsersController {
                   "dev_lat",
                   "dev_long",
                   "dev_email",
+                  "dev_image",
                 ],
                 include: [
                   {
@@ -1342,12 +1343,10 @@ class UsersController {
       console.error(error);
 
       if (error.name === "SequelizeValidationError") {
-        return res
-          .status(400)
-          .json({
-            message: "Erro de validação do Sequelize.",
-            error: error.errors,
-          });
+        return res.status(400).json({
+          message: "Erro de validação do Sequelize.",
+          error: error.errors,
+        });
       }
 
       return res
@@ -1558,7 +1557,9 @@ class UsersController {
           .json({ message: "Falha na autenticação: Token inválido." });
       }
     } catch (error) {
-      return res.status(500).json({ message: "Erro ao criar os dados!" });
+      return res
+        .status(500)
+        .json({ message: `Erro ao criar os dados. ${error}` });
     }
   }
 
@@ -1581,7 +1582,9 @@ class UsersController {
 
       return res.status(200).json({ message: [modifiedResult, infoBrand] });
     } catch (error) {
-      return res.status(500).json({ message: "Erro ao retornar os dados!" });
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
 
