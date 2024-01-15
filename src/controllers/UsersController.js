@@ -1415,7 +1415,9 @@ class UsersController {
         .json({ "Quantidade de relatórios distintos baixados:": Contagem });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+      return res
+        .status(500)
+        .json({ message: `Erro ao atualizar dados:${error}` });
     }
   }
   async storeReport(req, res) {
@@ -1430,7 +1432,9 @@ class UsersController {
         .json({ message: "Dados atualizados com sucesso!" });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+      return res
+        .status(500)
+        .json({ message: `Erro ao atualizar dados:${error}` });
     }
   }
   async Invoice(req, res) {
@@ -1455,10 +1459,14 @@ class UsersController {
         voice_client: voice_client,
         voice_company: voice_company,
       });
-      return res.status(200).json({ message: "Feito!" });
+      return res
+        .status(200)
+        .json({ message: "Dados cadastrados com sucesso!" });
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+      return res
+        .status(500)
+        .json({ message: `Erro ao atualizar dados:${error}` });
     }
   }
 
@@ -1491,7 +1499,9 @@ class UsersController {
           .json({ message: "Falha na autenticação: Token inválido." });
       }
     } catch (error) {
-      return res.status(500).json({ message: "Erro ao retornar os dados!" });
+      return res
+        .status(500)
+        .json({ message: `Erro ao atualizar dados:${error}` });
     }
   }
 
@@ -1587,7 +1597,25 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  async brandCreationUpdate(req, res) {
+    try {
+      const {arraybrands}=req.body
 
+
+
+
+
+
+
+
+
+
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
   async emailAlert(req, res) {
     try {
       const result = await Users.findAll({
