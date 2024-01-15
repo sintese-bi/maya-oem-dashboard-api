@@ -81,6 +81,11 @@ routes.post(
   UsersController.brandInformation
 );
 routes.post(
+  `${apiVersion}/brandupdate`,
+  checkToken,
+  UsersController.brandCreationUpdate
+);
+routes.post(
   `${apiVersion}/storereport`,
   checkToken,
   UsersController.storeReport

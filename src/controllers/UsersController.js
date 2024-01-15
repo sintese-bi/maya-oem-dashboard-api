@@ -1597,25 +1597,29 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  //Api de teste para criação de brands
   async brandCreationUpdate(req, res) {
     try {
-      const {arraybrands}=req.body
+      const { arraybrands } = req.body;
 
-
-
-
-
-
-
-
-
-
+      await Promise.all(
+        arraybrands.map(async (brand) => {
+          await Brand.create({
+            bl_login: brand.brand_login,
+            bl_password: brand.brand_password,
+            bl_name: brand.brand_name,
+            use_uuid: brand.use_uuid,
+          });
+        })
+      );
+      return res.status(200).json({ message: "Ok!" });
     } catch (error) {
       return res
         .status(400)
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+
   async emailAlert(req, res) {
     try {
       const result = await Users.findAll({
