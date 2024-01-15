@@ -77,7 +77,7 @@ routes.post(
 routes.get(`${apiVersion}/emailalert`, checkToken, UsersController.emailAlert);
 routes.post(
   `${apiVersion}/brandinfo`,
-  checkToken,
+  
   UsersController.brandInformation
 );
 routes.post(

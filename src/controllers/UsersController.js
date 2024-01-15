@@ -575,6 +575,7 @@ class UsersController {
                   "dev_lat",
                   "dev_long",
                   "dev_email",
+                  "dev_image",
                 ],
                 include: [
                   {
@@ -1245,7 +1246,6 @@ class UsersController {
   async updatePlants(req, res) {
     try {
       const currentDate = new Date();
-
       const firstDayOfMonth = new Date(
         currentDate.getFullYear(),
         currentDate.getMonth(),
@@ -1258,70 +1258,103 @@ class UsersController {
       );
 
       const { arrayplants } = req.body;
-      arrayplants.map(async (devarray) => {
-        const {
-          dev_uuid,
-          dev_capacity,
-          dev_email,
-          ic_city,
-          ic_states,
-          gen_estimated,
-        } = devarray;
-        if ((dev_capacity == 0 || ic_city === "") && gen_estimated == 0) {
-          return;
-        }
-        console.log(dev_capacity);
-        if (gen_estimated == 0) {
-          let irr = await IrradiationCoefficient.findOne({
-            where: { ic_city, ic_states },
-            attributes: ["ic_yearly"],
-          });
-          console.log(irr.dataValues.ic_yearly);
-          const ic_year = irr.dataValues.ic_yearly;
-          const gen_new = dev_capacity * ic_year * 0.81;
-          await Generation.update(
-            { gen_estimated: gen_new },
-            {
-              where: {
-                dev_uuid: dev_uuid,
-                gen_date: {
-                  [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-                },
-              },
-            }
-          );
-        } else {
-          await Generation.update(
-            { gen_estimated: gen_estimated },
-            {
-              where: {
-                dev_uuid: dev_uuid,
-                gen_date: {
-                  [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-                },
-              },
-            }
-          );
-        }
 
-        if (dev_email != "") {
-          await Devices.update(
-            { dev_capacity: dev_capacity, dev_email: dev_email },
+      await Promise.all(
+        arrayplants.map(async (devarray) => {
+          const {
+            dev_uuid,
+            dev_capacity,
+            dev_email,
+            ic_city,
+            ic_states,
+            gen_estimated,
+            dev_image,
+          } = devarray;
 
-            { where: { dev_uuid: dev_uuid } }
-          );
-        } else {
-          return;
-        }
-      });
+          if (
+            !dev_uuid ||
+            dev_capacity === undefined ||
+            ic_city === undefined ||
+            ic_states === undefined ||
+            gen_estimated === undefined
+          ) {
+            return;
+          }
+
+          if ((dev_capacity == 0 || ic_city === "") && gen_estimated == 0) {
+            return;
+          }
+
+          console.log(dev_capacity);
+
+          if (gen_estimated == 0) {
+            let irr = await IrradiationCoefficient.findOne({
+              where: { ic_city, ic_states },
+              attributes: ["ic_yearly"],
+            });
+
+            console.log(irr.dataValues.ic_yearly);
+
+            const ic_year = irr.dataValues.ic_yearly;
+            const gen_new = dev_capacity * ic_year * 0.81;
+
+            await Generation.update(
+              { gen_estimated: gen_new },
+              {
+                where: {
+                  dev_uuid: dev_uuid,
+                  gen_date: {
+                    [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                  },
+                },
+              }
+            );
+          } else {
+            await Generation.update(
+              { gen_estimated: gen_estimated },
+              {
+                where: {
+                  dev_uuid: dev_uuid,
+                  gen_date: {
+                    [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                  },
+                },
+              }
+            );
+          }
+
+          if (dev_email != "") {
+            await Devices.update(
+              {
+                dev_capacity: dev_capacity,
+                dev_email: dev_email,
+                dev_image: dev_image,
+              },
+              { where: { dev_uuid: dev_uuid } }
+            );
+          }
+        })
+      );
 
       return res
         .status(200)
         .json({ message: "Dados atualizados com sucesso!" });
     } catch (error) {
-      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+      console.error(error);
+
+      if (error.name === "SequelizeValidationError") {
+        return res.status(400).json({
+          message: "Erro de validação do Sequelize.",
+          error: error.errors,
+        });
+      }
+
+      return res
+        .status(500)
+        .json({ message: "Erro interno do servidor.", error: error.message });
     }
   }
+
   //Esta API desativa um usuário, modificando seu tipo de membro para 'free' e associando-o a um determinado perfil.
   //Em caso de sucesso, retorna uma mensagem de atualização bem-sucedida; em caso de erro, retorna uma mensagem de falha.
   async deleteUser(req, res) {
@@ -1524,7 +1557,9 @@ class UsersController {
           .json({ message: "Falha na autenticação: Token inválido." });
       }
     } catch (error) {
-      return res.status(500).json({ message: "Erro ao criar os dados!" });
+      return res
+        .status(500)
+        .json({ message: `Erro ao criar os dados. ${error}` });
     }
   }
 
@@ -1547,7 +1582,9 @@ class UsersController {
 
       return res.status(200).json({ message: [modifiedResult, infoBrand] });
     } catch (error) {
-      return res.status(500).json({ message: "Erro ao retornar os dados!" });
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
 
