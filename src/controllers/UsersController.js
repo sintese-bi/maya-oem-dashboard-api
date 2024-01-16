@@ -1280,7 +1280,7 @@ class UsersController {
           }
           let gen_estimated = 0;
           console.log(gen_estimated);
-          if ((dev_capacity == 0 || ic_city === "") && gen_estimated == 0) {
+          if ((dev_capacity == 0 || ic_city === "") ) {
             return;
           }
 
