@@ -1267,7 +1267,6 @@ class UsersController {
             dev_email,
             ic_city,
             ic_states,
-            gen_estimated,
             dev_image,
           } = devarray;
 
@@ -1275,53 +1274,36 @@ class UsersController {
             !dev_uuid ||
             dev_capacity === undefined ||
             ic_city === undefined ||
-            ic_states === undefined ||
-            gen_estimated === undefined
+            ic_states === undefined
           ) {
             return;
           }
-
+          let gen_estimated = 0;
+          console.log(gen_estimated);
           if ((dev_capacity == 0 || ic_city === "") && gen_estimated == 0) {
             return;
           }
 
-          console.log(dev_capacity);
+          console.log(1);
+          let irr = await IrradiationCoefficient.findOne({
+            where: { ic_city, ic_states },
+            attributes: ["ic_yearly"],
+          });
 
-          if (gen_estimated == 0) {
-            let irr = await IrradiationCoefficient.findOne({
-              where: { ic_city, ic_states },
-              attributes: ["ic_yearly"],
-            });
+          const ic_year = irr.dataValues.ic_yearly;
+          const gen_new = dev_capacity * ic_year * 0.81;
 
-            console.log(irr.dataValues.ic_yearly);
-
-            const ic_year = irr.dataValues.ic_yearly;
-            const gen_new = dev_capacity * ic_year * 0.81;
-
-            await Generation.update(
-              { gen_estimated: gen_new },
-              {
-                where: {
-                  dev_uuid: dev_uuid,
-                  gen_date: {
-                    [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-                  },
+          await Generation.update(
+            { gen_estimated: gen_new },
+            {
+              where: {
+                dev_uuid: dev_uuid,
+                gen_date: {
+                  [Op.between]: [firstDayOfMonth, lastDayOfMonth],
                 },
-              }
-            );
-          } else {
-            await Generation.update(
-              { gen_estimated: gen_estimated },
-              {
-                where: {
-                  dev_uuid: dev_uuid,
-                  gen_date: {
-                    [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-                  },
-                },
-              }
-            );
-          }
+              },
+            }
+          );
 
           if (dev_email != "") {
             await Devices.update(
