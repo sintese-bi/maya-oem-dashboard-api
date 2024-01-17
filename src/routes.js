@@ -80,6 +80,12 @@ routes.post(
   
   UsersController.brandInformation
 );
+
+routes.post(
+  `${apiVersion}/usealertemail`,
+  
+  UsersController.useAlertEmail
+);
 routes.post(
   `${apiVersion}/brandupdate`,
   checkToken,
