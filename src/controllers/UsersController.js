@@ -1596,7 +1596,7 @@ class UsersController {
           });
         })
       );
-      return res.status(200).json({ message: "Ok!" });
+      return res.status(200).json({ message: "Marcas atualizadas com sucesso!" });
     } catch (error) {
       return res
         .status(400)
