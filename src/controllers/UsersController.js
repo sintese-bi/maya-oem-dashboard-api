@@ -1603,11 +1603,35 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  async useAlertEmail(req, res) {
+    try {
+      const { use_uuid, use_alert_email } = req.body;
+      // const existingEmail = await Users.findOne({
+      //   attributes: ["use_alert_email"],
+      //   where: { use_uuid: use_uuid },
+      // });
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
 
+      if (!emailRegex.test(use_alert_email)) {
+        return res.status(400).json({ message: "O email não é válido." });
+      }
+      await Users.update(
+        { use_alert_email: use_alert_email },
+        { where: { use_uuid: use_uuid } }
+      );
+      return res.status(200).json({
+        message: "O email para envio de alertas foi cadastrado com sucesso!",
+      });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
   async emailAlert(req, res) {
     try {
       const result = await Users.findAll({
-        attributes: ["use_name", "use_email"],
+        attributes: ["use_name", "use_alert_email"],
         include: [
           {
             association: "brand_login",
@@ -1637,7 +1661,7 @@ class UsersController {
       });
 
       for (const user of result) {
-        const userEmail = user.use_email;
+        const userEmail = user.use_alert_email;
 
         if (user.brand_login) {
           const hasAlerts = user.brand_login.some((brand) => {

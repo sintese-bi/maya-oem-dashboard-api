@@ -40,13 +40,14 @@ class Users extends Model {
         use_kwp: { type: DataTypes.FLOAT },
         use_wifi: { type: DataTypes.INTEGER },
         use_type_system: { type: DataTypes.STRING },
-        use_type_member:{type:DataTypes.BOOLEAN},
+        use_type_member: { type: DataTypes.BOOLEAN },
         tp_uuid: { type: DataTypes.UUIDV4 },
         sta_uuid: { type: DataTypes.UUIDV4 },
         use_cnhrg: { type: DataTypes.TEXT, allowNull: true },
         use_proof: { type: DataTypes.TEXT, allowNull: true },
         use_token: { type: DataTypes.TEXT, allowNull: true },
-        use_deleted:{type:DataTypes.BOOLEAN},
+        use_alert_email: { type: DataTypes.STRING },
+        use_deleted: { type: DataTypes.BOOLEAN },
       },
       {
         sequelize,
@@ -66,7 +67,7 @@ class Users extends Model {
       foreignKey: "use_uuid",
       as: "brand_login",
     });
-    
+
     //Nesse caso, um usuário está associado a um único perfil.
     this.belongsTo(models.ProfileLevel, {
       foreignKey: "pl_uuid",
