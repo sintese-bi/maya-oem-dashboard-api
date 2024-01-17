@@ -1631,7 +1631,7 @@ class UsersController {
   async emailAlert(req, res) {
     try {
       const result = await Users.findAll({
-        attributes: ["use_name", "use_email"],
+        attributes: ["use_name", "use_alert_email"],
         include: [
           {
             association: "brand_login",
@@ -1661,7 +1661,7 @@ class UsersController {
       });
 
       for (const user of result) {
-        const userEmail = user.use_email;
+        const userEmail = user.use_alert_email;
 
         if (user.brand_login) {
           const hasAlerts = user.brand_login.some((brand) => {
