@@ -1258,7 +1258,13 @@ class UsersController {
       );
 
       const arrayplants = req.body.arrayplants.filter(
-        (data) => data.dev_uuid != undefined
+        (data) =>
+          data.dev_uuid !== undefined &&
+          data.dev_capacity !== undefined &&
+          data.ic_city !== undefined &&
+          data.ic_states !== undefined &&
+          data.dev_image !== undefined &&
+          data.dev_email !== undefined
       );
 
       await Promise.all(
@@ -1272,26 +1278,16 @@ class UsersController {
             dev_image,
           } = devarray;
 
-          if (
-            !dev_uuid ||
-            dev_capacity === undefined ||
-            ic_city === undefined ||
-            ic_states === undefined
-          ) {
-            return;
-          }
-          let gen_estimated = 0;
-          console.log(gen_estimated);
-          if (dev_capacity == 0 || ic_city === "") {
-            return;
-          }
-
-          console.log(1);
           let irr = await IrradiationCoefficient.findOne({
             where: { ic_city, ic_states },
             attributes: ["ic_yearly"],
           });
-
+          if (!irr) {
+            return res.status(400).json({
+              message:
+                "Verifique se um ou mais nomes de cidades ou estados foram escritos corretamente!",
+            });
+          }
           const ic_year = irr.dataValues.ic_yearly;
           const gen_new = dev_capacity * ic_year * 0.81;
 
@@ -1306,19 +1302,16 @@ class UsersController {
               },
             }
           );
-          console.log(ic_city, ic_states);
-          console.log(ic_city + "-" + ic_states)
-          if (dev_email != "") {
-            await Devices.update(
-              {
-                dev_capacity: dev_capacity,
-                dev_email: dev_email,
-                dev_image: dev_image,
-                dev_address: ic_city + "-" + ic_states,
-              },
-              { where: { dev_uuid: dev_uuid } }
-            );
-          }
+
+          await Devices.update(
+            {
+              dev_capacity: dev_capacity,
+              dev_email: dev_email,
+              dev_image: dev_image,
+              dev_address: ic_city + "-" + ic_states,
+            },
+            { where: { dev_uuid: dev_uuid } }
+          );
         })
       );
 
