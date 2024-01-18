@@ -1306,13 +1306,15 @@ class UsersController {
               },
             }
           );
-
+          console.log(ic_city, ic_states);
+          console.log(ic_city + "-" + ic_states)
           if (dev_email != "") {
             await Devices.update(
               {
                 dev_capacity: dev_capacity,
                 dev_email: dev_email,
                 dev_image: dev_image,
+                dev_address: ic_city + "-" + ic_states,
               },
               { where: { dev_uuid: dev_uuid } }
             );
@@ -1596,7 +1598,9 @@ class UsersController {
           });
         })
       );
-      return res.status(200).json({ message: "Ok!" });
+      return res
+        .status(200)
+        .json({ message: "Marcas atualizadas com sucesso!" });
     } catch (error) {
       return res
         .status(400)
