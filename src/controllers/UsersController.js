@@ -1286,26 +1286,39 @@ class UsersController {
             attributes: ["dev_name"],
             where: { dev_uuid: dev_uuid },
           });
+
           if (!irr) {
+            const ic_year = 5.04;
+            const gen_new = dev_capacity * ic_year * 0.81;
+            await Generation.update(
+              { gen_estimated: gen_new },
+              {
+                where: {
+                  dev_uuid: dev_uuid,
+                  gen_date: {
+                    [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                  },
+                },
+              }
+            );
             console.log(
               `Por favor, verifique se a cidade e/ou estado de "${result.dev_name}" foi inserida corretamente!`
             );
-          }
-
-          const ic_year = irr.dataValues.ic_yearly;
-          const gen_new = dev_capacity * ic_year * 0.81;
-
-          await Generation.update(
-            { gen_estimated: gen_new },
-            {
-              where: {
-                dev_uuid: dev_uuid,
-                gen_date: {
-                  [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+          } else {
+            const ic_year = irr.dataValues.ic_yearly;
+            const gen_new = dev_capacity * ic_year * 0.81;
+            await Generation.update(
+              { gen_estimated: gen_new },
+              {
+                where: {
+                  dev_uuid: dev_uuid,
+                  gen_date: {
+                    [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                  },
                 },
-              },
-            }
-          );
+              }
+            );
+          }
 
           await Devices.update(
             {
