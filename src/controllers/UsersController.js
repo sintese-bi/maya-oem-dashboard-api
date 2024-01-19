@@ -1259,12 +1259,7 @@ class UsersController {
 
       const arrayplants = req.body.arrayplants.filter(
         (data) =>
-          data.dev_uuid !== undefined ||
-          data.dev_capacity !== undefined ||
-          data.ic_city !== undefined ||
-          data.ic_states !== undefined ||
-          data.dev_image !== undefined ||
-          data.dev_email !== undefined
+          data.dev_uuid !== undefined 
       );
 
       await Promise.all(
