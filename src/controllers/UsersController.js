@@ -1152,7 +1152,13 @@ class UsersController {
   async deviceInformation(req, res) {
     try {
       const { use_uuid } = req.body;
-
+      const par = req.params.par;
+      let whereCondition = {};
+      if (par === "yes") {
+        whereCondition = {
+          [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
+        };
+      }
       const result = await Devices.findAll({
         attributes: [
           "dev_email",
@@ -1162,6 +1168,7 @@ class UsersController {
           "dev_uuid",
           "dev_address",
         ],
+        where: whereCondition,
         include: [
           {
             association: "brand_login",
@@ -1258,8 +1265,7 @@ class UsersController {
       );
 
       const arrayplants = req.body.arrayplants.filter(
-        (data) =>
-          data.dev_uuid !== undefined 
+        (data) => data.dev_uuid !== undefined
       );
 
       await Promise.all(
