@@ -1573,12 +1573,20 @@ class UsersController {
   }
 
   async brandInformation(req, res) {
+    const startOfDay = moment().startOf("day").toDate();
+    const endOfDay = moment().endOf("day").toDate();
+    
     try {
       const { use_uuid } = req.body;
 
       const infoBrand = await Brand.findAll({
         attributes: ["bl_login", "bl_password", "bl_check"],
-        where: { use_uuid: use_uuid },
+        where: {
+          bl_created_at: {
+            [Op.between]: [startOfDay, endOfDay],
+          },
+          use_uuid: use_uuid,
+        },
       });
 
       const result = await Brand_Info.findAll({
