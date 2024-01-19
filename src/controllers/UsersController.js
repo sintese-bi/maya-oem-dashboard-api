@@ -1259,11 +1259,11 @@ class UsersController {
 
       const arrayplants = req.body.arrayplants.filter(
         (data) =>
-          data.dev_uuid !== undefined &&
-          data.dev_capacity !== undefined &&
-          data.ic_city !== undefined &&
-          data.ic_states !== undefined &&
-          data.dev_image !== undefined &&
+          data.dev_uuid !== undefined ||
+          data.dev_capacity !== undefined ||
+          data.ic_city !== undefined ||
+          data.ic_states !== undefined ||
+          data.dev_image !== undefined ||
           data.dev_email !== undefined
       );
 
@@ -1277,32 +1277,51 @@ class UsersController {
             ic_states,
             dev_image,
           } = devarray;
-
-          let irr = await IrradiationCoefficient.findOne({
-            where: { ic_city, ic_states },
-            attributes: ["ic_yearly"],
-          });
-          if (!irr) {
-            return res.status(400).json({
-              message:
-                "Verifique se um ou mais nomes de cidades ou estados foram escritos corretamente!",
+          // console.log(ic_states, dev_image);
+          if (ic_city != undefined && ic_states != undefined) {
+            let irr = await IrradiationCoefficient.findOne({
+              where: { ic_city, ic_states },
+              attributes: ["ic_yearly"],
             });
-          }
-          const ic_year = irr.dataValues.ic_yearly;
-          const gen_new = dev_capacity * ic_year * 0.81;
 
-          await Generation.update(
-            { gen_estimated: gen_new },
-            {
-              where: {
-                dev_uuid: dev_uuid,
-                gen_date: {
-                  [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-                },
-              },
+            const result = await Devices.findOne({
+              attributes: ["dev_name"],
+              where: { dev_uuid: dev_uuid },
+            });
+
+            if (!irr) {
+              const ic_year = 5.04;
+              const gen_new = dev_capacity * ic_year * 0.81;
+              await Generation.update(
+                { gen_estimated: gen_new },
+                {
+                  where: {
+                    dev_uuid: dev_uuid,
+                    gen_date: {
+                      [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                    },
+                  },
+                }
+              );
+              console.log(
+                `Por favor, verifique se a cidade e/ou estado de "${result.dev_name}" foi inserida corretamente!`
+              );
+            } else {
+              const ic_year = irr.dataValues.ic_yearly;
+              const gen_new = dev_capacity * ic_year * 0.81;
+              await Generation.update(
+                { gen_estimated: gen_new },
+                {
+                  where: {
+                    dev_uuid: dev_uuid,
+                    gen_date: {
+                      [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                    },
+                  },
+                }
+              );
             }
-          );
-
+          }
           await Devices.update(
             {
               dev_capacity: dev_capacity,
@@ -1330,7 +1349,7 @@ class UsersController {
 
       return res
         .status(500)
-        .json({ message: "Erro interno do servidor.", error: error.message });
+        .json({ message: `Erro interno do servidor: ${error.message}` });
     }
   }
 

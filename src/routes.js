@@ -217,7 +217,7 @@ routes.post(`${apiVersion}/deleteuser`, checkToken, UsersController.deleteUser);
 //Api da Tabela
 routes.get(
   `${apiVersion}/dashboard/:uuid/:par?`,
-  checkToken,
+  
   UsersController.dashboard
 );
 
