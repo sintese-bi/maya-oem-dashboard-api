@@ -21,6 +21,7 @@ import cron from "node-cron";
 import Invoice_received from "../models/Invoice_received";
 import Brand_Info from "../models/Brand_info";
 import multer from "multer";
+import XLSX from "xlsx";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 //Configuração das credenciais do email de envio
@@ -1658,13 +1659,19 @@ class UsersController {
     try {
       const { use_uuid } = req.body;
       const arquivo = req.file;
-      if (!arquivo || !arquivo.mimetype.includes("excel")) {
-        return res
-          .status(400)
-          .json({ message: "Arquivo inválido. Envie um arquivo XLSX." });
-      }
 
-      const workbook = xlsx.read(arquivo.buffer, { type: "buffer" });
+      const workbook = XLSX.read(arquivo.buffer, { type: "buffer" });
+      const jsonData = [];
+
+      // Itera sobre cada folha de trabalho (worksheet) no arquivo XLSX
+      workbook.SheetNames.forEach((sheetName) => {
+        // Obtém os dados da folha de trabalho como uma matriz de objetos
+        const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+        // Adiciona os dados da folha de trabalho ao array JSON
+        jsonData.push({ [sheetName]: sheetData });
+      });
+      return res.status(200).json({ message: [jsonData, use_uuid] });
     } catch (error) {
       return res
         .status(500)
