@@ -1661,7 +1661,7 @@ class UsersController {
           .status(400)
           .json({ error: "Campos 'use_email' e 'text' são obrigatórios." });
       }
-      const emailBody = `<p><strong>Central de Ajuda Maya</strong></p> ${text} <p>Email do usuário: ${use_email}</p><p>Atenciosamente,<br>Equipe MAYA WATCH</p>`;
+      const emailBody = `<p><strong>Central de Ajuda Maya</strong></p> ${text} <p>Email do usuário: ${use_email}`;
 
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
