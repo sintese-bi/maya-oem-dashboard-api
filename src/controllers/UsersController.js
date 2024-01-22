@@ -20,6 +20,8 @@ import Reports from "../models/Reports";
 import cron from "node-cron";
 import Invoice_received from "../models/Invoice_received";
 import Brand_Info from "../models/Brand_info";
+import multer from "multer";
+import XLSX from "xlsx";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 //Configuração das credenciais do email de envio
@@ -1575,7 +1577,7 @@ class UsersController {
   async brandInformation(req, res) {
     const startOfDay = moment().startOf("day").toDate();
     const endOfDay = moment().endOf("day").toDate();
-    
+
     try {
       const { use_uuid } = req.body;
 
@@ -1651,6 +1653,77 @@ class UsersController {
       return res
         .status(500)
         .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  async xlsxPortal(req, res) {
+    try {
+      const { use_uuid } = req.body;
+      const arquivo = req.file;
+
+      const workbook = XLSX.read(arquivo.buffer, { type: "buffer" });
+      const jsonData = [];
+
+      // Itera sobre cada folha de trabalho (worksheet) no arquivo XLSX
+      workbook.SheetNames.forEach((sheetName) => {
+        // Obtém os dados da folha de trabalho como uma matriz de objetos
+        const sheetData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+        // Adiciona os dados da folha de trabalho ao array JSON
+        jsonData.push({ [sheetName]: sheetData });
+      });
+      await Promise.all(
+        jsonData[0].Planilha1.map(async (element) => {
+          await Brand.create({
+            bl_name: element.Marca,
+            bl_login: element.Login,
+            bl_password: element.Senha,
+            bl_url: element.Website_Portal,
+            bl_quant: element.Quantidade_Usinas,
+            use_uuid: use_uuid,
+          });
+        })
+      );
+      console.log(jsonData[0]);
+      return res.status(200).json({
+        message: "Os portais foram salvos com sucesso em nosso banco de dados!",
+      });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao salvar os dados. ${error}` });
+    }
+  }
+  async helpCenter(req, res) {
+    try {
+      const { use_email, text } = req.body;
+      if (!use_email || !text) {
+        return res
+          .status(400)
+          .json({ error: "Campos 'use_email' e 'text' são obrigatórios." });
+      }
+      const emailBody = `<p><strong>Central de Ajuda Maya</strong></p> ${text} <p>Email do usuário: ${use_email}`;
+
+      const mailOptions = {
+        from: '"noreplymayawatch@gmail.com',
+        to: [
+          "contato@mayaenergy.com.br",
+          "bisintese@gmail.com",
+          "eloymjunior00@gmail.com",
+        ],
+        subject: "Central de Ajuda",
+        text: "",
+        html: emailBody,
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Erro ao enviar o e-mail:", error);
+        } else {
+          console.log("E-mail enviado:", info.res);
+        }
+      });
+      return res.status(200).json({ message: "Email enviado com sucesso!" });
+    } catch (error) {
+      return res.status(500).json({ message: `Erro: ${error}` });
     }
   }
   async emailAlert(req, res) {
