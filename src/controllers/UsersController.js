@@ -20,6 +20,7 @@ import Reports from "../models/Reports";
 import cron from "node-cron";
 import Invoice_received from "../models/Invoice_received";
 import Brand_Info from "../models/Brand_info";
+import multer from "multer";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 //Configuração das credenciais do email de envio
@@ -1651,6 +1652,23 @@ class UsersController {
       return res
         .status(500)
         .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  async xlsxPortal(req, res) {
+    try {
+      const { use_uuid } = req.body;
+      const arquivo = req.file;
+      if (!arquivo || !arquivo.mimetype.includes("excel")) {
+        return res
+          .status(400)
+          .json({ message: "Arquivo inválido. Envie um arquivo XLSX." });
+      }
+
+      const workbook = xlsx.read(arquivo.buffer, { type: "buffer" });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao salvar os dados. ${error}` });
     }
   }
   async helpCenter(req, res) {

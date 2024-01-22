@@ -17,7 +17,8 @@ import StripeController from "./controllers/StripeController";
 import checkToken from "./service/token";
 import multer from "multer";
 import DevicesController from "./controllers/DevicesController";
-const upload = multer({ dest: "uploads/" }); // Define a pasta onde os arquivos serão armazenados
+const storage = multer.memoryStorage(); // Armazenar o arquivo na memória
+const upload = multer({ storage: storage }); // Define a pasta onde os arquivos serão armazenados
 
 // STADOS DE CONTROLLER
 const apiVersion = "/v1";
@@ -82,7 +83,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/helpcenter`,
-  
+
   UsersController.helpCenter
 );
 routes.post(
@@ -212,6 +213,12 @@ routes.post(
   checkToken,
   UsersController.csvDownload
 );
+
+routes.post(
+  `${apiVersion}/xlsxportal`,
+  upload.single("arquivo"),
+  UsersController.xlsxPortal
+);
 routes.post(
   `${apiVersion}/bignumbersum`,
   checkToken,
@@ -221,7 +228,7 @@ routes.post(`${apiVersion}/deleteuser`, checkToken, UsersController.deleteUser);
 //Api da Tabela
 routes.get(
   `${apiVersion}/dashboard/:uuid/:par?`,
-  
+
   UsersController.dashboard
 );
 
