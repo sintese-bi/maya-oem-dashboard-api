@@ -33,9 +33,9 @@ const transporter = nodemailer.createTransport({
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
-  tls: {
-    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
-  },
+  // tls: {
+  //   rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
+  // },
 });
 
 class UsersController {
