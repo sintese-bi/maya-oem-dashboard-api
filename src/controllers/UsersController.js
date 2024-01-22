@@ -33,9 +33,9 @@ const transporter = nodemailer.createTransport({
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
-  // tls: {
-  //   rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
-  // },
+  tls: {
+    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
+  },
 });
 
 class UsersController {
@@ -1575,7 +1575,7 @@ class UsersController {
   async brandInformation(req, res) {
     const startOfDay = moment().startOf("day").toDate();
     const endOfDay = moment().endOf("day").toDate();
-    
+
     try {
       const { use_uuid } = req.body;
 
@@ -1651,6 +1651,39 @@ class UsersController {
       return res
         .status(500)
         .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  async helpCenter(req, res) {
+    try {
+      const { use_email, text } = req.body;
+      if (!use_email || !text) {
+        return res
+          .status(400)
+          .json({ error: "Campos 'use_email' e 'text' são obrigatórios." });
+      }
+      const emailBody = `<p><strong>Central de Ajuda Maya</strong></p> ${text} <p>Email do usuário: ${use_email}</p><p>Atenciosamente,<br>Equipe MAYA WATCH</p>`;
+
+      const mailOptions = {
+        from: '"noreplymayawatch@gmail.com',
+        to: [
+          "contato@mayaenergy.com.br",
+          "bisintese@gmail.com",
+          "eloymjunior00@gmail.com",
+        ],
+        subject: "Central de Ajuda",
+        text: "",
+        html: emailBody,
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Erro ao enviar o e-mail:", error);
+        } else {
+          console.log("E-mail enviado:", info.res);
+        }
+      });
+      return res.status(200).json({ message: "Email enviado com sucesso!" });
+    } catch (error) {
+      return res.status(500).json({ message: `Erro: ${error}` });
     }
   }
   async emailAlert(req, res) {
