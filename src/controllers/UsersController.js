@@ -1671,7 +1671,24 @@ class UsersController {
         // Adiciona os dados da folha de trabalho ao array JSON
         jsonData.push({ [sheetName]: sheetData });
       });
-      return res.status(200).json({ message: [jsonData, use_uuid] });
+      await Promise.all(
+        jsonData[0].Planilha1.map(async (element) => {
+          await Brand.create({
+            bl_name: element.Marca,
+            bl_login: element.Login,
+            bl_password: element.Senha,
+            bl_url: element.Website,
+            use_uuid: use_uuid,
+          });
+        })
+      );
+
+      return res
+        .status(200)
+        .json({
+          message:
+            "Os portais foram salvos com sucesso em nosso banco de dados!",
+        });
     } catch (error) {
       return res
         .status(500)

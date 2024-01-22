@@ -217,6 +217,7 @@ routes.post(
 routes.post(
   `${apiVersion}/xlsxportal`,
   upload.single("arquivo"),
+  checkToken,
   UsersController.xlsxPortal
 );
 routes.post(
