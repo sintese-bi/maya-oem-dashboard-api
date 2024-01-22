@@ -1677,18 +1677,16 @@ class UsersController {
             bl_name: element.Marca,
             bl_login: element.Login,
             bl_password: element.Senha,
-            bl_url: element.Website,
+            bl_url: element.Website_Portal,
+            bl_quant: element.Quantidade_Usinas,
             use_uuid: use_uuid,
           });
         })
       );
-
-      return res
-        .status(200)
-        .json({
-          message:
-            "Os portais foram salvos com sucesso em nosso banco de dados!",
-        });
+      console.log(jsonData[0]);
+      return res.status(200).json({
+        message: "Os portais foram salvos com sucesso em nosso banco de dados!",
+      });
     } catch (error) {
       return res
         .status(500)
