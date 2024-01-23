@@ -1671,19 +1671,65 @@ class UsersController {
         // Adiciona os dados da folha de trabalho ao array JSON
         jsonData.push({ [sheetName]: sheetData });
       });
+
       await Promise.all(
         jsonData[0].Planilha1.map(async (element) => {
+          // const urlsPermitidas = [
+          //   "https://iot.weg.net/#/portal/main",
+          //   "https://monitoring.csisolar.com/home/login",
+          //   "https://global.hoymiles.com/platform/login?form=logout&notice=1",
+          //   "https://la5.fusionsolar.huawei.com/unisso/login.action?service=%2Funisess%2Fv1%2Fauth%3Fservice%3D%252F",
+          //   "https://www.auroravision.net/ums/v1/loginPage?redirectUrl=https:%2F%2Fwww.auroravision.net%2Fdash%2Fhome.jsf&cause=MISSING_TOKEN",
+          //   "https://www.isolarcloud.com.hk/?lang=pt_BR",
+          //   "https://www.semsportal.com/PowerStation/powerstatus",
+          //   "http://www.smten.com/login",
+          //   "https://www.isolarcloud.com.hk/",
+          //   "https://server.growatt.com/index",
+          //   "https://www.solarweb.com/PvSystems/Widgets",
+          //   "https://monitoring.csisolar.com/login",
+          //   "https://pro.solarmanpv.com/business/maintain/plant",
+          //   "https://www.renovigi.solar/cus/renovigi/index_po.html?1690209459489",
+          //   "https://apsystemsema.com/ema/index.action",
+          //   "https://www.soliscloud.com/#/homepage",
+          //   "https://home.solarmanpv.com/login",
+          //   "",
+          // ];
+
+          element.quant_usinas = element["O portal possui mais de uma usina?"];
+          delete element["O portal possui mais de uma usina?"];
+          // element.Website_Portal = element["Website_Portal(opcional)"];
+          // delete element["Website_Portal(opcional)"];
+          if (
+            element.Marca == null ||
+            element.Login == null ||
+            element.Senha == null ||
+            element.quant_usinas == null
+          ) {
+            return;
+          }
+
+          if (element.quant_usinas == "sim") {
+            element.quant_usinas = 2;
+          } else if (element.quant_usinas == "não") {
+            element.quant_usinas = 1;
+          }
+
+          let result = await Brand_Info.findOne({
+            attributes: ["bl_url"],
+            where: { bl_name: element.Marca },
+          });
           await Brand.create({
             bl_name: element.Marca,
             bl_login: element.Login,
             bl_password: element.Senha,
-            bl_url: element.Website_Portal,
-            bl_quant: element.Quantidade_Usinas,
+            bl_url: result.bl_url,
+            bl_quant: element.quant_usinas,
+            bl_check: "validating",
             use_uuid: use_uuid,
           });
         })
       );
-      console.log(jsonData[0]);
+
       return res.status(200).json({
         message: "Os portais foram salvos com sucesso em nosso banco de dados!",
       });
