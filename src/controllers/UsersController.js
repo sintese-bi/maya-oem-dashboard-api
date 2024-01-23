@@ -1732,7 +1732,6 @@ class UsersController {
 
       return res.status(200).json({
         message: "Os portais foram salvos com sucesso em nosso banco de dados!",
-        message2: jsonData,
       });
     } catch (error) {
       return res
