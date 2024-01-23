@@ -1697,16 +1697,23 @@ class UsersController {
 
           element.quant_usinas = element["O portal possui mais de uma usina?"];
           delete element["O portal possui mais de uma usina?"];
-          element.Website_Portal = element["Website_Portal(opcional)"];
-          delete element["Website_Portal(opcional)"];
-          // if (!urlsPermitidas.includes(element.Website_Portal)) {
-          //   element.Website_Portal = "";
-          // }
+          // element.Website_Portal = element["Website_Portal(opcional)"];
+          // delete element["Website_Portal(opcional)"];
+          if (
+            element.Marca == null ||
+            element.Login == null ||
+            element.Senha == null ||
+            element.quant_usinas == null
+          ) {
+            return;
+          }
+
           if (element.quant_usinas == "sim") {
             element.quant_usinas = 2;
           } else if (element.quant_usinas == "não") {
             element.quant_usinas = 1;
           }
+
           let result = await Brand_Info.findOne({
             attributes: ["bl_url"],
             where: { bl_name: element.Marca },
@@ -1717,11 +1724,12 @@ class UsersController {
             bl_password: element.Senha,
             bl_url: result.bl_url,
             bl_quant: element.quant_usinas,
+            bl_check: "validating",
             use_uuid: use_uuid,
           });
         })
       );
-      console.log(jsonData[0]);
+
       return res.status(200).json({
         message: "Os portais foram salvos com sucesso em nosso banco de dados!",
         message2: jsonData,
