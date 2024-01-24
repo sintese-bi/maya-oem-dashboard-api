@@ -1325,11 +1325,12 @@ class UsersController {
               );
             }
           }
+          const binaryImage = Buffer.from(dev_image, "base64");
           await Devices.update(
             {
               dev_capacity: dev_capacity,
               dev_email: dev_email,
-              dev_image: dev_image,
+              dev_image: binaryImage,
               dev_address: ic_city + "-" + ic_states,
             },
             { where: { dev_uuid: dev_uuid } }
