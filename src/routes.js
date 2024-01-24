@@ -83,7 +83,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/helpcenter`,
-
+  checkToken,
   UsersController.helpCenter
 );
 routes.post(
@@ -141,7 +141,7 @@ routes.post(
 );
 routes.get(
   `${apiVersion}/generationandtemperature`,
-
+  checkToken,
   GenerationController.deviceDataAndLatestTemperature
 );
 
@@ -155,7 +155,7 @@ routes.post(
 );
 routes.get(
   `${apiVersion}/alerts/:devUuid`,
-
+  checkToken,
   GenerationController.recentAlerts
 );
 routes.get(
