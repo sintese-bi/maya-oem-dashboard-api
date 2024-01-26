@@ -605,17 +605,6 @@ class UsersController {
           },
         ],
       });
-      // const result_1 = result.brand_login.map((device_0) => {
-      //   brand_login.devices.map((device) => {
-      //     if (device.generation.length == 0) {
-      //       console.log(device.generation);
-      //       delete device.generation;
-      //       console.log(device.generation);
-      //     }
-      //   });
-      // });
-
-      // console.log(result.brand_login[0]);
 
       return res.status(200).json({ result, brand });
     } catch (error) {
@@ -782,12 +771,16 @@ class UsersController {
           message: "Você já inseriu um login de mesmo nome para essa marca!",
         });
       }
+      const result = await Brand_Info.findOne({
+        attributes: ["bl_url"],
+        where: { bl_name: bl_name },
+      });
       const device = await Brand.create({
         use_uuid: use_uuid,
         bl_login: bl_login,
         bl_password: bl_password,
         bl_name: bl_name,
-        bl_url: bl_url,
+        bl_url: result.bl_url,
         bl_quant: bl_quant,
       });
       // await Devices.create({
@@ -795,7 +788,9 @@ class UsersController {
       // });
       return res
         .status(201)
-        .json({ message: "Login/device criado com sucesso!" });
+        .json({
+          message: `Esse processo pode demorar um pouco, mas não se preocupe lhe avisaremos assim que suas plantas estiverem disponíveis.${bl_name} e ${bl_login} `,
+        });
     } catch (error) {
       console.error(error);
       return res
