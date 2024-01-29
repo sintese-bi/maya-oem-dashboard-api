@@ -35,9 +35,9 @@ const transporter = nodemailer.createTransport({
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
-  // tls: {
-  //   rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
-  // },
+  tls: {
+    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
+  },
 });
 
 class UsersController {
@@ -605,17 +605,6 @@ class UsersController {
           },
         ],
       });
-      // const result_1 = result.brand_login.map((device_0) => {
-      //   brand_login.devices.map((device) => {
-      //     if (device.generation.length == 0) {
-      //       console.log(device.generation);
-      //       delete device.generation;
-      //       console.log(device.generation);
-      //     }
-      //   });
-      // });
-
-      // console.log(result.brand_login[0]);
 
       return res.status(200).json({ result, brand });
     } catch (error) {
@@ -772,8 +761,7 @@ class UsersController {
   //A API verifica se o dispositivo já está associado ao usuário, e se não estiver, cria um novo dispositivo na tabela Brand e associa a ele um novo registro na tabela Devices.
   async newDevice(req, res) {
     try {
-      const { use_uuid, bl_login, bl_name, bl_password, bl_url, bl_quant } =
-        req.body;
+      const { use_uuid, bl_login, bl_name, bl_password, bl_quant } = req.body;
       const search = await Brand.findOne({
         where: { use_uuid: use_uuid, bl_name: bl_name, bl_login: bl_login },
       });
@@ -782,20 +770,25 @@ class UsersController {
           message: "Você já inseriu um login de mesmo nome para essa marca!",
         });
       }
+      const result = await Brand_Info.findOne({
+        attributes: ["bl_url"],
+        where: { bl_name: bl_name },
+      });
       const device = await Brand.create({
         use_uuid: use_uuid,
         bl_login: bl_login,
         bl_password: bl_password,
         bl_name: bl_name,
-        bl_url: bl_url,
+        bl_url: result.bl_url,
         bl_quant: bl_quant,
+        bl_check: "validating",
       });
       // await Devices.create({
       //   bl_uuid: device.bl_uuid,
       // });
-      return res
-        .status(201)
-        .json({ message: "Login/device criado com sucesso!" });
+      return res.status(201).json({
+        message: `Esse processo pode demorar um pouco, mas não se preocupe lhe avisaremos assim que suas plantas estiverem disponíveis.${bl_name} e ${bl_login} `,
+      });
     } catch (error) {
       console.error(error);
       return res
@@ -1067,10 +1060,41 @@ class UsersController {
   //Ela aceita uma requisição contendo uma matriz de objetos, onde cada objeto possui um dev_uuid identificando um dispositivo e o conteúdo do PDF em formato base64 (base64).
   async massEmail(req, res) {
     try {
-      const pdfDataArray = req.body; // Array de objetos com dev_uuid e base64 do PDF
+      const currentDate = new Date();
+      const firstDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      const lastDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
 
+      const pdfDataArray = req.body; // Array de objetos com dev_uuid e base64 do PDF
+      //gen_real/gen_estimada *100
       const mailPromises = pdfDataArray.map(async (pdfData) => {
         const { base64, dev_uuid } = pdfData;
+        const result = await Generation.findAll({
+          attributes: ["gen_real", "gen_estimated"],
+
+          where: {
+            dev_uuid: dev_uuid,
+            gen_date: {
+              [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+            },
+          },
+        });
+
+        const sumreal = await result.reduce(
+          (acc, atual) => acc + atual.gen_real,
+          0
+        );
+        const sumestimated = await result.reduce(
+          (acc, atual) => acc + atual.gen_estimated,
+          0
+        );
 
         const attachment = {
           filename: "relatorio.pdf",
@@ -1095,7 +1119,7 @@ class UsersController {
 
         const mailOptions = {
           from: '"noreplymayawatch@gmail.com',
-          to: [searchDeviceEmail.dev_email],
+          to: [],
           subject: "Relatório de dados de Geração",
           text: "",
           html: emailBody,
@@ -1325,11 +1349,12 @@ class UsersController {
               );
             }
           }
+          const binaryImage = Buffer.from(dev_image, "base64");
           await Devices.update(
             {
               dev_capacity: dev_capacity,
               dev_email: dev_email,
-              dev_image: dev_image,
+              dev_image: binaryImage,
               dev_address: ic_city + "-" + ic_states,
             },
             { where: { dev_uuid: dev_uuid } }
