@@ -1086,16 +1086,32 @@ class UsersController {
             },
           },
         });
+        const cap = await Devices.findOne({
+          attributes: ["dev_capacity"],
 
+          where: { dev_uuid: dev_uuid },
+        });
         const sumreal = await result.reduce(
           (acc, atual) => acc + atual.gen_real,
           0
         );
+        const sumrealNew = sumreal.toFixed(2);
         const sumestimated = await result.reduce(
           (acc, atual) => acc + atual.gen_estimated,
           0
         );
+        const sumestimatedNew = sumestimated.toFixed(2);
+        const percent = (sumestimated / sumreal) * 100;
+        const percentNew = percent.toFixed(2);
 
+        const dev_element = [
+          dev_uuid,
+          cap.dev_capacity,
+          sumrealNew,
+          sumestimatedNew,
+          percentNew,
+        ];
+        console.log(dev_element)
         const attachment = {
           filename: "relatorio.pdf",
           content: base64,
