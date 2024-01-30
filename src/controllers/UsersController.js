@@ -537,11 +537,14 @@ class UsersController {
     try {
       const use = req.params.uuid;
       const par = req.params.par;
+      const fifteenDaysAgo = moment().subtract(15, "days").toDate();
+      const today = moment().date();
+
       const startOfMonth = moment().startOf("month").toDate();
       const endOfMonth = moment().endOf("month").toDate();
       console.log(startOfMonth, endOfMonth);
       let whereCondition = {};
-
+      
       if (par === "yes") {
         whereCondition = {
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
@@ -591,13 +594,11 @@ class UsersController {
                     required: false,
                     order: [["gen_date", "DESC"]],
                   },
-                  {
-                    association: "alerts",
-                    attributes: ["al_alerts", "al_inv", "alert_created_at"],
-                  },
+                 
                   {
                     association: "status",
                     attributes: ["sta_code", "sta_name"],
+
                   },
                 ],
               },
@@ -1086,16 +1087,32 @@ class UsersController {
             },
           },
         });
+        const cap = await Devices.findOne({
+          attributes: ["dev_capacity"],
 
+          where: { dev_uuid: dev_uuid },
+        });
         const sumreal = await result.reduce(
           (acc, atual) => acc + atual.gen_real,
           0
         );
+        const sumrealNew = sumreal.toFixed(2);
         const sumestimated = await result.reduce(
           (acc, atual) => acc + atual.gen_estimated,
           0
         );
+        const sumestimatedNew = sumestimated.toFixed(2);
+        const percent = (sumestimated / sumreal) * 100;
+        const percentNew = percent.toFixed(2);
 
+        const dev_element = [
+          dev_uuid,
+          cap.dev_capacity,
+          sumrealNew,
+          sumestimatedNew,
+          percentNew,
+        ];
+        console.log(dev_element);
         const attachment = {
           filename: "relatorio.pdf",
           content: base64,
