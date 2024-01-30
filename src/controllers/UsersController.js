@@ -569,7 +569,6 @@ class UsersController {
               {
                 association: "devices",
                 where: whereCondition,
-
                 attributes: [
                   "dev_uuid",
                   "dev_name",
@@ -594,11 +593,19 @@ class UsersController {
                     required: false,
                     order: [["gen_date", "DESC"]],
                   },
-                 
+                  {
+                    association: "alerts",
+                    attributes: ["al_alerts", "al_inv", "alert_created_at"],
+                    separate: true,
+                    where: {
+                      alert_created_at: {
+                        [Op.gte]: moment().subtract(1, 'hour').toDate(),
+                      },
+                    },
+                  },
                   {
                     association: "status",
                     attributes: ["sta_code", "sta_name"],
-
                   },
                 ],
               },
@@ -606,6 +613,7 @@ class UsersController {
           },
         ],
       });
+      
 
       return res.status(200).json({ result, brand });
     } catch (error) {
