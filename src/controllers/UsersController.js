@@ -544,7 +544,7 @@ class UsersController {
       const endOfMonth = moment().endOf("month").toDate();
       console.log(startOfMonth, endOfMonth);
       let whereCondition = {};
-      
+
       if (par === "yes") {
         whereCondition = {
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
@@ -599,7 +599,7 @@ class UsersController {
                     separate: true,
                     where: {
                       alert_created_at: {
-                        [Op.gte]: moment().subtract(1, 'hour').toDate(),
+                        [Op.gte]: moment().subtract(1, "hour").toDate(),
                       },
                     },
                   },
@@ -613,7 +613,6 @@ class UsersController {
           },
         ],
       });
-      
 
       return res.status(200).json({ result, brand });
     } catch (error) {
@@ -771,8 +770,13 @@ class UsersController {
   async newDevice(req, res) {
     try {
       const { use_uuid, bl_login, bl_name, bl_password, bl_quant } = req.body;
+      const newnamebrand = bl_name.toLowerCase();
       const search = await Brand.findOne({
-        where: { use_uuid: use_uuid, bl_name: bl_name, bl_login: bl_login },
+        where: {
+          use_uuid: use_uuid,
+          bl_name: newnamebrand,
+          bl_login: bl_login,
+        },
       });
       if (search) {
         return res.status(400).json({
@@ -781,13 +785,13 @@ class UsersController {
       }
       const result = await Brand_Info.findOne({
         attributes: ["bl_url"],
-        where: { bl_name: bl_name },
+        where: { bl_name: newnamebrand },
       });
       const device = await Brand.create({
         use_uuid: use_uuid,
         bl_login: bl_login,
         bl_password: bl_password,
-        bl_name: bl_name,
+        bl_name: newnamebrand,
         bl_url: result.bl_url,
         bl_quant: bl_quant,
         bl_check: "validating",
@@ -796,7 +800,7 @@ class UsersController {
       //   bl_uuid: device.bl_uuid,
       // });
       return res.status(201).json({
-        message: `Esse processo pode demorar um pouco, mas não se preocupe lhe avisaremos assim que suas plantas estiverem disponíveis.${bl_name} e ${bl_login} `,
+        message: `Esse processo pode demorar um pouco, mas não se preocupe lhe avisaremos assim que suas plantas estiverem disponíveis.${newnamebrand} e ${bl_login} `,
       });
     } catch (error) {
       console.error(error);
