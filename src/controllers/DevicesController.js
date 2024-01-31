@@ -7,7 +7,6 @@ class DevicesController {
   //Esta função index processa dados de dispositivos, recuperando informações de gerações associadas a eles.
   //Ela inclui a ordenação por data e trata casos onde a geração atual não está disponível, utilizando dados da geração anterior.
   async index(req, res) {
-    
     const blUuid = req.params.bl_uuid;
     const pl_name = req.params;
     const date = new Date();
@@ -77,8 +76,8 @@ class DevicesController {
               // sta_uuid: "b5f9a5f7-2f67-4ff2-8645-47f55d265e4e",
               [Op.or]: [
                 { dev_deleted: false },
-                { dev_deleted: { [Op.is]: null } }
-              ]
+                { dev_deleted: { [Op.is]: null } },
+              ],
             },
             include: [
               {
@@ -97,7 +96,7 @@ class DevicesController {
         },
         attributes: ["gen_date", "gen_real", "gen_estimated"],
       });
-      
+
       const somaGenRealDia = {};
       const somaGenEstimadaDia = {};
 
@@ -127,10 +126,8 @@ class DevicesController {
       }
 
       return res.status(200).json({
-        message: "Somas calculadas com sucesso!",
-        somaPorDiaReal: somaGenRealDia,
-        somaPorDiaEstimada: somaGenEstimadaDia,
-      
+        realGeneration: somaGenRealDia,
+        estimatedGeneration: somaGenEstimadaDia,
       });
     } catch (error) {
       return res
@@ -138,7 +135,7 @@ class DevicesController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  //Esta API calcula a soma diária de gerações real e estimada para um intervalo de datas específico, considerando apenas dispositivos associados a um usuário. 
+  //Esta API calcula a soma diária de gerações real e estimada para um intervalo de datas específico, considerando apenas dispositivos associados a um usuário.
   //Retorna as somas calculadas como resposta. Em caso de sucesso, a mensagem indica o cálculo bem-sucedido; em caso de erro, uma mensagem de falha é retornada.
   async sumGeneration(req, res) {
     try {
@@ -154,8 +151,8 @@ class DevicesController {
               // sta_uuid: "b5f9a5f7-2f67-4ff2-8645-47f55d265e4e",
               [Op.or]: [
                 { dev_deleted: false },
-                { dev_deleted: { [Op.is]: null } }
-              ]
+                { dev_deleted: { [Op.is]: null } },
+              ],
             },
             include: [
               {
@@ -174,7 +171,7 @@ class DevicesController {
         },
         attributes: ["gen_date", "gen_real", "gen_estimated"],
       });
-      
+
       const somaGenRealDia = {};
       const somaGenEstimadaDia = {};
 
@@ -207,7 +204,6 @@ class DevicesController {
         message: "Somas calculadas com sucesso!",
         somaPorDiaReal: somaGenRealDia,
         somaPorDiaEstimada: somaGenEstimadaDia,
-      
       });
     } catch (error) {
       return res
