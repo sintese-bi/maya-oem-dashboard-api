@@ -1086,22 +1086,22 @@ class UsersController {
       );
       console.log("Teste 1");
       const result = await Devices.findAll({
-        attributes:["dev_name"],
+        attributes: ["dev_uuid"],
         where: {
           dev_email: {
-            [Sequelize.Op.not]: null,
+            [Op.not]: null,
           },
         },
       });
       
-      console.log(result);
+      
       const dev_uuids = result.map((device) => device.dev_uuid);
-
+      console.log(dev_uuids.length)
       // Array de objetos com dev_uuid e base64 do PDF
       //gen_real/gen_estimada *100
       const mailPromises = dev_uuids.map(async (devUuid) => {
         const dev_uuid = devUuid;
-        console.log(dev_uuid);
+        
         const result = await Generation.findAll({
           attributes: ["gen_real", "gen_estimated"],
 
@@ -1138,12 +1138,12 @@ class UsersController {
           sumestimatedNew,
           percentNew,
         ];
-        console.log(dev_element);
-        const attachment = {
-          filename: "relatorio.pdf",
-          content: base64,
-          encoding: "base64",
-        };
+        
+        // const attachment = {
+        //   filename: "relatorio.pdf",
+        //   content: base64,
+        //   encoding: "base64",
+        // };
 
         const searchDeviceEmail = await Devices.findOne({
           where: { dev_uuid: dev_uuid },
@@ -1166,7 +1166,7 @@ class UsersController {
           subject: "Relatório de dados de Geração",
           text: "",
           html: emailBody,
-          attachments: [attachment],
+          // attachments: [attachment],
         };
 
         try {
