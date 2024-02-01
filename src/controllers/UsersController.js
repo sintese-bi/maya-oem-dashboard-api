@@ -1084,19 +1084,24 @@ class UsersController {
         currentDate.getMonth() + 1,
         0
       );
+      console.log("Teste 1");
       const result = await Devices.findAll({
-        attributes:["dev_uuid"],
+        attributes:["dev_name"],
         where: {
           dev_email: {
             [Sequelize.Op.not]: null,
           },
         },
       });
-      const dev_uuids = result.map((device) => device.dev_uuid);
       
+      console.log(result);
+      const dev_uuids = result.map((device) => device.dev_uuid);
+
+      // Array de objetos com dev_uuid e base64 do PDF
       //gen_real/gen_estimada *100
-      const mailPromises = dev_uuids.map(async (pdfData) => {
-        const { dev_uuid } = pdfData;
+      const mailPromises = dev_uuids.map(async (devUuid) => {
+        const dev_uuid = devUuid;
+        console.log(dev_uuid);
         const result = await Generation.findAll({
           attributes: ["gen_real", "gen_estimated"],
 
@@ -1112,6 +1117,7 @@ class UsersController {
 
           where: { dev_uuid: dev_uuid },
         });
+
         const sumreal = await result.reduce(
           (acc, atual) => acc + atual.gen_real,
           0
