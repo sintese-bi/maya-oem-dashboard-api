@@ -1084,11 +1084,19 @@ class UsersController {
         currentDate.getMonth() + 1,
         0
       );
-
-      const pdfDataArray = req.body; // Array de objetos com dev_uuid e base64 do PDF
+      const result = await Devices.findAll({
+        attributes:["dev_uuid"],
+        where: {
+          dev_email: {
+            [Sequelize.Op.not]: null,
+          },
+        },
+      });
+      const dev_uuids = result.map((device) => device.dev_uuid);
+      
       //gen_real/gen_estimada *100
-      const mailPromises = pdfDataArray.map(async (pdfData) => {
-        const { base64, dev_uuid } = pdfData;
+      const mailPromises = dev_uuids.map(async (pdfData) => {
+        const { dev_uuid } = pdfData;
         const result = await Generation.findAll({
           attributes: ["gen_real", "gen_estimated"],
 
