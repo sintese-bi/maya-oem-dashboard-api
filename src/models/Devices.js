@@ -15,6 +15,9 @@ class Devices extends Model {
         dev_lat:{
           type:DataTypes.FLOAT
         },
+        dev_status_count:{
+          type:DataTypes.INTEGER
+        },
         dev_long:{
           type:DataTypes.FLOAT
         },
