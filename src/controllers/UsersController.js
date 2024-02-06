@@ -1093,15 +1093,14 @@ class UsersController {
           },
         },
       });
-      
-      
+
       const dev_uuids = result.map((device) => device.dev_uuid);
-      console.log(dev_uuids.length)
+      console.log(dev_uuids.length);
       // Array de objetos com dev_uuid e base64 do PDF
       //gen_real/gen_estimada *100
       const mailPromises = dev_uuids.map(async (devUuid) => {
         const dev_uuid = devUuid;
-        
+
         const result = await Generation.findAll({
           attributes: ["gen_real", "gen_estimated"],
 
@@ -1138,7 +1137,7 @@ class UsersController {
           sumestimatedNew,
           percentNew,
         ];
-        
+
         // const attachment = {
         //   filename: "relatorio.pdf",
         //   content: base64,
@@ -1650,7 +1649,7 @@ class UsersController {
       const { use_uuid } = req.body;
 
       const infoBrand = await Brand.findAll({
-        attributes: ["bl_login", "bl_password", "bl_check"],
+        attributes: ["bl_name", "bl_login", "bl_password", "bl_check"],
         where: {
           bl_created_at: {
             [Op.between]: [startOfDay, endOfDay],
