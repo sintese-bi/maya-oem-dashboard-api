@@ -1084,11 +1084,23 @@ class UsersController {
         currentDate.getMonth() + 1,
         0
       );
+      console.log("Teste 1");
+      const result = await Devices.findAll({
+        attributes: ["dev_uuid"],
+        where: {
+          dev_email: {
+            [Op.not]: null,
+          },
+        },
+      });
 
-      const pdfDataArray = req.body; // Array de objetos com dev_uuid e base64 do PDF
+      const dev_uuids = result.map((device) => device.dev_uuid);
+      console.log(dev_uuids.length);
+      // Array de objetos com dev_uuid e base64 do PDF
       //gen_real/gen_estimada *100
-      const mailPromises = pdfDataArray.map(async (pdfData) => {
-        const { base64, dev_uuid } = pdfData;
+      const mailPromises = dev_uuids.map(async (devUuid) => {
+        const dev_uuid = devUuid;
+
         const result = await Generation.findAll({
           attributes: ["gen_real", "gen_estimated"],
 
@@ -1104,6 +1116,7 @@ class UsersController {
 
           where: { dev_uuid: dev_uuid },
         });
+
         const sumreal = await result.reduce(
           (acc, atual) => acc + atual.gen_real,
           0
@@ -1124,12 +1137,12 @@ class UsersController {
           sumestimatedNew,
           percentNew,
         ];
-        console.log(dev_element);
-        const attachment = {
-          filename: "relatorio.pdf",
-          content: base64,
-          encoding: "base64",
-        };
+
+        // const attachment = {
+        //   filename: "relatorio.pdf",
+        //   content: base64,
+        //   encoding: "base64",
+        // };
 
         const searchDeviceEmail = await Devices.findOne({
           where: { dev_uuid: dev_uuid },
@@ -1152,7 +1165,7 @@ class UsersController {
           subject: "Relatório de dados de Geração",
           text: "",
           html: emailBody,
-          attachments: [attachment],
+          // attachments: [attachment],
         };
 
         try {
@@ -1636,7 +1649,7 @@ class UsersController {
       const { use_uuid } = req.body;
 
       const infoBrand = await Brand.findAll({
-        attributes: ["bl_login", "bl_password", "bl_check"],
+        attributes: ["bl_name", "bl_login", "bl_password", "bl_check"],
         where: {
           bl_created_at: {
             [Op.between]: [startOfDay, endOfDay],
