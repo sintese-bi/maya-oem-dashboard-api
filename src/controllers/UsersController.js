@@ -20,6 +20,7 @@ import Reports from "../models/Reports";
 import cron from "node-cron";
 import Invoice_received from "../models/Invoice_received";
 import Brand_Info from "../models/Brand_info";
+import { generateFile } from "../utils/generateMassiveReports";
 import multer from "multer";
 import XLSX from "xlsx";
 require("dotenv").config();
@@ -29,14 +30,15 @@ const transporter = nodemailer.createTransport({
   service: "gmail",
   host: "smtp.gmail.com",
   port: 587,
+  pool: true,
 
-  secure: true, //alterar
+  // secure: true, //alterar
   auth: {
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
   tls: {
-    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
+    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
   },
 });
 
@@ -1112,7 +1114,7 @@ class UsersController {
           },
         });
         const cap = await Devices.findOne({
-          attributes: ["dev_capacity"],
+          attributes: ["dev_capacity", "dev_name", "dev_email"],
 
           where: { dev_uuid: dev_uuid },
         });
@@ -1127,27 +1129,42 @@ class UsersController {
           0
         );
         const sumestimatedNew = sumestimated.toFixed(2);
-        const percent = (sumestimated / sumreal) * 100;
-        const percentNew = percent.toFixed(2);
+        let percentNew;
+        if (sumreal == 0) {
+          percentNew = 0;
+        } else {
+          const percent = (sumestimated / sumreal) * 100;
+          percentNew = percent.toFixed(2);
+        }
 
-        const dev_element = [
+        const dev_element = {
+          dev_uuid,
+          capacity: cap.dev_capacity,
+          name: cap.dev_name,
+          sumrealNew,
+          sumestimatedNew,
+          percentNew,
+        };
+
+        console.log(
           dev_uuid,
           cap.dev_capacity,
           sumrealNew,
           sumestimatedNew,
-          percentNew,
-        ];
+          percentNew
+        );
+        const report = await generateFile(dev_element);
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+        const attachment = {
+          filename: "relatorio.pdf",
+          content: report,
+          encoding: "base64",
+        };
 
-        // const attachment = {
-        //   filename: "relatorio.pdf",
-        //   content: base64,
-        //   encoding: "base64",
-        // };
-
-        const searchDeviceEmail = await Devices.findOne({
-          where: { dev_uuid: dev_uuid },
-          attributes: ["dev_email"],
-        });
+        // const searchDeviceEmail = await Devices.findOne({
+        //   where: { dev_uuid: dev_uuid },
+        //   attributes: ["dev_email"],
+        // });
 
         const emailBody = `
           Prezado usuário,
@@ -1160,12 +1177,12 @@ class UsersController {
         `;
 
         const mailOptions = {
-          from: '"noreplymayawatch@gmail.com',
-          to: [],
+          from: "noreplymayawatch@gmail.com",
+          to: cap.dev_email, //substituir por  cap.dev_email, mas antes faça um console.log(cap.dev_email)
           subject: "Relatório de dados de Geração",
           text: "",
           html: emailBody,
-          // attachments: [attachment],
+          attachments: attachment,
         };
 
         try {
@@ -1189,6 +1206,7 @@ class UsersController {
       res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
   }
+
   //Essa API atualiza o endereço de e-mail de um usuário usando o UUID fornecido (use_uuid).
   //Ela verifica se o novo e-mail é válido, se ainda não está em uso por outro usuário e, em seguida, atualiza o e-mail na base de dados.
   async portalemailLogins(req, res) {
