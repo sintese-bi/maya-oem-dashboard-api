@@ -32,13 +32,13 @@ const transporter = nodemailer.createTransport({
   port: 587,
   pool: true,
 
-  // secure: true, //alterar
+  secure: true, 
   auth: {
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
   tls: {
-    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
+    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
   },
 });
 
@@ -1178,7 +1178,7 @@ class UsersController {
 
         const mailOptions = {
           from: "noreplymayawatch@gmail.com",
-          to: cap.dev_email, //substituir por  cap.dev_email, mas antes faça um console.log(cap.dev_email)
+          to: cap.dev_email, 
           subject: "Relatório de dados de Geração",
           text: "",
           html: emailBody,
