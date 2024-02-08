@@ -78,7 +78,7 @@ routes.post(
 routes.get(`${apiVersion}/emailalert`, checkToken, UsersController.emailAlert);
 routes.post(
   `${apiVersion}/brandinfo`,
-  checkToken,
+  
   UsersController.brandInformation
 );
 routes.post(
@@ -191,7 +191,7 @@ routes.post(
   checkToken,
   UsersController.UpdateUserInformation
 );
-routes.get(`${apiVersion}/massemail`, UsersController.massEmail);
+// routes.get(`${apiVersion}/massemail`, UsersController.massEmail);
 routes.post(
   `${apiVersion}/emaildash`,
   checkToken,
