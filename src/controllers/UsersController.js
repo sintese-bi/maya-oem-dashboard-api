@@ -32,7 +32,7 @@ const transporter = nodemailer.createTransport({
   port: 587,
   pool: true,
 
-  secure: true, 
+  secure: true,
   auth: {
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
@@ -1178,7 +1178,7 @@ class UsersController {
 
         const mailOptions = {
           from: "noreplymayawatch@gmail.com",
-          to: cap.dev_email, 
+          to: cap.dev_email,
           subject: "Relatório de dados de Geração",
           text: "",
           html: emailBody,
@@ -1683,7 +1683,7 @@ class UsersController {
         bl_name: item.bl_name.toUpperCase(),
         bl_url: item.bl_url,
       }));
-
+      
       return res.status(200).json({ message: [modifiedResult, infoBrand] });
     } catch (error) {
       return res
