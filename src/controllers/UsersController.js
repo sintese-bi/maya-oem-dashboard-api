@@ -1135,7 +1135,14 @@ class UsersController {
                 );
                 const sumestimatedNew = sumestimated.toFixed(2);
                 const percent = (sumestimated / sumreal) * 100;
-                const percentNew = percent.toFixed(2);
+                let percentNew;
+                if (sumreal == 0) {
+                  percentNew = 0;
+                } else {
+                  const percent = (sumestimated / sumreal) * 100;
+                  percentNew = percent.toFixed(2);
+                }
+
                 const dev_element = {
                   dev_uuid,
                   capacity: cap.dev_capacity,
@@ -1192,7 +1199,7 @@ class UsersController {
 
           const mailOptions = {
             from: "noreplymayawatch@gmail.com",
-            to: ["eloymun00@gmail.com"],
+            to: JSON.parse(chunk).email,
             subject: "Relatório de dados de Geração",
             text: "",
             html: emailBody,
@@ -1224,6 +1231,72 @@ class UsersController {
       res.status(200).json("Envio de relatórios em andamento");
     } catch (error) {
       res.status(500).json({ message: "Erro ao retornar os dados!" });
+    }
+  }
+
+  //Essa API atualiza o endereço de e-mail de um usuário usando o UUID fornecido (use_uuid).
+  //Ela verifica se o novo e-mail é válido, se ainda não está em uso por outro usuário e, em seguida, atualiza o e-mail na base de dados.
+  async portalemailLogins(req, res) {
+    try {
+      const { use_uuid, use_email } = req.body;
+      const existingEmail = await Users.findOne({
+        attributes: ["use_email"],
+        where: { use_email: use_email },
+      });
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+      console.log(req.body);
+      if (!emailRegex.test(use_email)) {
+        return res.status(400).json({ message: "O email não é válido." });
+      }
+      if (existingEmail) {
+        return res.status(400).json({ message: "O email já está em uso." });
+      }
+      await Users.update(
+        { use_email: use_email },
+        { where: { use_uuid: use_uuid } }
+      );
+      return res.status(200).json({ message: "Email atualizado com sucesso!" });
+    } catch (error) {
+      {
+        return res.status(500).json({ message: "Erro ao atualizar o email!" });
+      }
+    }
+  }
+  async deviceInformation(req, res) {
+    try {
+      const { use_uuid } = req.body;
+      const par = req.params.par;
+      let whereCondition = {};
+      if (par === "yes") {
+        whereCondition = {
+          [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
+        };
+      }
+      const result = await Devices.findAll({
+        attributes: [
+          "dev_email",
+          "dev_name",
+          "dev_brand",
+          "dev_capacity",
+          "dev_uuid",
+          "dev_address",
+        ],
+        where: whereCondition,
+        include: [
+          {
+            association: "brand_login",
+            attributes: ["bl_uuid"],
+            where: {
+              use_uuid: use_uuid,
+            },
+          },
+        ],
+      });
+      return res.status(200).json(result);
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: "Erro ao retornar os dados das plantas!" });
     }
   }
   //Essa API retorna informações específicas de dispositivos associados a um usuário, identificado pelo UUID fornecido (use_uuid).
