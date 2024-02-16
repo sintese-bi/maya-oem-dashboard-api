@@ -405,9 +405,7 @@ class UsersController {
         attributes: [
           "use_name",
           "use_email",
-
           "use_kwp",
-
           "use_type_system",
           "use_module_numbers",
           "tp_uuid",
@@ -1075,6 +1073,15 @@ class UsersController {
   //Ela aceita uma requisição contendo uma matriz de objetos, onde cada objeto possui um dev_uuid identificando um dispositivo e o conteúdo do PDF em formato base64 (base64).
   async massEmail(req, res) {
     try {
+      const {
+        Readable,
+        Writable,
+        pipeline,
+        Transform,
+      } = require("node:stream");
+      const util = require("util");
+
+      const pipelineAsync = util.promisify(pipeline);
       const currentDate = new Date();
       const firstDayOfMonth = new Date(
         currentDate.getFullYear(),
@@ -1097,179 +1104,126 @@ class UsersController {
       });
 
       const dev_uuids = result.map((device) => device.dev_uuid);
-      console.log(dev_uuids.length);
-      // Array de objetos com dev_uuid e base64 do PDF
-      //gen_real/gen_estimada *100
-      const mailPromises = dev_uuids.map(async (devUuid) => {
-        const dev_uuid = devUuid;
 
-        const result = await Generation.findAll({
-          attributes: ["gen_real", "gen_estimated"],
+      const readableStream = Readable({
+        async read() {
+          try {
+            const results = await Promise.all(
+              dev_uuids.map(async (devUuid) => {
+                const dev_uuid = devUuid;
+                const result = await Generation.findAll({
+                  attributes: ["gen_real", "gen_estimated"],
+                  where: {
+                    dev_uuid: dev_uuid,
+                    gen_date: {
+                      [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                    },
+                  },
+                });
+                const cap = await Devices.findOne({
+                  attributes: ["dev_capacity", "dev_name"],
+                  where: { dev_uuid: dev_uuid },
+                });
+                const sumreal = await result.reduce(
+                  (acc, atual) => acc + atual.gen_real,
+                  0
+                );
+                const sumrealNew = sumreal.toFixed(2);
+                const sumestimated = await result.reduce(
+                  (acc, atual) => acc + atual.gen_estimated,
+                  0
+                );
+                const sumestimatedNew = sumestimated.toFixed(2);
+                const percent = (sumestimated / sumreal) * 100;
+                const percentNew = percent.toFixed(2);
+                const dev_element = {
+                  dev_uuid,
+                  capacity: cap.dev_capacity,
+                  name: cap.dev_name,
+                  email: cap.dev_email,
+                  sumrealNew,
+                  sumestimatedNew,
+                  percentNew,
+                };
+                return JSON.stringify(dev_element);
+              })
+            );
 
-          where: {
-            dev_uuid: dev_uuid,
-            gen_date: {
-              [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-            },
-          },
-        });
-        const cap = await Devices.findOne({
-          attributes: ["dev_capacity", "dev_name", "dev_email"],
+            results.forEach((result) => this.push(result));
 
-          where: { dev_uuid: dev_uuid },
-        });
-
-        const sumreal = await result.reduce(
-          (acc, atual) => acc + atual.gen_real,
-          0
-        );
-        const sumrealNew = sumreal.toFixed(2);
-        const sumestimated = await result.reduce(
-          (acc, atual) => acc + atual.gen_estimated,
-          0
-        );
-        const sumestimatedNew = sumestimated.toFixed(2);
-        let percentNew;
-        if (sumreal == 0) {
-          percentNew = 0;
-        } else {
-          const percent = (sumestimated / sumreal) * 100;
-          percentNew = percent.toFixed(2);
-        }
-
-        const dev_element = {
-          dev_uuid,
-          capacity: cap.dev_capacity,
-          name: cap.dev_name,
-          sumrealNew,
-          sumestimatedNew,
-          percentNew,
-        };
-
-        console.log(
-          dev_uuid,
-          cap.dev_capacity,
-          sumrealNew,
-          sumestimatedNew,
-          percentNew
-        );
-        const report = await generateFile(dev_element);
-        await new Promise((resolve) => setTimeout(resolve, 10000));
-        const attachment = {
-          filename: "relatorio.pdf",
-          content: report,
-          encoding: "base64",
-        };
-
-        // const searchDeviceEmail = await Devices.findOne({
-        //   where: { dev_uuid: dev_uuid },
-        //   attributes: ["dev_email"],
-        // });
-
-        const emailBody = `
-          Prezado usuário,
-          
-          Anexamos um relatório em formato PDF com os dados de geração da usina. Este relatório inclui informações referentes à geração diária, semanal e mensal, apresentadas de forma clara e concisa.
-  
-          Além disso, no documento, você encontrará um gráfico temporal que ilustra a variação na produção de energia ao longo do período analisado.
-  
-          <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
-        `;
-
-        const mailOptions = {
-          from: "noreplymayawatch@gmail.com",
-          to: cap.dev_email,
-          subject: "Relatório de dados de Geração",
-          text: "",
-          html: emailBody,
-          attachments: attachment,
-        };
-
-        try {
-          await transporter.sendMail(mailOptions);
-          return {
-            success: true,
-            message: `Email enviado com sucesso para dev_uuid: ${dev_uuid}`,
-          };
-        } catch (error) {
-          return {
-            success: false,
-            message: `Erro ao enviar o email para dev_uuid: ${dev_uuid} - ${error}`,
-          };
-        }
+            this.push(null);
+          } catch (error) {
+            this.emit("error", error);
+          }
+        },
       });
 
-      const results = await Promise.all(mailPromises);
+      const transformStream = Transform({
+        async transform(chunk, encode, cb) {
+          let report = await generateFile(JSON.parse(chunk));
+          let userWithReport = JSON.parse(chunk);
+          userWithReport.report = report;
+          cb(null, JSON.stringify(userWithReport));
+        },
+      });
 
-      res.status(200).json(results);
+      const writableStream = Writable({
+        async write(chunk, enconding, cb) {
+          const attachment = {
+            filename: "relatorio.pdf",
+            content: JSON.parse(chunk).report.base64,
+            encoding: "base64",
+          };
+
+          // const searchDeviceEmail = await Devices.findOne({
+          //   where: { dev_uuid: dev_uuid },
+          //   attributes: ["dev_email"],
+          // });
+
+          const emailBody = `
+            Prezado usuário,
+            
+            Anexamos um relatório em formato PDF com os dados de geração da usina. Este relatório inclui informações referentes à geração diária, semanal e mensal, apresentadas de forma clara e concisa.
+    
+            Além disso, no documento, você encontrará um gráfico temporal que ilustra a variação na produção de energia ao longo do período analisado.
+    
+            <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
+          `;
+
+          const mailOptions = {
+            from: "noreplymayawatch@gmail.com",
+            to: ["eloymun00@gmail.com"],
+            subject: "Relatório de dados de Geração",
+            text: "",
+            html: emailBody,
+            attachments: attachment,
+          };
+
+          try {
+            await transporter.sendMail(mailOptions);
+            console.log({
+              success: true,
+              message: `Email enviado com sucesso para dev_uuid: ${
+                JSON.parse(chunk).dev_uuid
+              }`,
+            });
+          } catch (error) {
+            console.log({
+              success: false,
+              message: `Erro ao enviar o email para dev_uuid: ${
+                JSON.parse(chunk).dev_uuid
+              } - ${error}`,
+            });
+          }
+          cb();
+        },
+      });
+
+      pipelineAsync(readableStream, transformStream, writableStream);
+
+      res.status(200).json("Envio de relatórios em andamento");
     } catch (error) {
       res.status(500).json({ message: "Erro ao retornar os dados!" });
-    }
-  }
-
-  //Essa API atualiza o endereço de e-mail de um usuário usando o UUID fornecido (use_uuid).
-  //Ela verifica se o novo e-mail é válido, se ainda não está em uso por outro usuário e, em seguida, atualiza o e-mail na base de dados.
-  async portalemailLogins(req, res) {
-    try {
-      const { use_uuid, use_email } = req.body;
-      const existingEmail = await Users.findOne({
-        attributes: ["use_email"],
-        where: { use_email: use_email },
-      });
-      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-      console.log(req.body);
-      if (!emailRegex.test(use_email)) {
-        return res.status(400).json({ message: "O email não é válido." });
-      }
-      if (existingEmail) {
-        return res.status(400).json({ message: "O email já está em uso." });
-      }
-      await Users.update(
-        { use_email: use_email },
-        { where: { use_uuid: use_uuid } }
-      );
-      return res.status(200).json({ message: "Email atualizado com sucesso!" });
-    } catch (error) {
-      {
-        return res.status(500).json({ message: "Erro ao atualizar o email!" });
-      }
-    }
-  }
-  async deviceInformation(req, res) {
-    try {
-      const { use_uuid } = req.body;
-      const par = req.params.par;
-      let whereCondition = {};
-      if (par === "yes") {
-        whereCondition = {
-          [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
-        };
-      }
-      const result = await Devices.findAll({
-        attributes: [
-          "dev_email",
-          "dev_name",
-          "dev_brand",
-          "dev_capacity",
-          "dev_uuid",
-          "dev_address",
-        ],
-        where: whereCondition,
-        include: [
-          {
-            association: "brand_login",
-            attributes: ["bl_uuid"],
-            where: {
-              use_uuid: use_uuid,
-            },
-          },
-        ],
-      });
-      return res.status(200).json(result);
-    } catch (error) {
-      return res
-        .status(500)
-        .json({ message: "Erro ao retornar os dados das plantas!" });
     }
   }
   //Essa API retorna informações específicas de dispositivos associados a um usuário, identificado pelo UUID fornecido (use_uuid).
@@ -1683,7 +1637,7 @@ class UsersController {
         bl_name: item.bl_name.toUpperCase(),
         bl_url: item.bl_url,
       }));
-      
+
       return res.status(200).json({ message: [modifiedResult, infoBrand] });
     } catch (error) {
       return res
