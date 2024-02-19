@@ -133,5 +133,5 @@ export const generateFile = async (params) => {
   const pdfBytes = await pdfDoc.save();
 
   const base64DataUri = await pdfDoc.saveAsBase64();
-  return base64DataUri ;
+  return { base64: base64DataUri };
 };
