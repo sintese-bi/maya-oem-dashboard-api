@@ -1121,7 +1121,7 @@ class UsersController {
                   },
                 });
                 const cap = await Devices.findOne({
-                  attributes: ["dev_capacity", "dev_name"],
+                  attributes: ["dev_capacity", "dev_name", "dev_email"],
                   where: { dev_uuid: dev_uuid },
                 });
                 const sumreal = await result.reduce(
