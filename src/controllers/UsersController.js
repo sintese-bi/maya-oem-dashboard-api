@@ -2079,5 +2079,5 @@ class UsersController {
   }
 }
 const usersController = new UsersController();
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarVerificacaoDeAlertas();
 export default new UsersController();
