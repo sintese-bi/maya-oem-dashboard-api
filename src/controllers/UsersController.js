@@ -1112,7 +1112,7 @@ class UsersController {
               dev_uuids.map(async (devUuid) => {
                 const dev_uuid = devUuid;
                 const result = await Generation.findAll({
-                  attributes: ["gen_real", "gen_estimated"],
+                  attributes: ["gen_real", "gen_estimated", "gen_date"],
                   where: {
                     dev_uuid: dev_uuid,
                     gen_date: {
@@ -1120,6 +1120,16 @@ class UsersController {
                     },
                   },
                 });
+                //Realgeneration
+                const realGeneration = result.map((element) => {
+                  return { value: element.gen_real, date: element.gen_date };
+                });
+                console.log(realGeneration);
+                //Estimatedgeneration
+                const estimatedGeneration = result.map((element) => {
+                  return element.gen_estimated;
+                });
+                console.log(estimatedGeneration);
                 const cap = await Devices.findOne({
                   attributes: ["dev_capacity", "dev_name", "dev_email"],
                   where: { dev_uuid: dev_uuid },
@@ -1151,6 +1161,8 @@ class UsersController {
                   sumrealNew,
                   sumestimatedNew,
                   percentNew,
+                  realGeneration,
+                  estimatedGeneration
                 };
                 return JSON.stringify(dev_element);
               })
