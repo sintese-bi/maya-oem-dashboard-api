@@ -184,7 +184,7 @@ routes.post(
 );
 routes.get(
   `${apiVersion}/invoicevalues`,
-  
+  checkToken,
   UsersController.invoiceValues
 );
 routes.post(

@@ -1964,7 +1964,16 @@ class UsersController {
         }
       );
 
-      return res.status(200).json({ message: result.data });
+      const secondResult = await axios.post(
+        "https://solarmanager.com.br/api/relatorios/todos-comissionamentos-vendedor",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${result.data.access_token}`,
+          },
+        }
+      );
+      return res.status(200).json(secondResult.data);
     } catch (error) {
       return res.status(500).json({ message: `Erro: ${error}` });
     }
@@ -2109,5 +2118,5 @@ class UsersController {
   }
 }
 const usersController = new UsersController();
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarVerificacaoDeAlertas();
 export default new UsersController();
