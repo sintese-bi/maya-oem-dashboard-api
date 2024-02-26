@@ -18,6 +18,7 @@ import csvParser from "csv-parser";
 import createCsvWriter from "csv-writer";
 import Reports from "../models/Reports";
 import cron from "node-cron";
+import axios from "axios";
 import Invoice_received from "../models/Invoice_received";
 import Brand_Info from "../models/Brand_info";
 import { generateFile } from "../utils/generateMassiveReports";
@@ -1162,7 +1163,7 @@ class UsersController {
                   sumestimatedNew,
                   percentNew,
                   realGeneration,
-                  estimatedGeneration
+                  estimatedGeneration,
                 };
                 return JSON.stringify(dev_element);
               })
@@ -1947,6 +1948,23 @@ class UsersController {
         }
       });
       return res.status(200).json({ message: "Email enviado com sucesso!" });
+    } catch (error) {
+      return res.status(500).json({ message: `Erro: ${error}` });
+    }
+  }
+  async invoiceValues(req, res) {
+    try {
+      const email = process.env.EMAIL_FATURA;
+      const password = process.env.PASSWORD;
+      const result = await axios.post(
+        "https://solarmanager.com.br/api/relatorios/login",
+        {
+          email: email,
+          password: password,
+        }
+      );
+
+      return res.status(200).json({ message: result.data });
     } catch (error) {
       return res.status(500).json({ message: `Erro: ${error}` });
     }

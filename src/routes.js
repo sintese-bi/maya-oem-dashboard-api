@@ -182,6 +182,11 @@ routes.post(
   checkToken,
   UsersController.cancelUserPlan
 );
+routes.get(
+  `${apiVersion}/invoicevalues`,
+  
+  UsersController.invoiceValues
+);
 routes.post(
   `${apiVersion}/updateuser`,
   checkToken,
