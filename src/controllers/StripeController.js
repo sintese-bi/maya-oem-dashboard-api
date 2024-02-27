@@ -16,13 +16,13 @@ const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
 
-  secure: false, //alterar
+  secure: true, //alterar
   auth: {
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
   tls: {
-    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
+    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
   },
 });
 
