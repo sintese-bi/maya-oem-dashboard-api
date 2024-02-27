@@ -211,6 +211,81 @@ class DevicesController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  async sumGenerationLastHour(req, res) {
+    try {
+      const { use_uuid } = req.body;
+
+      const currentDate = new Date();
+      const startOfDay = new Date(currentDate);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(currentDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const result = await Generation.findAll({
+        include: [
+          {
+            association: "devices",
+            where: {
+              [Op.or]: [
+                { dev_deleted: false },
+                { dev_deleted: { [Op.is]: null } },
+              ],
+            },
+            include: [
+              {
+                association: "brand_login",
+                where: {
+                  use_uuid: use_uuid,
+                },
+              },
+            ],
+          },
+        ],
+        where: {
+          gen_created_at: {
+            [Op.between]: [startOfDay, endOfDay],
+          },
+        },
+        attributes: ["gen_date", "gen_real", "gen_estimated", "gen_created_at"],
+        order: [["gen_created_at", "DESC"]],
+      });
+
+      const sumsPerHour = {};
+
+      result.forEach((item) => {
+        if (item.gen_created_at !== undefined) {
+          // Ajuste para obter a hora correta na timezone local
+          const hourKey = new Date(item.gen_created_at).getUTCHours();
+
+          // Somar os valores para cada hora
+          sumsPerHour[hourKey] = {
+            gen_real: (sumsPerHour[hourKey]?.gen_real || 0) + item.gen_real,
+            gen_estimated:
+              (sumsPerHour[hourKey]?.gen_estimated || 0) + item.gen_estimated,
+          };
+        }
+      });
+
+      // Preencher horas ausentes com 0
+      for (let hour = 0; hour < 24; hour++) {
+        sumsPerHour[hour] = sumsPerHour[hour] || {
+          gen_real: 0,
+          gen_estimated: 0,
+        };
+      }
+
+      return res.status(200).json({
+        message: "Somas calculadas com sucesso!",
+        resultado: result,
+        sumsPerHour: sumsPerHour,
+      });
+    } catch (error) {
+      return res.status(400).json({
+        message: `Erro ao retornar os dados. ${error.message || error}`,
+      });
+    }
+  }
 }
 
 export default new DevicesController();
