@@ -12,8 +12,11 @@ class Generation extends Model {
         gen_estimated: {
           type: DataTypes.FLOAT,
           get: function () {
-            return this.getDataValue('gen_estimated') && this.getDataValue('gen_estimated').toFixed(2) * 1
-          }
+            return (
+              this.getDataValue("gen_estimated") &&
+              this.getDataValue("gen_estimated").toFixed(2) * 1
+            );
+          },
         },
         gen_real: {
           type: DataTypes.FLOAT,
@@ -23,6 +26,10 @@ class Generation extends Model {
         },
         dev_uuid: {
           type: DataTypes.UUID,
+        },
+        gen_created_at: {
+          type: DataTypes.DATE,
+          defaultValue: DataTypes.NOW,
         },
         // gen_projection: {
         //   type: DataTypes.FLOAT,
@@ -43,8 +50,8 @@ class Generation extends Model {
   }
   static associate(models) {
     this.belongsTo(models.Devices, {
-      foreignKey: 'dev_uuid',
-      as: 'devices'
+      foreignKey: "dev_uuid",
+      as: "devices",
     });
   }
 }

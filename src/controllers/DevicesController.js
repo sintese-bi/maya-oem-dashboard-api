@@ -216,14 +216,11 @@ class DevicesController {
       const { use_uuid } = req.body;
 
       const currentDate = new Date();
-      const startOfDay = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        currentDate.getDate(),
-        0,
-        0,
-        0
-      );
+      const startOfDay = new Date(currentDate);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(currentDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
       const result = await Generation.findAll({
         include: [
@@ -247,19 +244,40 @@ class DevicesController {
         ],
         where: {
           gen_created_at: {
-            [Op.between]: [startOfDay, currentDate],
+            [Op.between]: [startOfDay, endOfDay],
           },
         },
         attributes: ["gen_date", "gen_real", "gen_estimated", "gen_created_at"],
         order: [["gen_created_at", "DESC"]],
       });
 
-      
+      const sumsPerHour = {};
+
+      result.forEach((item) => {
+        if (item.gen_created_at !== undefined) {
+          const hour = new Date(item.gen_created_at).getHours();
+
+          // Somar os valores de todos os dispositivos para cada hora
+          sumsPerHour[hour] = {
+            gen_real: (sumsPerHour[hour]?.gen_real || 0) + item.gen_real,
+            gen_estimated:
+              (sumsPerHour[hour]?.gen_estimated || 0) + item.gen_estimated,
+          };
+        }
+      });
+
+      // Preencher horas ausentes com 0
+      for (let hour = 0; hour < 24; hour++) {
+        sumsPerHour[hour] = sumsPerHour[hour] || {
+          gen_real: 0,
+          gen_estimated: 0,
+        };
+      }
 
       return res.status(200).json({
         message: "Somas calculadas com sucesso!",
         resultado: result,
-
+        sumsPerHour: sumsPerHour,
       });
     } catch (error) {
       return res.status(400).json({
