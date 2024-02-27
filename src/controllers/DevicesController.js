@@ -211,6 +211,8 @@ class DevicesController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+
+  //Essa API soma os valores de gen_real e gen_estimated para todas as horas do dia corrente
   async sumGenerationLastHour(req, res) {
     try {
       const { use_uuid } = req.body;
@@ -254,16 +256,14 @@ class DevicesController {
       const sumsPerHour = {};
 
       result.forEach((item) => {
-        if (item.gen_created_at !== undefined) {
-          const hour = new Date(item.gen_created_at).getHours();
+        const hour = new Date(item.gen_created_at).getHours();
 
-          // Somar os valores de todos os dispositivos para cada hora
-          sumsPerHour[hour] = {
-            gen_real: (sumsPerHour[hour]?.gen_real || 0) + item.gen_real,
-            gen_estimated:
-              (sumsPerHour[hour]?.gen_estimated || 0) + item.gen_estimated,
-          };
-        }
+        // Somar os valores de todos os dispositivos para cada hora
+        sumsPerHour[hour] = {
+          gen_real: (sumsPerHour[hour]?.gen_real || 0) + item.gen_real,
+          gen_estimated:
+            (sumsPerHour[hour]?.gen_estimated || 0) + item.gen_estimated,
+        };
       });
 
       // Preencher horas ausentes com 0
