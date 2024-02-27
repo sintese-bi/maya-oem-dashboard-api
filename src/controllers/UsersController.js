@@ -1774,12 +1774,26 @@ class UsersController {
       const result = await Brand_Info.findAll({
         attributes: ["bl_name", "bl_url"],
       });
-      const modifiedResult = result.map((item) => ({
-        bl_name: item.bl_name.toUpperCase(),
-        bl_url: item.bl_url,
-      }));
 
-      return res.status(200).json({ message: [modifiedResult, infoBrand] });
+      const uniqueBlNamesSet = new Set();
+
+      const modifiedResult = result.map((item) => {
+        const uppercasedBlName = item.bl_name.toUpperCase();
+
+        if (!uniqueBlNamesSet.has(uppercasedBlName)) {
+          uniqueBlNamesSet.add(uppercasedBlName);
+          return {
+            bl_name: uppercasedBlName,
+            bl_url: item.bl_url,
+          };
+        }
+
+        return null;
+      });
+
+      const filteredResult = modifiedResult.filter((item) => item !== null);
+
+      return res.status(200).json({ message: [filteredResult, infoBrand] });
     } catch (error) {
       return res
         .status(400)
