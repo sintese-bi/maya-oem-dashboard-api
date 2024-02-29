@@ -1541,6 +1541,7 @@ class UsersController {
   async deleteUser(req, res) {
     try {
       const { use_uuid, use_deleted } = req.body;
+      console.log(use_uuid, use_deleted);
       await Users.update(
         {
           use_type_member: false,
@@ -1550,11 +1551,27 @@ class UsersController {
 
         { where: { use_uuid: use_uuid } }
       );
+      if (use_deleted == true) {
+        await Brand.update(
+          { bl_deleted: 0 },
+
+          { where: { use_uuid: use_uuid } }
+        );
+      } else {
+        await Brand.update(
+          { bl_deleted: 1 },
+
+          { where: { use_uuid: use_uuid } }
+        );
+      }
+
       return res
         .status(200)
         .json({ message: "Dados atualizados com sucesso!" });
     } catch (error) {
-      return res.status(500).json({ message: "Erro ao atualizar dados!" });
+      return res
+        .status(500)
+        .json({ message: `Erro ao atualizar dados:${error}` });
     }
   }
 
