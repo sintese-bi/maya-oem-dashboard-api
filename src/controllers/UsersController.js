@@ -1540,12 +1540,12 @@ class UsersController {
   //Em caso de sucesso, retorna uma mensagem de atualização bem-sucedida; em caso de erro, retorna uma mensagem de falha.
   async deleteUser(req, res) {
     try {
-      const { use_uuid } = req.body;
+      const { use_uuid, use_deleted } = req.body;
       await Users.update(
         {
           use_type_member: false,
           pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
-          use_deleted: true,
+          use_deleted: use_deleted,
         },
 
         { where: { use_uuid: use_uuid } }
