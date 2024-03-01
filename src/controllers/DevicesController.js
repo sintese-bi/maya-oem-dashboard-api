@@ -55,19 +55,16 @@ class DevicesController {
   async bigNumberSum(req, res) {
     try {
       const { use_uuid } = req.body;
+      //Ajuste data
       const currentDate = new Date();
+      const currentYear = currentDate.getUTCFullYear();
+      const currentMonth = currentDate.getUTCMonth();
 
-      const firstDayOfMonth = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        1
-      );
+      const firstDayOfMonth = new Date(Date.UTC(currentYear, currentMonth, 1));
       const lastDayOfMonth = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1,
-        0
+        Date.UTC(currentYear, currentMonth + 1, 0)
       );
-
+      
       const result = await Generation.findAll({
         include: [
           {
@@ -276,7 +273,7 @@ class DevicesController {
 
       return res.status(200).json({
         message: "Somas calculadas com sucesso!",
-        resultado: result,
+        
         sumsPerHour: sumsPerHour,
       });
     } catch (error) {
