@@ -55,19 +55,16 @@ class DevicesController {
   async bigNumberSum(req, res) {
     try {
       const { use_uuid } = req.body;
+      //Ajuste data
       const currentDate = new Date();
+      const currentYear = currentDate.getUTCFullYear();
+      const currentMonth = currentDate.getUTCMonth();
 
-      const firstDayOfMonth = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        1
-      );
+      const firstDayOfMonth = new Date(Date.UTC(currentYear, currentMonth, 1));
       const lastDayOfMonth = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1,
-        0
+        Date.UTC(currentYear, currentMonth + 1, 0)
       );
-
+      
       const result = await Generation.findAll({
         include: [
           {
@@ -209,6 +206,80 @@ class DevicesController {
       return res
         .status(400)
         .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+
+  //Essa API soma os valores de gen_real e gen_estimated para todas as horas do dia corrente
+  async sumGenerationLastHour(req, res) {
+    try {
+      const { use_uuid } = req.body;
+
+      const currentDate = new Date();
+      const startOfDay = new Date(currentDate);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(currentDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const result = await Generation.findAll({
+        include: [
+          {
+            association: "devices",
+            where: {
+              [Op.or]: [
+                { dev_deleted: false },
+                { dev_deleted: { [Op.is]: null } },
+              ],
+            },
+            include: [
+              {
+                association: "brand_login",
+                where: {
+                  use_uuid: use_uuid,
+                },
+              },
+            ],
+          },
+        ],
+        where: {
+          gen_created_at: {
+            [Op.between]: [startOfDay, endOfDay],
+          },
+        },
+        attributes: ["gen_date", "gen_real", "gen_estimated", "gen_created_at"],
+        order: [["gen_created_at", "DESC"]],
+      });
+
+      const sumsPerHour = {};
+
+      result.forEach((item) => {
+        const hour = new Date(item.gen_created_at).getHours();
+
+        // Somar os valores de todos os dispositivos para cada hora
+        sumsPerHour[hour] = {
+          gen_real: (sumsPerHour[hour]?.gen_real || 0) + item.gen_real,
+          gen_estimated:
+            (sumsPerHour[hour]?.gen_estimated || 0) + item.gen_estimated,
+        };
+      });
+
+      // Preencher horas ausentes com 0
+      for (let hour = 0; hour < 24; hour++) {
+        sumsPerHour[hour] = sumsPerHour[hour] || {
+          gen_real: 0,
+          gen_estimated: 0,
+        };
+      }
+
+      return res.status(200).json({
+        message: "Somas calculadas com sucesso!",
+        
+        sumsPerHour: sumsPerHour,
+      });
+    } catch (error) {
+      return res.status(400).json({
+        message: `Erro ao retornar os dados. ${error.message || error}`,
+      });
     }
   }
 }
