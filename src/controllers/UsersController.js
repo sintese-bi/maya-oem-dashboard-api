@@ -788,6 +788,13 @@ class UsersController {
         attributes: ["bl_url"],
         where: { bl_name: newnamebrand },
       });
+      // let bl_deleted;
+      // console.log(use_uuid);
+      // if (use_uuid == "a7ed2d10-4340-43df-824d-63ca16979114") {
+      //   bl_deleted = 1;
+      // } else {
+      //   bl_deleted = 0;
+      // }
       const device = await Brand.create({
         use_uuid: use_uuid,
         bl_login: bl_login,
@@ -796,6 +803,7 @@ class UsersController {
         bl_url: result.bl_url,
         bl_quant: bl_quant,
         bl_check: "validating",
+        bl_deleted: 1,
       });
       // await Devices.create({
       //   bl_uuid: device.bl_uuid,
@@ -1535,73 +1543,72 @@ class UsersController {
         .json({ message: `Erro interno do servidor: ${error.message}` });
     }
   }
-  async deleteUser(req, res) {
-    try {
-      const { use_uuid } = req.body;
-      await Users.update(
-        {
-          use_type_member: false,
-          // pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
-          use_deleted: true,
-        },
-
-        { where: { use_uuid: use_uuid } }
-      );
-      return res
-        .status(200)
-        .json({ message: "Dados atualizados com sucesso!" });
-    } catch (error) {
-      return res.status(500).json({ message: "Erro ao atualizar dados!" });
-    }
-  }
-  //Esta API desativa um usuário, modificando seu tipo de membro para 'free' e associando-o a um determinado perfil.
-  //Em caso de sucesso, retorna uma mensagem de atualização bem-sucedida; em caso de erro, retorna uma mensagem de falha.
   // async deleteUser(req, res) {
   //   try {
-  //     const { use_uuid, use_deleted } = req.body;
-  //     console.log(use_uuid, use_deleted);
+  //     const { use_uuid } = req.body;
+  //     await Users.update(
+  //       {
+  //         use_type_member: false,
+  //         // pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
+  //         use_deleted: true,
+  //       },
 
-  //     if (use_deleted == true) {
-  //       await Users.update(
-  //         {
-  //           use_type_member: false,
-  //           // pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
-  //           use_deleted: use_deleted,
-  //         },
-
-  //         { where: { use_uuid: use_uuid } }
-  //       );
-  //       await Brand.update(
-  //         { bl_deleted: 0 },
-
-  //         { where: { use_uuid: use_uuid } }
-  //       );
-  //     } else {
-  //       await Users.update(
-  //         {
-  //           use_type_member: true,
-  //           // pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
-  //           use_deleted: use_deleted,
-  //         },
-
-  //         { where: { use_uuid: use_uuid } }
-  //       );
-  //       await Brand.update(
-  //         { bl_deleted: 1 },
-
-  //         { where: { use_uuid: use_uuid } }
-  //       );
-  //     }
-
+  //       { where: { use_uuid: use_uuid } }
+  //     );
   //     return res
   //       .status(200)
   //       .json({ message: "Dados atualizados com sucesso!" });
   //   } catch (error) {
-  //     return res
-  //       .status(500)
-  //       .json({ message: `Erro ao atualizar dados:${error}` });
+  //     return res.status(500).json({ message: "Erro ao atualizar dados!" });
   //   }
   // }
+  // Esta API desativa um usuário, modificando seu tipo de membro para 'free' e associando-o a um determinado perfil.
+  // Em caso de sucesso, retorna uma mensagem de atualização bem-sucedida; em caso de erro, retorna uma mensagem de falha.
+  async deleteUser(req, res) {
+    try {
+      const { use_uuid, use_deleted } = req.body;
+      console.log(use_deleted);
+      if (use_deleted == true) {
+        await Users.update(
+          {
+            use_type_member: false,
+            // pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
+            use_deleted: use_deleted,
+          },
+
+          { where: { use_uuid: use_uuid } }
+        );
+        await Brand.update(
+          { bl_deleted: 0 },
+
+          { where: { use_uuid: use_uuid } }
+        );
+      } else if (use_deleted == false) {
+        await Users.update(
+          {
+            use_type_member: true,
+            // pl_uuid: "2e317d3d-8424-40ca-9e29-665116635eec",
+            use_deleted: use_deleted,
+          },
+
+          { where: { use_uuid: use_uuid } }
+        );
+        await Brand.update(
+          { bl_deleted: 1 },
+
+          { where: { use_uuid: use_uuid } }
+        );
+      }
+
+      return res
+        .status(200)
+        .json({ message: "Dados atualizados com sucesso!" });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao atualizar dados:${error}` });
+    }
+  }
 
   async reportCounting(req, res) {
     try {
