@@ -273,7 +273,7 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  //Essa API é uma função assíncrona chamada reportgenerationEmailPDF que gera e envia relatórios em formato PDF por e-mail.
+  //Essa API é uma função assíncrona que gera e envia relatórios em formato PDF por e-mail.
   //Ela aceita um PDF em formato base64, o UUID do dispositivo (dev_uuid) e o endereço de e-mail associado ao dispositivo. O relatório é anexado ao e-mail e enviado.
   //Em caso de erro, a API retorna uma mensagem de erro.
   async reportgenerationEmailPDF(req, res) {

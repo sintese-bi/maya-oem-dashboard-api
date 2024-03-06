@@ -64,7 +64,7 @@ class DevicesController {
       const lastDayOfMonth = new Date(
         Date.UTC(currentYear, currentMonth + 1, 0)
       );
-      
+
       const result = await Generation.findAll({
         include: [
           {
@@ -215,11 +215,11 @@ class DevicesController {
       const { use_uuid } = req.body;
 
       const currentDate = new Date();
-      const startOfDay = new Date(currentDate);
-      startOfDay.setHours(0, 0, 0, 0);
+      const startOfDay = new Date(currentDate.toISOString()); 
+      startOfDay.setUTCHours(0, 0, 0, 0);
 
-      const endOfDay = new Date(currentDate);
-      endOfDay.setHours(23, 59, 59, 999);
+      const endOfDay = new Date(currentDate.toISOString()); 
+      endOfDay.setUTCHours(23, 59, 59, 999);
 
       const result = await Generation.findAll({
         include: [
@@ -253,7 +253,7 @@ class DevicesController {
       const sumsPerHour = {};
 
       result.forEach((item) => {
-        const hour = new Date(item.gen_created_at).getHours();
+        const hour = new Date(item.gen_created_at).getUTCHours(); 
 
         // Somar os valores de todos os dispositivos para cada hora
         sumsPerHour[hour] = {
@@ -273,7 +273,6 @@ class DevicesController {
 
       return res.status(200).json({
         message: "Somas calculadas com sucesso!",
-        
         sumsPerHour: sumsPerHour,
       });
     } catch (error) {
