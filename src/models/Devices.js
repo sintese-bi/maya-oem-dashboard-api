@@ -12,14 +12,14 @@ class Devices extends Model {
         dev_name: {
           type: DataTypes.STRING,
         },
-        dev_lat:{
-          type:DataTypes.FLOAT
+        dev_lat: {
+          type: DataTypes.FLOAT,
         },
-        dev_status_count:{
-          type:DataTypes.INTEGER
+        dev_status_count: {
+          type: DataTypes.INTEGER,
         },
-        dev_long:{
-          type:DataTypes.FLOAT
+        dev_long: {
+          type: DataTypes.FLOAT,
         },
         dev_contract_name: {
           type: DataTypes.STRING,
@@ -40,7 +40,7 @@ class Devices extends Model {
           type: DataTypes.STRING,
         },
         dev_image: {
-          type: DataTypes.TEXT,
+          type: DataTypes.TEXT, //BLOB e banco para bytea
         },
         sta_uuid: { type: DataTypes.UUIDV4 },
       },
