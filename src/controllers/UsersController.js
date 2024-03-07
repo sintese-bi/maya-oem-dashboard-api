@@ -614,7 +614,7 @@ class UsersController {
           },
         ],
       });
-
+      
       return res.status(200).json({ result, brand });
     } catch (error) {
       return res
@@ -1467,7 +1467,7 @@ class UsersController {
             ic_states,
             dev_image,
           } = devarray;
-          // console.log(ic_states, dev_image);
+
           if (ic_city != undefined && ic_states != undefined) {
             let irr = await IrradiationCoefficient.findOne({
               where: { ic_city, ic_states },
@@ -1512,12 +1512,13 @@ class UsersController {
               );
             }
           }
-          const binaryImage = Buffer.from(dev_image, "base64");
+          // const binaryImage = Buffer.from(dev_image, "base64");
+          // console.log({ binario: binaryImage });
           await Devices.update(
             {
               dev_capacity: dev_capacity,
               dev_email: dev_email,
-              dev_image: binaryImage,
+              dev_image: dev_image,
               dev_address: ic_city + "-" + ic_states,
             },
             { where: { dev_uuid: dev_uuid } }

@@ -139,7 +139,7 @@ class DevicesController {
       const { startDate, endDate, use_uuid } = req.body;
       const start = new Date(startDate);
       const end = new Date(endDate);
-
+      console.log(start, end);
       const result = await Generation.findAll({
         include: [
           {
@@ -166,41 +166,95 @@ class DevicesController {
             [Op.between]: [start, end],
           },
         },
-        attributes: ["gen_date", "gen_real", "gen_estimated"],
+        attributes: ["gen_date", "gen_real", "gen_estimated", "gen_updated_at"],
+        order: [["gen_updated_at", "DESC"]],
       });
 
-      const somaGenRealDia = {};
-      const somaGenEstimadaDia = {};
+      const aggregatedResult = result.reduce((acc, item) => {
+        const deviceUUID = item.devices.dev_uuid;
+        const genDate = new Date(item.gen_date).toISOString().split("T")[0];
 
-      result.forEach((item) => {
-        const dateKey = item.gen_date.split("T")[0];
-        // Verifique se a geração real é maior que 0 antes de adicionar à soma
-        if (item.gen_real > 0) {
-          somaGenRealDia[dateKey] =
-            (somaGenRealDia[dateKey] || 0) + item.gen_real;
-          somaGenEstimadaDia[dateKey] =
-            (somaGenEstimadaDia[dateKey] || 0) + item.gen_estimated;
+        if (
+          !acc[deviceUUID] ||
+          !acc[deviceUUID][genDate] ||
+          item.gen_updated_at > acc[deviceUUID][genDate].gen_updated_at
+        ) {
+          acc[deviceUUID] = {
+            ...acc[deviceUUID],
+            [genDate]: {
+              gen_real: item.gen_real,
+              gen_estimated: item.gen_estimated,
+              gen_updated_at: item.gen_updated_at,
+            },
+          };
         }
+
+        return acc;
+      }, {});
+
+      
+      const totalByDate = {};
+      Object.keys(aggregatedResult).forEach((deviceUUID) => {
+        Object.keys(aggregatedResult[deviceUUID]).forEach((genDate) => {
+          if (!totalByDate[genDate]) {
+            totalByDate[genDate] = {
+              gen_real: 0,
+              gen_estimated: 0,
+            };
+          }
+
+          totalByDate[genDate].gen_real +=
+            aggregatedResult[deviceUUID][genDate].gen_real;
+          totalByDate[genDate].gen_estimated +=
+            aggregatedResult[deviceUUID][genDate].gen_estimated;
+        });
       });
 
-      for (
-        let date = new Date(start);
-        date <= end;
-        date.setDate(date.getDate() + 1)
-      ) {
-        const dateKey = date.toISOString().split("T")[0];
-        somaGenRealDia[dateKey] = parseFloat(
-          (somaGenRealDia[dateKey] || 0).toFixed(2)
+      
+      Object.keys(totalByDate).forEach((genDate) => {
+        totalByDate[genDate].gen_real = parseFloat(
+          totalByDate[genDate].gen_real.toFixed(2)
         );
-        somaGenEstimadaDia[dateKey] = parseFloat(
-          (somaGenEstimadaDia[dateKey] || 0).toFixed(2)
+        totalByDate[genDate].gen_estimated = parseFloat(
+          totalByDate[genDate].gen_estimated.toFixed(2)
         );
-      }
+      });
+
+      
+
+      // const somaGenRealDia = {};
+      // const somaGenEstimadaDia = {};
+
+      // result.forEach((item) => {
+      //   const dateKey = item.gen_date.split("T")[0];
+      //   // Verifique se a geração real é maior que 0 antes de adicionar à soma
+      //   if (item.gen_real > 0) {
+      //     somaGenRealDia[dateKey] =
+      //       (somaGenRealDia[dateKey] || 0) + item.gen_real;
+      //     somaGenEstimadaDia[dateKey] =
+      //       (somaGenEstimadaDia[dateKey] || 0) + item.gen_estimated;
+      //   }
+      // });
+
+      // for (
+      //   let date = new Date(start);
+      //   date <= end;
+      //   date.setDate(date.getDate() + 1)
+      // ) {
+      //   const dateKey = date.toISOString().split("T")[0];
+      //   somaGenRealDia[dateKey] = parseFloat(
+      //     (somaGenRealDia[dateKey] || 0).toFixed(2)
+      //   );
+      //   somaGenEstimadaDia[dateKey] = parseFloat(
+      //     (somaGenEstimadaDia[dateKey] || 0).toFixed(2)
+      //   );
+      // }
 
       return res.status(200).json({
         message: "Somas calculadas com sucesso!",
-        somaPorDiaReal: somaGenRealDia,
-        somaPorDiaEstimada: somaGenEstimadaDia,
+        // somaPorDiaReal: somaGenRealDia,
+        // somaPorDiaEstimada: somaGenEstimadaDia,
+        totalByDate,
       });
     } catch (error) {
       return res
@@ -215,10 +269,10 @@ class DevicesController {
       const { use_uuid } = req.body;
 
       const currentDate = new Date();
-      const startOfDay = new Date(currentDate.toISOString()); 
+      const startOfDay = new Date(currentDate.toISOString());
       startOfDay.setUTCHours(0, 0, 0, 0);
 
-      const endOfDay = new Date(currentDate.toISOString()); 
+      const endOfDay = new Date(currentDate.toISOString());
       endOfDay.setUTCHours(23, 59, 59, 999);
 
       const result = await Generation.findAll({
@@ -253,7 +307,7 @@ class DevicesController {
       const sumsPerHour = {};
 
       result.forEach((item) => {
-        const hour = new Date(item.gen_created_at).getUTCHours(); 
+        const hour = new Date(item.gen_created_at).getUTCHours();
 
         // Somar os valores de todos os dispositivos para cada hora
         sumsPerHour[hour] = {
