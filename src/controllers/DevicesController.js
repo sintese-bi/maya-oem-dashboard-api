@@ -171,37 +171,46 @@ class DevicesController {
       });
 
       const aggregatedResult = result.reduce((acc, item) => {
+        const deviceUUID = item.devices.dev_uuid;
         const genDate = new Date(item.gen_date).toISOString().split("T")[0];
 
         if (
-          !acc[genDate] ||
-          item.gen_updated_at > acc[genDate].gen_updated_at
+          !acc[deviceUUID] ||
+          !acc[deviceUUID][genDate] ||
+          item.gen_updated_at > acc[deviceUUID][genDate].gen_updated_at
         ) {
-          acc[genDate] = {
-            gen_real: item.gen_real,
-            gen_estimated: item.gen_estimated,
-            gen_updated_at: item.gen_updated_at,
+          acc[deviceUUID] = {
+            ...acc[deviceUUID],
+            [genDate]: {
+              gen_real: item.gen_real,
+              gen_estimated: item.gen_estimated,
+              gen_updated_at: item.gen_updated_at,
+            },
           };
         }
 
         return acc;
       }, {});
 
+      
       const totalByDate = {};
-      Object.keys(aggregatedResult).forEach((genDate) => {
-        totalByDate[genDate] = {
-          gen_real: 0,
-          gen_estimated: 0,
-        };
+      Object.keys(aggregatedResult).forEach((deviceUUID) => {
+        Object.keys(aggregatedResult[deviceUUID]).forEach((genDate) => {
+          if (!totalByDate[genDate]) {
+            totalByDate[genDate] = {
+              gen_real: 0,
+              gen_estimated: 0,
+            };
+          }
+
+          totalByDate[genDate].gen_real +=
+            aggregatedResult[deviceUUID][genDate].gen_real;
+          totalByDate[genDate].gen_estimated +=
+            aggregatedResult[deviceUUID][genDate].gen_estimated;
+        });
       });
 
-      result.forEach((item) => {
-        const genDate = new Date(item.gen_date).toISOString().split("T")[0];
-        totalByDate[genDate].gen_real += item.gen_real;
-        totalByDate[genDate].gen_estimated += item.gen_estimated;
-      });
-
-      // Formatando para duas casas decimais
+      
       Object.keys(totalByDate).forEach((genDate) => {
         totalByDate[genDate].gen_real = parseFloat(
           totalByDate[genDate].gen_real.toFixed(2)
@@ -210,6 +219,8 @@ class DevicesController {
           totalByDate[genDate].gen_estimated.toFixed(2)
         );
       });
+
+      
 
       // const somaGenRealDia = {};
       // const somaGenEstimadaDia = {};
