@@ -170,20 +170,46 @@ class DevicesController {
         order: [["gen_updated_at", "DESC"]],
       });
 
-      const groupedByDevice = result.reduce((acc, item) => {
-        const deviceUUID = item.devices.dev_uuid;
+      const aggregatedResult = result.reduce((acc, item) => {
+        const genDate = new Date(item.gen_date).toISOString().split("T")[0];
 
         if (
-          !acc[deviceUUID] ||
-          item.gen_updated_at > acc[deviceUUID].gen_updated_at
+          !acc[genDate] ||
+          item.gen_updated_at > acc[genDate].gen_updated_at
         ) {
-          acc[deviceUUID] = item;
+          acc[genDate] = {
+            gen_real: item.gen_real,
+            gen_estimated: item.gen_estimated,
+            gen_updated_at: item.gen_updated_at,
+          };
         }
 
         return acc;
       }, {});
 
-      const aggregatedResult = Object.values(groupedByDevice);
+      const totalByDate = {};
+      Object.keys(aggregatedResult).forEach((genDate) => {
+        totalByDate[genDate] = {
+          gen_real: 0,
+          gen_estimated: 0,
+        };
+      });
+
+      result.forEach((item) => {
+        const genDate = new Date(item.gen_date).toISOString().split("T")[0];
+        totalByDate[genDate].gen_real += item.gen_real;
+        totalByDate[genDate].gen_estimated += item.gen_estimated;
+      });
+
+      // Formatando para duas casas decimais
+      Object.keys(totalByDate).forEach((genDate) => {
+        totalByDate[genDate].gen_real = parseFloat(
+          totalByDate[genDate].gen_real.toFixed(2)
+        );
+        totalByDate[genDate].gen_estimated = parseFloat(
+          totalByDate[genDate].gen_estimated.toFixed(2)
+        );
+      });
 
       // const somaGenRealDia = {};
       // const somaGenEstimadaDia = {};
@@ -217,7 +243,7 @@ class DevicesController {
         message: "Somas calculadas com sucesso!",
         // somaPorDiaReal: somaGenRealDia,
         // somaPorDiaEstimada: somaGenEstimadaDia,
-        aggregatedResult,
+        totalByDate,
       });
     } catch (error) {
       return res
