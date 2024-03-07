@@ -192,7 +192,6 @@ class DevicesController {
         return acc;
       }, {});
 
-      
       const totalByDate = {};
       Object.keys(aggregatedResult).forEach((deviceUUID) => {
         Object.keys(aggregatedResult[deviceUUID]).forEach((genDate) => {
@@ -210,7 +209,6 @@ class DevicesController {
         });
       });
 
-      
       Object.keys(totalByDate).forEach((genDate) => {
         totalByDate[genDate].gen_real = parseFloat(
           totalByDate[genDate].gen_real.toFixed(2)
@@ -219,8 +217,6 @@ class DevicesController {
           totalByDate[genDate].gen_estimated.toFixed(2)
         );
       });
-
-      
 
       // const somaGenRealDia = {};
       // const somaGenEstimadaDia = {};

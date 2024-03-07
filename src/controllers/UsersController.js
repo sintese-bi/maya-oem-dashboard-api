@@ -614,7 +614,7 @@ class UsersController {
           },
         ],
       });
-      
+
       return res.status(200).json({ result, brand });
     } catch (error) {
       return res
@@ -2185,5 +2185,5 @@ class UsersController {
   }
 }
 const usersController = new UsersController();
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarVerificacaoDeAlertas();
 export default new UsersController();
