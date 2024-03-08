@@ -2,7 +2,7 @@ import { PDFDocument, degrees, rgb } from "pdf-lib";
 import fs from "fs/promises";
 import moment from "moment-timezone";
 
-export const generateFile = async ({ params, paramstest }) => {
+export const generateFile = async ({ params }) => {
   let dataSpace = 0;
   let dataBetweenSpace = 0;
   let dataWidth = 0;
@@ -30,7 +30,10 @@ export const generateFile = async ({ params, paramstest }) => {
       break;
   }
 
-  const { realGeneration, estimatedGeneration } = paramstest;
+  const { realGeneration, estimatedGeneration } = params;
+
+  console.log(realGeneration, estimatedGeneration);
+
   const startOfMonth = moment().startOf("month").format("DD/MM/YYYY");
   const recentDayOfMonth = moment().format("DD/MM/YYYY");
 
@@ -205,6 +208,13 @@ export const generateFile = async ({ params, paramstest }) => {
       size: 19,
     }
   );
+
+  firstPage.drawText(`${params.situation}`, {
+    color: rgb(1, 1, 1),
+    x: width / 2 - 152,
+    y: height - (height - 262),
+    size: 10,
+  });
 
   firstPage.drawText("POWERED BY: MAYA TECH S.A", {
     color: rgb(0, 0, 0),

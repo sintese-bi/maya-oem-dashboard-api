@@ -1133,12 +1133,10 @@ class UsersController {
                 const realGeneration = result.map((element) => {
                   return { value: element.gen_real, date: element.gen_date };
                 });
-                console.log(realGeneration);
                 //Estimatedgeneration
                 const estimatedGeneration = result.map((element) => {
                   return element.gen_estimated;
                 });
-                console.log(estimatedGeneration);
                 const cap = await Devices.findOne({
                   attributes: ["dev_capacity", "dev_name", "dev_email"],
                   where: { dev_uuid: dev_uuid },
@@ -1162,6 +1160,10 @@ class UsersController {
                   percentNew = percent.toFixed(2);
                 }
 
+                let situation =
+                  percentNew > 80
+                    ? `Parábens, sua usina produziu o equivalente à ${percentNew} do total esperado.`
+                    : `Infelizmente, sua usina produziu apenas ${percentNew} em relação ao esperado.`;
                 const dev_element = {
                   dev_uuid,
                   capacity: cap.dev_capacity,
@@ -1170,6 +1172,7 @@ class UsersController {
                   sumrealNew,
                   sumestimatedNew,
                   percentNew,
+                  situation,
                   realGeneration,
                   estimatedGeneration,
                 };
@@ -1275,7 +1278,7 @@ class UsersController {
 
           const mailOptions = {
             from: "noreplymayawatch@gmail.com",
-            to: JSON.parse(chunk).email,
+            to: ["felipegadelha2004@gmail.com"],
             subject: "Relatório de dados de Geração",
             text: "",
             html: emailBody,
