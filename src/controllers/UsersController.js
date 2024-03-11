@@ -538,12 +538,12 @@ class UsersController {
     try {
       const use = req.params.uuid;
       const par = req.params.par;
-      const fifteenDaysAgo = moment().subtract(15, "days").toDate();
-      const today = moment().date();
+      const today = moment().format("YYYY-MM-DD");
 
       const startOfMonth = moment().startOf("month").toDate();
       const endOfMonth = moment().endOf("month").toDate();
       console.log(startOfMonth, endOfMonth);
+
       let whereCondition = {};
 
       if (par === "yes") {
@@ -551,14 +551,6 @@ class UsersController {
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         };
       }
-      const brand = await Users.findByPk(use, {
-        include: [
-          {
-            association: "brand_login",
-            attributes: ["bl_name", "bl_uuid"],
-          },
-        ],
-      });
 
       const result = await Users.findByPk(use, {
         attributes: ["use_name"],
@@ -592,14 +584,12 @@ class UsersController {
                       "gen_updated_at",
                     ],
                     order: [["gen_updated_at", "DESC"]],
-
                     where: {
                       gen_date: {
                         [Op.between]: [startOfMonth, endOfMonth],
                       },
                     },
                     required: false,
-                    order: [["gen_date", "DESC"]],
                   },
                   {
                     association: "alerts",
@@ -627,86 +617,89 @@ class UsersController {
       if (result) {
         const brandLogin = result.brand_login;
 
-        if (brandLogin) {
-          for (const brand of brandLogin) {
-            const devices = brand.devices;
+        for (const brand of brandLogin) {
+          const devices = brand.devices;
 
-            if (devices) {
-              for (const device of devices) {
-                const generations = device.generation;
+          for (const device of devices) {
+            const generations = device.generation;
 
-                const dailySums = {};
-                const weeklySumsReal = {};
-                const weeklySumsEstimated = {};
-                const monthlySumsReal = {};
-                const monthlySumsEstimated = {};
+            const dailySums = {};
+            const weeklySumsReal = {};
+            const weeklySumsEstimated = {};
+            const monthlySumsReal = {};
+            const monthlySumsEstimated = {};
 
-                if (generations) {
-                  for (const gen of generations) {
-                    const genDate = moment(gen.gen_date).format("YYYY-MM-DD");
+            if (generations) {
+              for (const gen of generations) {
+                const genDate = moment(gen.gen_date)
+                  .tz("America/Sao_Paulo")
+                  .format("YYYY-MM-DD");
 
-                    if (
-                      !dailySums[genDate] ||
-                      dailySums[genDate].gen_updated_at < gen.gen_updated_at
-                    ) {
-                      dailySums[genDate] = {
-                        gen_real: gen.gen_real,
-                        gen_estimated: gen.gen_estimated,
-                        gen_updated_at: gen.gen_updated_at,
-                      };
-                    }
-                  }
-
-                  Object.values(dailySums).forEach((gen) => {
-                    const weekStartDate = moment(gen.gen_updated_at)
-                      .startOf("week")
-                      .format("YYYY-MM-DD");
-                    const monthStartDate = moment()
-                      .startOf("month")
-                      .format("YYYY-MM-DD");
-
-                    weeklySumsReal[weekStartDate] =
-                      (weeklySumsReal[weekStartDate] || 0) + gen.gen_real;
-                    weeklySumsEstimated[weekStartDate] =
-                      (weeklySumsEstimated[weekStartDate] || 0) +
-                      gen.gen_estimated;
-
-                    const monthKey = moment(gen.gen_updated_at)
-                      .startOf("month")
-                      .format("YYYY-MM-DD");
-                    monthlySumsReal[monthKey] =
-                      (monthlySumsReal[monthKey] || 0) + gen.gen_real;
-                    monthlySumsEstimated[monthKey] =
-                      (monthlySumsEstimated[monthKey] || 0) + gen.gen_estimated;
-                  });
+                if (
+                  !dailySums[genDate] ||
+                  moment(dailySums[genDate].gen_updated_at).isSameOrBefore(
+                    moment(gen.gen_updated_at)
+                  )
+                ) {
+                  dailySums[genDate] = {
+                    gen_real: gen.gen_real,
+                    gen_estimated: gen.gen_estimated,
+                    gen_updated_at: gen.gen_updated_at,
+                  };
                 }
-
-                const deviceData = {
-                  dev_uuid: device.dev_uuid,
-                  dev_name: device.dev_name,
-                  brand_login: {
-                    bl_name: brand.bl_name,
-                    bl_uuid: brand.bl_uuid,
-                  },
-                  gen_estimated: dailySums[moment().format("YYYY-MM-DD")]
-                    ? dailySums[moment().format("YYYY-MM-DD")].gen_estimated
-                    : 0,
-                  gen_real: dailySums[moment().format("YYYY-MM-DD")]
-                    ? dailySums[moment().format("YYYY-MM-DD")].gen_real
-                    : 0,
-                  weeklySum: {
-                    gen_real: weeklySumsReal,
-                    gen_estimated: weeklySumsEstimated,
-                  },
-                  monthlySum: {
-                    gen_real: monthlySumsReal,
-                    gen_estimated: monthlySumsEstimated,
-                  },
-                };
-
-                devicesData.push(deviceData);
               }
+
+              Object.values(dailySums).forEach((gen) => {
+                const genDate = moment(gen.gen_updated_at).format("YYYY-MM-DD");
+                const weekStartDate = moment(gen.gen_updated_at)
+                  .startOf("isoWeek")
+                  .format("YYYY-MM-DD");
+                const monthStartDate = moment(gen.gen_updated_at)
+                  .startOf("month")
+                  .format("YYYY-MM-DD");
+
+                if (!weeklySumsReal[weekStartDate])
+                  weeklySumsReal[weekStartDate] = 0;
+                if (!weeklySumsEstimated[weekStartDate])
+                  weeklySumsEstimated[weekStartDate] = 0;
+                if (!monthlySumsReal[monthStartDate])
+                  monthlySumsReal[monthStartDate] = 0;
+                if (!monthlySumsEstimated[monthStartDate])
+                  monthlySumsEstimated[monthStartDate] = 0;
+
+                weeklySumsReal[weekStartDate] += gen.gen_real;
+                weeklySumsEstimated[weekStartDate] += gen.gen_estimated;
+
+                const monthKey = moment(gen.gen_updated_at)
+                  .startOf("month")
+                  .format("YYYY-MM-DD");
+                monthlySumsReal[monthKey] += gen.gen_real;
+                monthlySumsEstimated[monthKey] += gen.gen_estimated;
+              });
             }
+
+            const deviceData = {
+              dev_uuid: device.dev_uuid,
+              dev_name: device.dev_name,
+              brand_login: {
+                bl_name: brand.bl_name,
+                bl_uuid: brand.bl_uuid,
+              },
+              gen_estimated: dailySums[today]
+                ? dailySums[today].gen_estimated
+                : 0,
+              gen_real: dailySums[today] ? dailySums[today].gen_real : 0,
+              weeklySum: {
+                gen_real: weeklySumsReal,
+                gen_estimated: weeklySumsEstimated,
+              },
+              monthlySum: {
+                gen_real: monthlySumsReal,
+                gen_estimated: monthlySumsEstimated,
+              },
+            };
+
+            devicesData.push(deviceData);
           }
         }
       }
