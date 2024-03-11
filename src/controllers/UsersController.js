@@ -551,7 +551,14 @@ class UsersController {
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         };
       }
-
+      const brand = await Users.findByPk(use, {
+        include: [
+          {
+            association: "brand_login",
+            attributes: ["bl_name", "bl_uuid"],
+          },
+        ],
+      });
       const result = await Users.findByPk(use, {
         attributes: ["use_name"],
         include: [
@@ -651,30 +658,35 @@ class UsersController {
 
               Object.values(dailySums).forEach((gen) => {
                 const genDate = moment(gen.gen_updated_at).format("YYYY-MM-DD");
-                const weekStartDate = moment(gen.gen_updated_at)
+                const weekStartDate = moment()
                   .startOf("isoWeek")
                   .format("YYYY-MM-DD");
+                console.log({DATASEMANA:weekStartDate})
+                if (moment(gen.gen_updated_at).isSameOrAfter(weekStartDate)) {
+                  if (!weeklySumsReal[weekStartDate]) {
+                    weeklySumsReal[weekStartDate] = 0;
+                  }
+                  if (!weeklySumsEstimated[weekStartDate]) {
+                    weeklySumsEstimated[weekStartDate] = 0;
+                  }
+
+                  weeklySumsReal[weekStartDate] += gen.gen_real;
+                  weeklySumsEstimated[weekStartDate] += gen.gen_estimated;
+                }
+
                 const monthStartDate = moment(gen.gen_updated_at)
                   .startOf("month")
                   .format("YYYY-MM-DD");
 
-                if (!weeklySumsReal[weekStartDate])
-                  weeklySumsReal[weekStartDate] = 0;
-                if (!weeklySumsEstimated[weekStartDate])
-                  weeklySumsEstimated[weekStartDate] = 0;
-                if (!monthlySumsReal[monthStartDate])
+                if (!monthlySumsReal[monthStartDate]) {
                   monthlySumsReal[monthStartDate] = 0;
-                if (!monthlySumsEstimated[monthStartDate])
+                }
+                if (!monthlySumsEstimated[monthStartDate]) {
                   monthlySumsEstimated[monthStartDate] = 0;
+                }
 
-                weeklySumsReal[weekStartDate] += gen.gen_real;
-                weeklySumsEstimated[weekStartDate] += gen.gen_estimated;
-
-                const monthKey = moment(gen.gen_updated_at)
-                  .startOf("month")
-                  .format("YYYY-MM-DD");
-                monthlySumsReal[monthKey] += gen.gen_real;
-                monthlySumsEstimated[monthKey] += gen.gen_estimated;
+                monthlySumsReal[monthStartDate] += gen.gen_real;
+                monthlySumsEstimated[monthStartDate] += gen.gen_estimated;
               });
             }
 
@@ -704,7 +716,7 @@ class UsersController {
         }
       }
 
-      return res.status(200).json({ devicesData });
+      return res.status(200).json({ devicesData, brand });
     } catch (error) {
       return res
         .status(400)
