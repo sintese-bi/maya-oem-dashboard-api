@@ -585,7 +585,14 @@ class UsersController {
                 include: [
                   {
                     association: "generation",
-                    attributes: ["gen_real", "gen_estimated", "gen_date"],
+                    attributes: [
+                      "gen_real",
+                      "gen_estimated",
+                      "gen_date",
+                      "gen_updated_at",
+                    ],
+                    order: [["gen_updated_at", "DESC"]],
+
                     where: {
                       gen_date: {
                         [Op.between]: [startOfMonth, endOfMonth],
@@ -615,7 +622,96 @@ class UsersController {
         ],
       });
 
-      return res.status(200).json({ result, brand });
+      const devicesData = [];
+
+      if (result) {
+        const brandLogin = result.brand_login;
+
+        if (brandLogin) {
+          for (const brand of brandLogin) {
+            const devices = brand.devices;
+
+            if (devices) {
+              for (const device of devices) {
+                const generations = device.generation;
+
+                const dailySums = {};
+                const weeklySumsReal = {};
+                const weeklySumsEstimated = {};
+                const monthlySumsReal = {};
+                const monthlySumsEstimated = {};
+
+                if (generations) {
+                  for (const gen of generations) {
+                    const genDate = moment(gen.gen_date).format("YYYY-MM-DD");
+
+                    if (
+                      !dailySums[genDate] ||
+                      dailySums[genDate].gen_updated_at < gen.gen_updated_at
+                    ) {
+                      dailySums[genDate] = {
+                        gen_real: gen.gen_real,
+                        gen_estimated: gen.gen_estimated,
+                        gen_updated_at: gen.gen_updated_at,
+                      };
+                    }
+                  }
+
+                  Object.values(dailySums).forEach((gen) => {
+                    const weekStartDate = moment(gen.gen_updated_at)
+                      .startOf("week")
+                      .format("YYYY-MM-DD");
+                    const monthStartDate = moment()
+                      .startOf("month")
+                      .format("YYYY-MM-DD");
+
+                    weeklySumsReal[weekStartDate] =
+                      (weeklySumsReal[weekStartDate] || 0) + gen.gen_real;
+                    weeklySumsEstimated[weekStartDate] =
+                      (weeklySumsEstimated[weekStartDate] || 0) +
+                      gen.gen_estimated;
+
+                    const monthKey = moment(gen.gen_updated_at)
+                      .startOf("month")
+                      .format("YYYY-MM-DD");
+                    monthlySumsReal[monthKey] =
+                      (monthlySumsReal[monthKey] || 0) + gen.gen_real;
+                    monthlySumsEstimated[monthKey] =
+                      (monthlySumsEstimated[monthKey] || 0) + gen.gen_estimated;
+                  });
+                }
+
+                const deviceData = {
+                  dev_uuid: device.dev_uuid,
+                  dev_name: device.dev_name,
+                  brand_login: {
+                    bl_name: brand.bl_name,
+                    bl_uuid: brand.bl_uuid,
+                  },
+                  gen_estimated: dailySums[moment().format("YYYY-MM-DD")]
+                    ? dailySums[moment().format("YYYY-MM-DD")].gen_estimated
+                    : 0,
+                  gen_real: dailySums[moment().format("YYYY-MM-DD")]
+                    ? dailySums[moment().format("YYYY-MM-DD")].gen_real
+                    : 0,
+                  weeklySum: {
+                    gen_real: weeklySumsReal,
+                    gen_estimated: weeklySumsEstimated,
+                  },
+                  monthlySum: {
+                    gen_real: monthlySumsReal,
+                    gen_estimated: monthlySumsEstimated,
+                  },
+                };
+
+                devicesData.push(deviceData);
+              }
+            }
+          }
+        }
+      }
+
+      return res.status(200).json({ devicesData });
     } catch (error) {
       return res
         .status(400)
@@ -2188,5 +2284,5 @@ class UsersController {
   }
 }
 const usersController = new UsersController();
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarVerificacaoDeAlertas();
 export default new UsersController();
