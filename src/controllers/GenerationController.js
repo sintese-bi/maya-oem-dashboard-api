@@ -1,4 +1,4 @@
-import { Sequelize, Op } from "sequelize";
+import { Sequelize, Op, fn, col } from "sequelize";
 import Devices from "../models/Devices";
 import Generation from "../models/Generation";
 import moment from "moment-timezone";
@@ -49,10 +49,22 @@ class GenerationController {
               },
             },
             required: false,
-            order: [["gen_date", "ASC"]],
+            attributes: [
+              "dev_uuid",
+              "gen_date",
+              "gen_updated_at",
+              [fn("MAX", col("gen_updated_at")), "max_gen_updated_at"],
+            ],
+            group: ["dev_uuid", "gen_date"],
+            order: [
+              ["gen_date", "DESC"],
+              ["max_gen_updated_at", "DESC"],
+            ],
+            limit: 1,
           },
         ],
       });
+
       const latestTemp = await Devices.findAll({
         where: {
           dev_uuid: devUuid,
@@ -92,12 +104,12 @@ class GenerationController {
       });
 
       res.json({ deviceData, latestTemp });
-      console.log(deviceData, latestTemp);
     } catch (error) {
       console.error(error);
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+
   //Esta recupera alertas recentes de um dispositivo específico dentro da última hora.
   //Ela retorna os dados em formato JSON, incluindo o nome do dispositivo e os detalhes dos alertas (como o tipo de alerta e o inversor associado, se houver). Se houver um erro durante o processo, a função retorna uma mensagem de erro no formato JSON.
   async recentAlerts(req, res) {
@@ -124,7 +136,7 @@ class GenerationController {
           },
         ],
       });
-      console.log(recentAlerts)
+      console.log(recentAlerts);
       return res.json(recentAlerts);
     } catch (error) {
       console.error(error);
