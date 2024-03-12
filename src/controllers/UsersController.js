@@ -638,9 +638,7 @@ class UsersController {
 
             if (generations) {
               for (const gen of generations) {
-                const genDate = moment(gen.gen_date)
-                  .tz("America/Sao_Paulo")
-                  .format("YYYY-MM-DD");
+                const genDate = moment(gen.gen_date).utc().format("YYYY-MM-DD");
 
                 if (
                   !dailySums[genDate] ||
@@ -651,7 +649,9 @@ class UsersController {
                   dailySums[genDate] = {
                     gen_real: gen.gen_real,
                     gen_estimated: gen.gen_estimated,
+                    gen_date: gen.gen_date,
                     gen_updated_at: gen.gen_updated_at,
+                    gen_date: gen.gen_date,
                   };
                 }
               }
@@ -661,8 +661,14 @@ class UsersController {
                 const weekStartDate = moment()
                   .startOf("isoWeek")
                   .format("YYYY-MM-DD");
-                console.log({DATASEMANA:weekStartDate})
-                if (moment(gen.gen_updated_at).isSameOrAfter(weekStartDate)) {
+                const weekEndDate = moment()
+                  .endOf("isoWeek")
+                  .format("YYYY-MM-DD");
+
+                if (
+                  moment(gen.gen_updated_at).isSameOrAfter(weekStartDate) &&
+                  moment(gen.gen_updated_at).isBefore(weekEndDate)
+                ) {
                   if (!weeklySumsReal[weekStartDate]) {
                     weeklySumsReal[weekStartDate] = 0;
                   }
@@ -693,21 +699,54 @@ class UsersController {
             const deviceData = {
               dev_uuid: device.dev_uuid,
               dev_name: device.dev_name,
+              dev_brand: device.dev_brand,
+              dev_lat: device.dev_lat,
+              dev_long: device.dev_long,
+              dev_capacity: device.dev_capacity,
+              dev_address: device.dev_address,
+              gen_updated_at: dailySums[today]
+                ? dailySums[today].gen_updated_at
+                : null,
+              gen_date: dailySums[today] ? dailySums[today].gen_date : null,
               brand_login: {
                 bl_name: brand.bl_name,
                 bl_uuid: brand.bl_uuid,
               },
-              gen_estimated: dailySums[today]
-                ? dailySums[today].gen_estimated
+
+              gen_estimated_day: dailySums[today]
+                ? parseFloat(dailySums[today].gen_estimated).toFixed(2)
                 : 0,
-              gen_real: dailySums[today] ? dailySums[today].gen_real : 0,
+              gen_real_day: dailySums[today]
+                ? parseFloat(dailySums[today].gen_real).toFixed(2)
+                : 0,
+
               weeklySum: {
-                gen_real: weeklySumsReal,
-                gen_estimated: weeklySumsEstimated,
+                gen_real: Object.fromEntries(
+                  Object.entries(weeklySumsReal).map(([key, value]) => [
+                    key,
+                    parseFloat(value).toFixed(2),
+                  ])
+                ),
+                gen_estimated: Object.fromEntries(
+                  Object.entries(weeklySumsEstimated).map(([key, value]) => [
+                    key,
+                    parseFloat(value).toFixed(2),
+                  ])
+                ),
               },
               monthlySum: {
-                gen_real: monthlySumsReal,
-                gen_estimated: monthlySumsEstimated,
+                gen_real: Object.fromEntries(
+                  Object.entries(monthlySumsReal).map(([key, value]) => [
+                    key,
+                    parseFloat(value).toFixed(2),
+                  ])
+                ),
+                gen_estimated: Object.fromEntries(
+                  Object.entries(monthlySumsEstimated).map(([key, value]) => [
+                    key,
+                    parseFloat(value).toFixed(2),
+                  ])
+                ),
               },
             };
 
