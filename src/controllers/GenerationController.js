@@ -1,4 +1,4 @@
-import { Sequelize, Op, fn, col } from "sequelize";
+import { Sequelize, Op } from "sequelize";
 import Devices from "../models/Devices";
 import Generation from "../models/Generation";
 import moment from "moment-timezone";
@@ -49,18 +49,8 @@ class GenerationController {
               },
             },
             required: false,
-            attributes: [
-              "dev_uuid",
-              "gen_date",
-              "gen_updated_at",
-              [fn("MAX", col("gen_updated_at")), "max_gen_updated_at"],
-            ],
-            group: ["dev_uuid", "gen_date"],
-            order: [
-              ["gen_date", "DESC"],
-              ["max_gen_updated_at", "DESC"],
-            ],
-            limit: 1,
+            order: [["gen_updated_at", "DESC"]],
+            
           },
         ],
       });
