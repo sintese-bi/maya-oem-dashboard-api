@@ -140,7 +140,7 @@ routes.post(
 );
 routes.get(
   `${apiVersion}/generationandtemperature`,
-  checkToken,
+
   GenerationController.deviceDataAndLatestTemperature
 );
 

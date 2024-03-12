@@ -29,7 +29,6 @@ class GenerationController {
     const firstDay = moment(startDate).format("YYYY-MM-DD");
     const lastDay = moment(endDate).format("YYYY-MM-DD");
 
-    console.log(firstDay, lastDay, dataNow);
     try {
       let deviceData;
 
@@ -49,12 +48,16 @@ class GenerationController {
               },
             },
             required: false,
-            order: [["gen_updated_at", "DESC"]],
-            
+            attributes: ["id", "gen_uuid", "gen_updated_at"],
+            order: [
+              [Sequelize.literal('"generation"."gen_updated_at"'), "DESC"],
+            ],
+            limit: 1,
           },
         ],
+        order: [[Sequelize.literal('"generation.gen_updated_at"'), "DESC"]],
       });
-
+      console.log(deviceData[0].generation[0].gen_updated_at);
       const latestTemp = await Devices.findAll({
         where: {
           dev_uuid: devUuid,
