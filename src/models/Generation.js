@@ -31,6 +31,10 @@ class Generation extends Model {
           type: DataTypes.DATE,
           defaultValue: DataTypes.NOW,
         },
+        gen_updated_at: {
+          type: DataTypes.DATE,
+          defaultValue: DataTypes.NOW,
+        },
         // gen_projection: {
         //   type: DataTypes.FLOAT,
         // },
