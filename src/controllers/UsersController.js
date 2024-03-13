@@ -732,32 +732,20 @@ class UsersController {
                 : 0,
 
               weeklySum: {
-                gen_real: Object.fromEntries(
-                  Object.entries(weeklySumsReal).map(([key, value]) => [
-                    key,
-                    parseFloat(value).toFixed(2),
-                  ])
-                ),
-                gen_estimated: Object.fromEntries(
-                  Object.entries(weeklySumsEstimated).map(([key, value]) => [
-                    key,
-                    parseFloat(value).toFixed(2),
-                  ])
-                ),
+                gen_real: Object.values(weeklySumsReal)
+                  .reduce((acc, value) => acc + value, 0)
+                  .toFixed(2),
+                gen_estimated: Object.values(weeklySumsEstimated)
+                  .reduce((acc, value) => acc + value, 0)
+                  .toFixed(2),
               },
               monthlySum: {
-                gen_real: Object.fromEntries(
-                  Object.entries(monthlySumsReal).map(([key, value]) => [
-                    key,
-                    parseFloat(value).toFixed(2),
-                  ])
-                ),
-                gen_estimated: Object.fromEntries(
-                  Object.entries(monthlySumsEstimated).map(([key, value]) => [
-                    key,
-                    parseFloat(value).toFixed(2),
-                  ])
-                ),
+                gen_real: Object.values(monthlySumsReal)
+                  .reduce((acc, value) => acc + value, 0)
+                  .toFixed(2),
+                gen_estimated: Object.values(monthlySumsEstimated)
+                  .reduce((acc, value) => acc + value, 0)
+                  .toFixed(2),
               },
             };
 
