@@ -629,7 +629,7 @@ class UsersController {
 
           for (const device of devices) {
             const generations = device.generation;
-
+            const alerts = device.alerts || [];
             const dailySums = {};
             const weeklySumsReal = {};
             const weeklySumsEstimated = {};
@@ -701,7 +701,18 @@ class UsersController {
               dev_name: device.dev_name,
               dev_brand: device.dev_brand,
               dev_lat: device.dev_lat,
+
+              dev_deleted: device.dev_deleted,
               dev_long: device.dev_long,
+              status: {
+                sta_name: device.status ? device.status.sta_name : null,
+                sta_code: device.status ? device.status.sta_code : null,
+              },
+              alerts: alerts.filter((alert) =>
+                moment(alert.alert_created_at).isAfter(
+                  moment().subtract(1, "hour")
+                )
+              ),
               dev_capacity: device.dev_capacity,
               dev_address: device.dev_address,
               gen_updated_at: dailySums[today]

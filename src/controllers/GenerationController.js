@@ -1,4 +1,4 @@
-import { Sequelize, Op } from "sequelize";
+import { Sequelize, Op, fn, col, literal } from "sequelize";
 import Devices from "../models/Devices";
 import Generation from "../models/Generation";
 import moment from "moment-timezone";
@@ -29,35 +29,38 @@ class GenerationController {
     const firstDay = moment(startDate).format("YYYY-MM-DD");
     const lastDay = moment(endDate).format("YYYY-MM-DD");
 
+    console.log(firstDay, lastDay, dataNow);
+
     try {
       let deviceData;
-
-      // Busca de primeiro ao último dia do mês
-      deviceData = await Devices.findAll({
+      deviceData = await Generation.findAll({
+        attributes: [
+          "gen_uuid",
+          "gen_estimated",
+          "gen_real",
+          "gen_date",
+          "dev_uuid",
+          "gen_created_at",
+          "gen_updated_at",
+        ],
         where: {
           dev_uuid: devUuid,
-        },
-        attributes: ["dev_name"],
-        include: [
-          {
-            model: Generation,
-            as: "generation",
-            where: {
-              gen_date: {
-                [Op.between]: [firstDay, lastDay],
-              },
-            },
-            required: false,
-            attributes: ["id", "gen_uuid", "gen_updated_at"],
-            order: [
-              [Sequelize.literal('"generation"."gen_updated_at"'), "DESC"],
-            ],
-            limit: 1,
+          gen_date: {
+            [Op.between]: [firstDay, lastDay],
           },
-        ],
-        order: [[Sequelize.literal('"generation.gen_updated_at"'), "DESC"]],
+          gen_updated_at: {
+            [Op.in]: Generation.sequelize.literal(`
+              (SELECT MAX(gen_updated_at) 
+              FROM generation 
+              WHERE dev_uuid = :devUuid 
+              AND gen_date BETWEEN :firstDay AND :lastDay 
+              GROUP BY gen_date)
+            `),
+          },
+        },
+        replacements: { devUuid, firstDay, lastDay },
       });
-      console.log(deviceData[0].generation[0].gen_updated_at);
+
       const latestTemp = await Devices.findAll({
         where: {
           dev_uuid: devUuid,
@@ -75,14 +78,14 @@ class GenerationController {
       });
 
       deviceData.forEach((dev) => {
-        const generation = dev.generation.find(
-          (gen) => gen.gen_date === dataNow
-        );
-
         dev.alert = {
           msg: "Geração diária dentro da faixa estimada",
           type: "success",
         };
+
+        const generation =
+          dev.generation &&
+          dev.generation.find((gen) => gen.gen_date === dataNow);
 
         if (generation) {
           const alert = (generation.gen_real / generation.gen_estimated) * 100;
@@ -96,7 +99,7 @@ class GenerationController {
         }
       });
 
-      res.json({ deviceData, latestTemp });
+      return res.status(200).json({ deviceData, latestTemp });
     } catch (error) {
       console.error(error);
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });

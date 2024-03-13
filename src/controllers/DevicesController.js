@@ -218,33 +218,7 @@ class DevicesController {
         );
       });
 
-      // const somaGenRealDia = {};
-      // const somaGenEstimadaDia = {};
-
-      // result.forEach((item) => {
-      //   const dateKey = item.gen_date.split("T")[0];
-      //   // Verifique se a geração real é maior que 0 antes de adicionar à soma
-      //   if (item.gen_real > 0) {
-      //     somaGenRealDia[dateKey] =
-      //       (somaGenRealDia[dateKey] || 0) + item.gen_real;
-      //     somaGenEstimadaDia[dateKey] =
-      //       (somaGenEstimadaDia[dateKey] || 0) + item.gen_estimated;
-      //   }
-      // });
-
-      // for (
-      //   let date = new Date(start);
-      //   date <= end;
-      //   date.setDate(date.getDate() + 1)
-      // ) {
-      //   const dateKey = date.toISOString().split("T")[0];
-      //   somaGenRealDia[dateKey] = parseFloat(
-      //     (somaGenRealDia[dateKey] || 0).toFixed(2)
-      //   );
-      //   somaGenEstimadaDia[dateKey] = parseFloat(
-      //     (somaGenEstimadaDia[dateKey] || 0).toFixed(2)
-      //   );
-      // }
+   
 
       return res.status(200).json({
         message: "Somas calculadas com sucesso!",
