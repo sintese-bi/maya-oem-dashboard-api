@@ -195,7 +195,7 @@ routes.post(
   checkToken,
   UsersController.UpdateUserInformation
 );
-// routes.get(`${apiVersion}/massemail`, UsersController.massEmail);
+routes.get(`${apiVersion}/massemail`, UsersController.massEmail);
 routes.post(
   `${apiVersion}/emaildash`,
   checkToken,
