@@ -1430,7 +1430,7 @@ class UsersController {
 
           const mailOptions = {
             from: "noreplymayawatch@gmail.com",
-            to: ["eloymjunior00@gmail.com"],
+            to: cap.dev_email,
             subject: "Relatório de dados de Geração",
             text: "",
             html: emailBody,
