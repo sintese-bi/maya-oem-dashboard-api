@@ -31,7 +31,7 @@ export const generateFile = async ({ params }) => {
   }
 
   const { realGeneration, estimatedGeneration } = params;
-
+  realGeneration.sort((a, b) => new Date(a.date) - new Date(b.date));
   console.log(realGeneration, estimatedGeneration);
 
   const startOfMonth = moment().startOf("month").format("DD/MM/YYYY");
@@ -98,16 +98,13 @@ export const generateFile = async ({ params }) => {
       opacity: 0.5,
       borderOpacity: 0.75,
     });
-    firstPage.drawText(
-      `${moment(realGenerationItem.date, "DD-MM-AAAA").format("DD")}`,
-      {
-        size: 8,
-        x: index * dataSpace + dataBetweenSpace + 45,
-        y: height - 310,
-        width: dataWidth,
-        height: estimatedGeneration[index] * 5,
-      }
-    );
+    firstPage.drawText(`${moment(realGenerationItem.date).format("DD")}`, {
+      size: 8,
+      x: index * dataSpace + dataBetweenSpace + 45,
+      y: height - 310,
+      width: dataWidth,
+      height: estimatedGeneration[index] * 5,
+    });
   });
 
   firstPage.drawText(`${params.name}`, {
