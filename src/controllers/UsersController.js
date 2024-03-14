@@ -1241,6 +1241,7 @@ class UsersController {
         currentDate.getMonth() + 1,
         0
       );
+      console.log(firstDayOfMonth,lastDayOfMonth)
       console.log("Teste 1");
       const result = await Devices.findAll({
         attributes: ["dev_uuid"],
@@ -1251,10 +1252,10 @@ class UsersController {
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         },
       });
-      
+
       const dev_uuids = result.map((device) => device.dev_uuid);
-      const quant=dev_uuids.length
-      console.log(quant)
+      const quant = dev_uuids.length;
+      console.log(quant);
       const readableStream = Readable({
         async read() {
           try {
@@ -1268,7 +1269,17 @@ class UsersController {
                     gen_date: {
                       [Op.between]: [firstDayOfMonth, lastDayOfMonth],
                     },
+                    gen_updated_at: {
+                      [Op.in]: Generation.sequelize.literal(`
+                        (SELECT MAX(gen_updated_at) 
+                        FROM generation 
+                        WHERE dev_uuid = :dev_uuid 
+                        AND gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
+                        GROUP BY gen_date)
+                      `),
+                    },
                   },
+                  replacements: { dev_uuid, firstDayOfMonth, lastDayOfMonth },
                 });
                 //Realgeneration
                 const realGeneration = result.map((element) => {
