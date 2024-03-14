@@ -1248,11 +1248,13 @@ class UsersController {
           dev_email: {
             [Op.not]: null,
           },
+          [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         },
       });
-
+      
       const dev_uuids = result.map((device) => device.dev_uuid);
-
+      const quant=dev_uuids.length
+      console.log(quant)
       const readableStream = Readable({
         async read() {
           try {
@@ -1417,7 +1419,7 @@ class UsersController {
 
           const mailOptions = {
             from: "noreplymayawatch@gmail.com",
-            to: ["felipegadelha2004@gmail.com"],
+            to: ["eloymjunior00@gmail.com"],
             subject: "Relatório de dados de Geração",
             text: "",
             html: emailBody,
