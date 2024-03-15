@@ -1241,7 +1241,7 @@ class UsersController {
         currentDate.getMonth() + 1,
         0
       );
-      console.log(firstDayOfMonth,lastDayOfMonth)
+      console.log(firstDayOfMonth, lastDayOfMonth);
       console.log("Teste 1");
       const result = await Devices.findAll({
         attributes: ["dev_uuid"],
@@ -2327,9 +2327,34 @@ class UsersController {
       console.error(error);
     }
   }
+  async massemailScheduler(req, res) {
+    //Esboço api
+    try {
 
+
+
+
+
+
+
+
+
+    } catch (error) {
+      return res.status(500).json({ message: `Erro: ${error}` });
+    }
+  }
+  agendarenvioEmailRelatorio() {
+    // Agende a função para ser executada a cada dia
+    cron.schedule("0 5 * * *", async () => {
+      try {
+        await this.massemailScheduler();
+      } catch (error) {
+        console.error("Erro durante o envio do relatório agendado:", error);
+      }
+    });
+  }
   agendarVerificacaoDeAlertas() {
-    // Agende a função para ser executada a cada minuto
+    // Agende a função para ser executada a cada hora
     cron.schedule("39 * * * *", async () => {
       try {
         await this.emailAlert();
@@ -2339,6 +2364,8 @@ class UsersController {
     });
   }
 }
+
 const usersController = new UsersController();
 usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
