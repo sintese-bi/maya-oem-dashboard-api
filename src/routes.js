@@ -217,7 +217,11 @@ routes.post(
   checkToken,
   UsersController.csvDownload
 );
-
+// routes.post(
+//   `${apiVersion}/emailscheduler`, //Agendador data de envio relatorio
+//   checkToken,
+//   UsersController.massemailScheduler
+// );
 routes.post(
   `${apiVersion}/xlsxportal`,
   upload.single("arquivo"),

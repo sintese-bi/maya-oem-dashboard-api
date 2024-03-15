@@ -2328,17 +2328,32 @@ class UsersController {
     }
   }
   async massemailScheduler(req, res) {
-    //Esboço api
+    //Esboço api para setar data de envio e verificar se ja foi definido previamente
     try {
+      const { dev_uuid, date } = req.body;
+      const result = await devices.findOne({
+        attributes: ["dev_set_report"],
 
-
-
-
-
-
-
-
-
+        where: { dev_uuid: dev_uuid },
+      });
+      if (result.dev_set_report == true) {
+        return res
+          .status(409)
+          .send(
+            "O envio do relatório já foi configurado anteriormente e não pode ser configurado novamente."
+          );
+      }
+       await Devices.update(
+        {
+          dev_date_report: date,
+        },
+        { where: { dev_uuid: dev_uuid } }
+      );
+      return res
+        .status(200)
+        .json({
+          message: "Foi definido a data para envio do relatório com sucesso!",
+        });
     } catch (error) {
       return res.status(500).json({ message: `Erro: ${error}` });
     }
