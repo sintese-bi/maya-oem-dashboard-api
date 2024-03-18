@@ -701,7 +701,7 @@ class UsersController {
               dev_name: device.dev_name,
               dev_brand: device.dev_brand,
               dev_lat: device.dev_lat,
-
+              dev_email:device.dev_email,
               dev_deleted: device.dev_deleted,
               dev_long: device.dev_long,
               status: {
@@ -1241,8 +1241,8 @@ class UsersController {
         currentDate.getMonth() + 1,
         0
       );
-      console.log(firstDayOfMonth,lastDayOfMonth)
-      console.log("Teste 1");
+      console.log(firstDayOfMonth, lastDayOfMonth);
+     
       const result = await Devices.findAll({
         attributes: ["dev_uuid"],
         where: {
@@ -2327,9 +2327,49 @@ class UsersController {
       console.error(error);
     }
   }
+  async massemailScheduler(req, res) {
+    //Esboço api para setar data de envio e verificar se ja foi definido previamente
+    try {
+      const { dev_uuid, date } = req.body;
+      const result = await devices.findOne({
+        attributes: ["dev_set_report"],
 
+        where: { dev_uuid: dev_uuid },
+      });
+      if (result.dev_set_report == true) {
+        return res
+          .status(409)
+          .send(
+            "O envio do relatório já foi configurado anteriormente e não pode ser configurado novamente."
+          );
+      }
+       await Devices.update(
+        {
+          dev_date_report: date,
+        },
+        { where: { dev_uuid: dev_uuid } }
+      );
+      return res
+        .status(200)
+        .json({
+          message: "Foi definido a data para envio do relatório com sucesso!",
+        });
+    } catch (error) {
+      return res.status(500).json({ message: `Erro: ${error}` });
+    }
+  }
+  agendarenvioEmailRelatorio() {
+    // Agende a função para ser executada a cada dia
+    cron.schedule("0 5 * * *", async () => {
+      try {
+        await this.massemailScheduler();
+      } catch (error) {
+        console.error("Erro durante o envio do relatório agendado:", error);
+      }
+    });
+  }
   agendarVerificacaoDeAlertas() {
-    // Agende a função para ser executada a cada minuto
+    // Agende a função para ser executada a cada hora
     cron.schedule("39 * * * *", async () => {
       try {
         await this.emailAlert();
@@ -2339,6 +2379,8 @@ class UsersController {
     });
   }
 }
+
 const usersController = new UsersController();
 usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
