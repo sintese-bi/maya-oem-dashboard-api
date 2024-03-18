@@ -701,7 +701,7 @@ class UsersController {
               dev_name: device.dev_name,
               dev_brand: device.dev_brand,
               dev_lat: device.dev_lat,
-
+              dev_email:device.dev_email,
               dev_deleted: device.dev_deleted,
               dev_long: device.dev_long,
               status: {
@@ -1242,7 +1242,7 @@ class UsersController {
         0
       );
       console.log(firstDayOfMonth, lastDayOfMonth);
-      console.log("Teste 1");
+     
       const result = await Devices.findAll({
         attributes: ["dev_uuid"],
         where: {

@@ -438,6 +438,30 @@ class GenerationController {
       res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+
+  async teste(req, res) {
+    try {
+      const { use_uuid, startDate, endDate } = req.body;
+
+      const result = await Generation.findAll({
+
+        
+
+
+
+
+
+      })
+
+
+
+
+
+
+    } catch (error) {
+      res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
 }
 
 export default new GenerationController();
