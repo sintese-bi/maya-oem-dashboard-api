@@ -538,10 +538,10 @@ class UsersController {
     try {
       const use = req.params.uuid;
       const par = req.params.par;
-      const today = moment().format("YYYY-MM-DD");
+      const today = moment.utc().format("YYYY-MM-DD");
 
-      const startOfMonth = moment().startOf("month").toDate();
-      const endOfMonth = moment().endOf("month").toDate();
+      const startOfMonth = moment.utc().startOf("month").toDate();
+      const endOfMonth = moment.utc().endOf("month").toDate();
       console.log(startOfMonth, endOfMonth);
 
       let whereCondition = {};
@@ -604,7 +604,7 @@ class UsersController {
                     separate: true,
                     where: {
                       alert_created_at: {
-                        [Op.gte]: moment().subtract(1, "hour").toDate(),
+                        [Op.gte]: moment.utc().subtract(1, "hour").toDate(),
                       },
                     },
                   },
@@ -638,36 +638,39 @@ class UsersController {
 
             if (generations) {
               for (const gen of generations) {
-                const genDate = moment(gen.gen_date).utc().format("YYYY-MM-DD");
+                const genDate = moment.utc(gen.gen_date).format("YYYY-MM-DD");
 
                 if (
                   !dailySums[genDate] ||
-                  moment(dailySums[genDate].gen_updated_at).isSameOrBefore(
-                    moment(gen.gen_updated_at)
-                  )
+                  moment
+                    .utc(dailySums[genDate].gen_updated_at)
+                    .isSameOrBefore(moment.utc(gen.gen_updated_at))
                 ) {
                   dailySums[genDate] = {
                     gen_real: gen.gen_real,
                     gen_estimated: gen.gen_estimated,
                     gen_date: gen.gen_date,
                     gen_updated_at: gen.gen_updated_at,
-                    gen_date: gen.gen_date,
                   };
                 }
               }
 
               Object.values(dailySums).forEach((gen) => {
-                const genDate = moment(gen.gen_updated_at).format("YYYY-MM-DD");
-                const weekStartDate = moment()
+                const genDate = moment
+                  .utc(gen.gen_updated_at)
+                  .format("YYYY-MM-DD");
+                const weekStartDate = moment
+                  .utc()
                   .startOf("isoWeek")
                   .format("YYYY-MM-DD");
-                const weekEndDate = moment()
+                const weekEndDate = moment
+                  .utc()
                   .endOf("isoWeek")
                   .format("YYYY-MM-DD");
 
                 if (
-                  moment(gen.gen_updated_at).isSameOrAfter(weekStartDate) &&
-                  moment(gen.gen_updated_at).isBefore(weekEndDate)
+                  moment.utc(gen.gen_updated_at).isSameOrAfter(weekStartDate) &&
+                  moment.utc(gen.gen_updated_at).isBefore(weekEndDate)
                 ) {
                   if (!weeklySumsReal[weekStartDate]) {
                     weeklySumsReal[weekStartDate] = 0;
@@ -680,7 +683,8 @@ class UsersController {
                   weeklySumsEstimated[weekStartDate] += gen.gen_estimated;
                 }
 
-                const monthStartDate = moment(gen.gen_updated_at)
+                const monthStartDate = moment
+                  .utc(gen.gen_updated_at)
                   .startOf("month")
                   .format("YYYY-MM-DD");
 
@@ -701,7 +705,7 @@ class UsersController {
               dev_name: device.dev_name,
               dev_brand: device.dev_brand,
               dev_lat: device.dev_lat,
-              dev_email:device.dev_email,
+              dev_email: device.dev_email,
               dev_deleted: device.dev_deleted,
               dev_long: device.dev_long,
               status: {
@@ -709,9 +713,9 @@ class UsersController {
                 sta_code: device.status ? device.status.sta_code : null,
               },
               alerts: alerts.filter((alert) =>
-                moment(alert.alert_created_at).isAfter(
-                  moment().subtract(1, "hour")
-                )
+                moment
+                  .utc(alert.alert_created_at)
+                  .isAfter(moment.utc().subtract(1, "hour"))
               ),
               dev_capacity: device.dev_capacity,
               dev_address: device.dev_address,
@@ -754,7 +758,10 @@ class UsersController {
         }
       }
 
-      return res.status(200).json({ devicesData, brand });
+      return res.status(200).json({
+        devicesData,
+        brand,
+      });
     } catch (error) {
       return res
         .status(400)
@@ -923,10 +930,18 @@ class UsersController {
           message: "Você já inseriu um login de mesmo nome para essa marca!",
         });
       }
-      const result = await Brand_Info.findOne({
-        attributes: ["bl_url"],
-        where: { bl_name: newnamebrand },
-      });
+      let result;
+      let url;
+      if (newnamebrand == "canadian" && bl_quant == 2) {
+        url = "http://teste";
+      } else {
+        result = await Brand_Info.findOne({
+          attributes: ["bl_url"],
+          where: { bl_name: newnamebrand },
+        });
+        url = result.bl_url;
+      }
+
       // let bl_deleted;
       // console.log(use_uuid);
       // if (use_uuid == "a7ed2d10-4340-43df-824d-63ca16979114") {
@@ -939,7 +954,7 @@ class UsersController {
         bl_login: bl_login,
         bl_password: bl_password,
         bl_name: newnamebrand,
-        bl_url: result.bl_url,
+        bl_url: url,
         bl_quant: bl_quant,
         bl_check: "validating",
         bl_deleted: 1,
@@ -948,7 +963,7 @@ class UsersController {
       //   bl_uuid: device.bl_uuid,
       // });
       return res.status(201).json({
-        message: `Esse processo pode demorar um pouco, mas não se preocupe lhe avisaremos assim que suas plantas estiverem disponíveis.${newnamebrand} e ${bl_login} `,
+        message: `Esse processo pode demorar um pouco, mas não se preocupe lhe avisaremos assim que suas plantas estiverem disponíveis: ${newnamebrand} e ${bl_login} `,
       });
     } catch (error) {
       console.error(error);
@@ -1242,7 +1257,7 @@ class UsersController {
         0
       );
       console.log(firstDayOfMonth, lastDayOfMonth);
-     
+
       const result = await Devices.findAll({
         attributes: ["dev_uuid"],
         where: {
@@ -2343,17 +2358,15 @@ class UsersController {
             "O envio do relatório já foi configurado anteriormente e não pode ser configurado novamente."
           );
       }
-       await Devices.update(
+      await Devices.update(
         {
           dev_date_report: date,
         },
         { where: { dev_uuid: dev_uuid } }
       );
-      return res
-        .status(200)
-        .json({
-          message: "Foi definido a data para envio do relatório com sucesso!",
-        });
+      return res.status(200).json({
+        message: "Foi definido a data para envio do relatório com sucesso!",
+      });
     } catch (error) {
       return res.status(500).json({ message: `Erro: ${error}` });
     }
