@@ -2348,20 +2348,26 @@ class UsersController {
     }
   }
   async massemailScheduler(req, res) {
-   
     try {
-      const { dev_uuid, date } = req.body;
-      const result = await devices.findOne({
-        attributes: ["dev_set_report"],
+      // Date=dia do mês que foi definido pelo usuário
+      const { use_uuid, date } = req.body;
+      const result = await Users.findOne({
+        attributes: ["use_set_report"],
 
-        where: { dev_uuid: dev_uuid },
+        where: { use_uuid: use_uuid },
       });
-      await Devices.update(
+      if ((result.use_set_report == true)) {
+        return res
+          .status(409)
+          .json({ message: "O relatório já foi enviado este mês!" });
+      }
+      await Users.update(
         {
-          dev_date_report: date,
+          use_date_report: date,
         },
-        { where: { dev_uuid: dev_uuid } }
+        { where: { use_uuid: use_uuid } }
       );
+
       return res.status(200).json({
         message: "Foi definido a data para envio do relatório com sucesso!",
       });
@@ -2371,12 +2377,6 @@ class UsersController {
   }
   async massemailSender(req, res) {
     try {
-      
-
-
-
-
-
     } catch (error) {
       return res.status(500).json({ message: `Erro: ${error}` });
     }
