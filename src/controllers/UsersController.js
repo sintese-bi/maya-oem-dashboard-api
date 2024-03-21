@@ -933,7 +933,7 @@ class UsersController {
       let result;
       let url;
       if (newnamebrand == "canadian" && bl_quant == 2) {
-        url = "http://teste";
+        url = "https://monitoring.csisolar.com/login";
       } else {
         result = await Brand_Info.findOne({
           attributes: ["bl_url"],
@@ -1795,7 +1795,7 @@ class UsersController {
         currentDate.getMonth() + 1,
         0
       );
-
+      const { use_uuid } = req.body;
       // Consulta o banco de dados para obter dev_uuid distintos inseridos no mês atual
       const uniqueDevUuids = await Reports.findAll({
         attributes: [
@@ -1808,6 +1808,7 @@ class UsersController {
           createdAt: {
             [Op.between]: [startOfMonth, endOfMonth],
           },
+          use_uuid: use_uuid,
         },
       });
 
@@ -1826,10 +1827,14 @@ class UsersController {
   }
   async storeReport(req, res) {
     try {
-      const { dev_uuid } = req.body;
+      const { dev_uuid, use_uuid } = req.body;
 
       // Cria o registro no banco de dados
-      await Reports.create({ port_check: true, dev_uuid: dev_uuid });
+      await Reports.create({
+        port_check: true,
+        dev_uuid: dev_uuid,
+        use_uuid: use_uuid,
+      });
 
       return res
         .status(200)

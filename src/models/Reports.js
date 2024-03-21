@@ -12,7 +12,7 @@ class Reports extends Model {
         port_check: {
           type: DataTypes.BOOLEAN,
         },
-
+        use_uuid: { type: DataTypes.UUIDV4 },
         dev_uuid: {
           type: DataTypes.UUID,
           references: {
