@@ -1998,30 +1998,33 @@ class UsersController {
           use_uuid: use_uuid,
         },
       });
-
+      const infoBrandall = await Brand.findAll({
+        attributes: ["bl_name", "bl_login", "bl_password", "bl_check"],
+        where: {
+          use_uuid: use_uuid,
+        },
+      });
       const result = await Brand_Info.findAll({
         attributes: ["bl_name", "bl_url"],
       });
+      const brandNamesSet = new Set();
+      const brandinfo = [];
 
-      const uniqueBlNamesSet = new Set();
+      for (const info of infoBrandall) {
+        brandNamesSet.add(info.bl_name);
+      }
 
-      const modifiedResult = result.map((item) => {
-        const uppercasedBlName = item.bl_name.toUpperCase();
-
-        if (!uniqueBlNamesSet.has(uppercasedBlName)) {
-          uniqueBlNamesSet.add(uppercasedBlName);
-          return {
-            bl_name: uppercasedBlName,
-            bl_url: item.bl_url,
-          };
+      for (const element of result) {
+        if (brandNamesSet.has(element.bl_name)) {
+          brandinfo.push({
+            bl_name: element.bl_name,
+            bl_url: element.bl_url,
+          });
+          brandNamesSet.delete(element.bl_name);
         }
+      }
 
-        return null;
-      });
-
-      const filteredResult = modifiedResult.filter((item) => item !== null);
-
-      return res.status(200).json({ message: [filteredResult, infoBrand] });
+      return res.status(200).json({ message: [brandinfo, infoBrand] });
     } catch (error) {
       return res
         .status(400)
@@ -2348,27 +2351,26 @@ class UsersController {
     }
   }
   async massemailScheduler(req, res) {
-    //Esboço api para setar data de envio e verificar se ja foi definido previamente
     try {
-      const { dev_uuid, date } = req.body;
-      const result = await devices.findOne({
-        attributes: ["dev_set_report"],
+      // Date=dia do mês que foi definido pelo usuário
+      const { use_uuid, date } = req.body;
+      const result = await Users.findOne({
+        attributes: ["use_date_report"],
 
-        where: { dev_uuid: dev_uuid },
+        where: { use_uuid: use_uuid },
       });
-      if (result.dev_set_report == true) {
+      if (result.use_set_report == true) {
         return res
           .status(409)
-          .send(
-            "O envio do relatório já foi configurado anteriormente e não pode ser configurado novamente."
-          );
+          .json({ message: "O relatório já foi enviado este mês!" });
       }
-      await Devices.update(
+      await Users.update(
         {
-          dev_date_report: date,
+          use_date_report: date,
         },
-        { where: { dev_uuid: dev_uuid } }
+        { where: { use_uuid: use_uuid } }
       );
+
       return res.status(200).json({
         message: "Foi definido a data para envio do relatório com sucesso!",
       });
@@ -2376,11 +2378,18 @@ class UsersController {
       return res.status(500).json({ message: `Erro: ${error}` });
     }
   }
+  async massemailSender(req, res) {
+    try {
+    } catch (error) {
+      return res.status(500).json({ message: `Erro: ${error}` });
+    }
+  }
+
   agendarenvioEmailRelatorio() {
     // Agende a função para ser executada a cada dia
     cron.schedule("0 5 * * *", async () => {
       try {
-        await this.massemailScheduler();
+        await this.massemailSender();
       } catch (error) {
         console.error("Erro durante o envio do relatório agendado:", error);
       }
