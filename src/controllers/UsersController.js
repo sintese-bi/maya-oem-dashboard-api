@@ -1998,30 +1998,33 @@ class UsersController {
           use_uuid: use_uuid,
         },
       });
-
+      const infoBrandall = await Brand.findAll({
+        attributes: ["bl_name", "bl_login", "bl_password", "bl_check"],
+        where: {
+          use_uuid: use_uuid,
+        },
+      });
       const result = await Brand_Info.findAll({
         attributes: ["bl_name", "bl_url"],
       });
+      const brandNamesSet = new Set();
+      const brandinfo = [];
 
-      const uniqueBlNamesSet = new Set();
+      for (const info of infoBrandall) {
+        brandNamesSet.add(info.bl_name);
+      }
 
-      const modifiedResult = result.map((item) => {
-        const uppercasedBlName = item.bl_name.toUpperCase();
-
-        if (!uniqueBlNamesSet.has(uppercasedBlName)) {
-          uniqueBlNamesSet.add(uppercasedBlName);
-          return {
-            bl_name: uppercasedBlName,
-            bl_url: item.bl_url,
-          };
+      for (const element of result) {
+        if (brandNamesSet.has(element.bl_name)) {
+          brandinfo.push({
+            bl_name: element.bl_name,
+            bl_url: element.bl_url,
+          });
+          brandNamesSet.delete(element.bl_name);
         }
+      }
 
-        return null;
-      });
-
-      const filteredResult = modifiedResult.filter((item) => item !== null);
-
-      return res.status(200).json({ message: [filteredResult, infoBrand] });
+      return res.status(200).json({ message: [brandinfo, infoBrand] });
     } catch (error) {
       return res
         .status(400)
@@ -2352,11 +2355,11 @@ class UsersController {
       // Date=dia do mês que foi definido pelo usuário
       const { use_uuid, date } = req.body;
       const result = await Users.findOne({
-        attributes: ["use_set_report"],
+        attributes: ["use_date_report"],
 
         where: { use_uuid: use_uuid },
       });
-      if ((result.use_set_report == true)) {
+      if (result.use_set_report == true) {
         return res
           .status(409)
           .json({ message: "O relatório já foi enviado este mês!" });
