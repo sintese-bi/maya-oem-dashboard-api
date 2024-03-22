@@ -1743,7 +1743,7 @@ class UsersController {
         pipelineAsync(readableStream, transformStream, writableStream);
         try {
           await Users.update(
-            { use_date_report: true },
+            { use_set_report: true },
             {
               where: { use_uuid: user.use_uuid },
             }
