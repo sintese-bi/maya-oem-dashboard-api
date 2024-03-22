@@ -91,12 +91,6 @@ routes.post(
   UsersController.useAlertEmail
 );
 
-//Rota de teste
-// routes.post(
-//   `${apiVersion}/teste`,
-
-//   UsersController.massemailSender
-// );
 routes.post(
   `${apiVersion}/brandupdate`,
   checkToken,

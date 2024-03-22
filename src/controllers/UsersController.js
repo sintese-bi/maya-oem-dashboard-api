@@ -2386,28 +2386,12 @@ class UsersController {
       return res.status(500).json({ message: `Erro: ${error}` });
     }
   }
-  async massemailSender(req, res) {
-    try {
-      const { use_uuid } = req.body;
-      const result = await Users.findAll({
-        attributes: ["use_date_report"],
-        where: { use_uuid: use_uuid },
-      });
-      const callmassemail=this.massEmail(use_uuid)
-
-
-
-      return res.status(200).json({ result });
-    } catch (error) {
-      return res.status(500).json({ message: `Erro: ${error}` });
-    }
-  }
-
+  
   agendarenvioEmailRelatorio() {
     // Agende a função para ser executada a cada dia
-    cron.schedule("0 5 * * *", async () => {
+    cron.schedule("0 9 * * *", async () => {
       try {
-        await this.massemailSender();
+        await this.massEmail();
       } catch (error) {
         console.error("Erro durante o envio do relatório agendado:", error);
       }
