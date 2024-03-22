@@ -1262,6 +1262,7 @@ class UsersController {
         include: [
           {
             association: "brand_login",
+            attributes: [],
             where: {
               use_uuid: use_uuid,
             },
@@ -1275,7 +1276,6 @@ class UsersController {
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         },
       });
-
       const dev_uuids = result.map((device) => device.dev_uuid);
       const quant = dev_uuids.length;
       console.log(quant);
@@ -2388,6 +2388,26 @@ class UsersController {
   }
   async massemailSender(req, res) {
     try {
+      const { use_uuid } = req.body;
+      const result = await Devices.findAll({
+        include: [
+          {
+            association: "brand_login",
+            attributes: [],
+            where: {
+              use_uuid: use_uuid,
+            },
+          },
+        ],
+        attributes: ["dev_uuid"],
+        where: {
+          dev_email: {
+            [Op.not]: null,
+          },
+          [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
+        },
+      });
+      return res.status(200).json({ result });
     } catch (error) {
       return res.status(500).json({ message: `Erro: ${error}` });
     }

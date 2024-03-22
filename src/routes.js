@@ -90,6 +90,13 @@ routes.post(
   checkToken,
   UsersController.useAlertEmail
 );
+
+//Rota de teste
+// routes.post(
+//   `${apiVersion}/teste`,
+
+//   UsersController.massemailSender
+// );
 routes.post(
   `${apiVersion}/brandupdate`,
   checkToken,
@@ -113,7 +120,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/updateplants`,
-  
+
   UsersController.updatePlants
 );
 routes.post(
@@ -166,7 +173,8 @@ routes.patch(
   `${apiVersion}/projection`,
   checkToken,
   GenerationController.projectionPatch
-); // NAO TA SENDO USADA
+); 
+//Não esta sendo usada essa rota
 routes.get(
   `${apiVersion}/devices/:bl_uuid`,
 
@@ -195,7 +203,7 @@ routes.post(
   checkToken,
   UsersController.UpdateUserInformation
 );
-routes.get(`${apiVersion}/massemail`, UsersController.massEmail);
+routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
 routes.post(
   `${apiVersion}/emaildash`,
   checkToken,
