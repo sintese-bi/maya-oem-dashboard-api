@@ -2389,24 +2389,14 @@ class UsersController {
   async massemailSender(req, res) {
     try {
       const { use_uuid } = req.body;
-      const result = await Devices.findAll({
-        include: [
-          {
-            association: "brand_login",
-            attributes: [],
-            where: {
-              use_uuid: use_uuid,
-            },
-          },
-        ],
-        attributes: ["dev_uuid"],
-        where: {
-          dev_email: {
-            [Op.not]: null,
-          },
-          [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
-        },
+      const result = await Users.findAll({
+        attributes: ["use_date_report"],
+        where: { use_uuid: use_uuid },
       });
+      const callmassemail=this.massEmail(use_uuid)
+
+
+
       return res.status(200).json({ result });
     } catch (error) {
       return res.status(500).json({ message: `Erro: ${error}` });
