@@ -1236,6 +1236,7 @@ class UsersController {
   //Ela aceita uma requisição contendo uma matriz de objetos, onde cada objeto possui um dev_uuid identificando um dispositivo e o conteúdo do PDF em formato base64 (base64).
   async massEmail(req, res) {
     try {
+      const { use_uuid } = req.body;
       const {
         Readable,
         Writable,
@@ -1256,9 +1257,16 @@ class UsersController {
         currentDate.getMonth() + 1,
         0
       );
-      console.log(firstDayOfMonth, lastDayOfMonth);
 
       const result = await Devices.findAll({
+        include: [
+          {
+            association: "brand_login",
+            where: {
+              use_uuid: use_uuid,
+            },
+          },
+        ],
         attributes: ["dev_uuid"],
         where: {
           dev_email: {
