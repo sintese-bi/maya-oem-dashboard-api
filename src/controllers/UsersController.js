@@ -527,34 +527,76 @@ class UsersController {
   }
   async emailAlertSend(req, res) {
     try {
-      const dataNow = moment().format("YYYY-MM-DD");
-      let deviceData;
-      deviceData = await Generation.findAll({
-        attributes: [
-          "gen_uuid",
-          "gen_estimated",
-          "gen_real",
-          "gen_date",
-          "dev_uuid",
-          "gen_created_at",
-          "gen_updated_at",
+      const { use_uuid } = req.body;
+      const currentDate = new Date();
+      const startOfDay = new Date(currentDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(currentDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const result = await Generation.findAll({
+        include: [
+          {
+            association: "devices",
+            where: {
+              [Op.or]: [
+                { dev_deleted: false },
+                { dev_deleted: { [Op.is]: null } },
+              ],
+            },
+            include: [
+              {
+                association: "brand_login",
+                where: {
+                  use_uuid: use_uuid,
+                },
+              },
+            ],
+          },
         ],
         where: {
-          dev_uuid: devUuid,
-          gen_date: dataNow,
-          gen_updated_at: {
-            [Op.in]: Generation.sequelize.literal(`
-              (SELECT MAX(gen_updated_at) 
-              FROM generation 
-              WHERE dev_uuid = :devUuid 
-              AND gen_date =:dataNow
-              GROUP BY gen_date)
-            `),
+          gen_date: {
+            [Op.between]: [startOfDay, endOfDay],
           },
         },
-        replacements: { devUuid, dataNow },
+        attributes: ["gen_date", "gen_real", "gen_estimated", "gen_updated_at"],
+        order: [["gen_updated_at", "DESC"]],
       });
-      return res.status(200).json({ message: deviceData });
+
+      const aggregatedResult = {};
+
+      result.forEach((item) => {
+        const deviceUUID = item.devices.dev_uuid;
+        const genDate = new Date(item.gen_date).toISOString().split("T")[0];
+
+        if (
+          !aggregatedResult[deviceUUID] ||
+          !aggregatedResult[deviceUUID][genDate]
+        ) {
+          aggregatedResult[deviceUUID] = {
+            [genDate]: {
+              gen_real: item.gen_real,
+              gen_estimated: item.gen_estimated,
+              gen_updated_at: item.gen_updated_at,
+            },
+          };
+        }
+      });
+
+      const recentGenerations = {};
+
+      Object.keys(aggregatedResult).forEach((deviceUUID) => {
+        const latestDate = Object.keys(aggregatedResult[deviceUUID])
+          .sort()
+          .reverse()[0];
+        recentGenerations[deviceUUID] =
+          aggregatedResult[deviceUUID][latestDate];
+      });
+
+      return res.status(200).json({
+        message: "Geração diária mais recente retornada com sucesso!",
+        recentGenerations,
+      });
     } catch (error) {
       return res
         .status(400)
