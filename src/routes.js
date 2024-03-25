@@ -167,16 +167,16 @@ routes.patch(
   `${apiVersion}/projection`,
   checkToken,
   GenerationController.projectionPatch
-); 
+);
 //Não esta sendo usada essa rota
 routes.get(
   `${apiVersion}/devices/:bl_uuid`,
 
   DevicesControlle.index
 );
-routes.patch(
+routes.put(
   `${apiVersion}/alertFrequency`,
-  UsersController.patchAlertFrequency
+  UsersController.alertFrequencyDefinition
 );
 routes.get(
   `${apiVersion}/alertFrequency/:uuid`,

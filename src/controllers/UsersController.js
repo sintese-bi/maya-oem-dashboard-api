@@ -503,19 +503,24 @@ class UsersController {
   }
   //Esta API permite que o usuário atualize a frequência e a porcentagem de alertas associados ao seu perfil.
   //Ela recebe os novos valores, como a porcentagem e o nome da frequência, e os aplica ao usuário identificado pelo UUID fornecido.
-  async patchAlertFrequency(req, res) {
-    const { useUuid, values } = req.body;
-    const { percentage, frequencyName } = values;
-
-    await Users.update(
-      { use_percentage: percentage, use_frequency_name: frequencyName },
-      { where: { use_uuid: useUuid } }
-    );
-
+  async alertFrequencyDefinition(req, res) {
     try {
-      return res.status(200).json({ message: "Alterar salva com sucesso!" });
+      const { use_uuid, use_percentage, use_frequency_data } = req.body;
+      const result = await Users.update(
+        {
+          use_percentage: use_percentage,
+          use_frequency_data: use_frequency_data,
+        },
+
+        { where: { use_uuid: use_uuid } }
+      );
+      return res
+        .status(200)
+        .json({ message: "Os dados foram atualizados com sucesso!" });
     } catch (error) {
-      return res.status(400).json({ message: "Erro ao salvar os dados!" });
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
   //Esta API assíncrona retorna a porcentagem e o nome da frequência de alertas associados a um usuário específico identificado pelo UUID fornecido.
