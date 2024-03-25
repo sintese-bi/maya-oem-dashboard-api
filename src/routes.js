@@ -178,8 +178,16 @@ routes.put(
   `${apiVersion}/alertfrequency`,
   UsersController.alertFrequencyDefinition
 );
+emailAlertSend;
+routes.get(
+  `${apiVersion}/emailalertsend`,
+  checkToken,
+  UsersController.emailAlertSend
+);
+
 routes.get(
   `${apiVersion}/alertFrequency/:uuid`,
+  checkToken,
   UsersController.alertFrequency
 );
 routes.post(

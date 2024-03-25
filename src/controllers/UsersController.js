@@ -5,7 +5,7 @@ import fs from "fs";
 import { google } from "googleapis";
 import jwt from "jsonwebtoken";
 import moment from "moment-timezone";
-import { Op } from "sequelize";
+import { Sequelize, Op } from "sequelize";
 import Brand from "../models/Brand";
 import IrradiationCoefficient from "../models/IrradiationCoefficient";
 import ProfileLevel from "../models/ProfileLevel";
@@ -525,6 +525,41 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  async emailAlertSend(req, res) {
+    try {
+      const dataNow = moment().format("YYYY-MM-DD");
+      let deviceData;
+      deviceData = await Generation.findAll({
+        attributes: [
+          "gen_uuid",
+          "gen_estimated",
+          "gen_real",
+          "gen_date",
+          "dev_uuid",
+          "gen_created_at",
+          "gen_updated_at",
+        ],
+        where: {
+          dev_uuid: devUuid,
+          gen_date: dataNow,
+          gen_updated_at: {
+            [Op.in]: Generation.sequelize.literal(`
+              (SELECT MAX(gen_updated_at) 
+              FROM generation 
+              WHERE dev_uuid = :devUuid 
+              AND gen_date =:dataNow
+              GROUP BY gen_date)
+            `),
+          },
+        },
+        replacements: { devUuid, dataNow },
+      });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
   //Esta API assíncrona retorna a porcentagem e o nome da frequência de alertas associados a um usuário específico identificado pelo UUID fornecido.
   async alertFrequency(req, res) {
     const use = req.params.uuid;
@@ -538,6 +573,7 @@ class UsersController {
       return res.status(400).json({ message: "Erro ao restornar os dados!" });
     }
   }
+
   //
   //Esta API assíncrona retorna dados detalhados relacionados ao dashboard de um usuário específico, identificado pelo UUID fornecido.
   //Ela inclui informações sobre o nome do usuário e suas marcas associadas. Cada marca possui detalhes sobre os dispositivos, incluindo UUID, nome, marca, capacidade, geração real e estimada, alertas e status. A busca é limitada ao mês atual.
