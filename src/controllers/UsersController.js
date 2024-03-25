@@ -554,6 +554,7 @@ class UsersController {
         },
         replacements: { devUuid, dataNow },
       });
+      return res.status(200).json({ message: deviceData });
     } catch (error) {
       return res
         .status(400)
