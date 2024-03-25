@@ -90,6 +90,7 @@ routes.post(
   checkToken,
   UsersController.useAlertEmail
 );
+
 routes.post(
   `${apiVersion}/brandupdate`,
   checkToken,
@@ -113,7 +114,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/updateplants`,
-  
+
   UsersController.updatePlants
 );
 routes.post(
@@ -166,18 +167,28 @@ routes.patch(
   `${apiVersion}/projection`,
   checkToken,
   GenerationController.projectionPatch
-); // NAO TA SENDO USADA
+);
+//Não esta sendo usada essa rota
 routes.get(
   `${apiVersion}/devices/:bl_uuid`,
 
   DevicesControlle.index
 );
-routes.patch(
-  `${apiVersion}/alertFrequency`,
-  UsersController.patchAlertFrequency
-);
+// routes.put(
+//   `${apiVersion}/alertfrequency`,
+//   checkToken,
+//   UsersController.alertFrequencyDefinition
+// );
+
+// routes.post(
+//   `${apiVersion}/emailalertsend`,
+//   checkToken,
+//   UsersController.emailAlertSend
+// );
+
 routes.get(
   `${apiVersion}/alertFrequency/:uuid`,
+  checkToken,
   UsersController.alertFrequency
 );
 routes.post(
@@ -195,7 +206,9 @@ routes.post(
   checkToken,
   UsersController.UpdateUserInformation
 );
-routes.get(`${apiVersion}/massemail`, UsersController.massEmail);
+
+routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
+// routes.post(`${apiVersion}/automaticmassemail`, checkToken, UsersController.automaticmassEmail);
 routes.post(
   `${apiVersion}/emaildash`,
   checkToken,
