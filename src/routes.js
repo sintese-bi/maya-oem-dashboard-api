@@ -175,7 +175,7 @@ routes.get(
   DevicesControlle.index
 );
 routes.put(
-  `${apiVersion}/alertFrequency`,
+  `${apiVersion}/alertfrequency`,
   UsersController.alertFrequencyDefinition
 );
 routes.get(

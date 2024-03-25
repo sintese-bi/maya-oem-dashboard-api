@@ -505,11 +505,13 @@ class UsersController {
   //Ela recebe os novos valores, como a porcentagem e o nome da frequência, e os aplica ao usuário identificado pelo UUID fornecido.
   async alertFrequencyDefinition(req, res) {
     try {
-      const { use_uuid, use_percentage, use_frequency_data } = req.body;
+      const { use_uuid, use_percentage, use_frequency_data, use_alert_email } =
+        req.body;
       const result = await Users.update(
         {
           use_percentage: use_percentage,
           use_frequency_data: use_frequency_data,
+          use_alert_email: use_alert_email,
         },
 
         { where: { use_uuid: use_uuid } }
@@ -2690,6 +2692,6 @@ class UsersController {
 }
 
 const usersController = new UsersController();
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
