@@ -594,7 +594,7 @@ class UsersController {
       });
 
       return res.status(200).json({
-        message: "Geração diária mais recente retornada com sucesso!",
+        message: "Geração para comparação retornada com sucesso!",
         recentGenerations,
       });
     } catch (error) {
@@ -2520,6 +2520,7 @@ class UsersController {
             bl_quant: element.quant_usinas,
             bl_check: "validating",
             use_uuid: use_uuid,
+            bl_deleted:1
           });
         })
       );
@@ -2771,6 +2772,6 @@ class UsersController {
 }
 
 const usersController = new UsersController();
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();

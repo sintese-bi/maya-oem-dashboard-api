@@ -174,17 +174,17 @@ routes.get(
 
   DevicesControlle.index
 );
-routes.put(
-  `${apiVersion}/alertfrequency`,
-  checkToken,
-  UsersController.alertFrequencyDefinition
-);
+// routes.put(
+//   `${apiVersion}/alertfrequency`,
+//   checkToken,
+//   UsersController.alertFrequencyDefinition
+// );
 
-routes.post(
-  `${apiVersion}/emailalertsend`,
-  checkToken,
-  UsersController.emailAlertSend
-);
+// routes.post(
+//   `${apiVersion}/emailalertsend`,
+//   checkToken,
+//   UsersController.emailAlertSend
+// );
 
 routes.get(
   `${apiVersion}/alertFrequency/:uuid`,
