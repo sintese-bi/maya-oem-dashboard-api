@@ -525,6 +525,7 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  //Api para envio de alerta quando a geração real estiver x% abaixo da geração estimada
   async emailAlertSend(req, res) {
     try {
       const { use_uuid } = req.body;
@@ -538,6 +539,7 @@ class UsersController {
         include: [
           {
             association: "devices",
+            attributes: ["dev_uuid", "dev_name"], 
             where: {
               [Op.or]: [
                 { dev_deleted: false },
@@ -567,6 +569,7 @@ class UsersController {
 
       result.forEach((item) => {
         const deviceUUID = item.devices.dev_uuid;
+        const deviceName = item.devices.dev_name;
         const genDate = new Date(item.gen_date).toISOString().split("T")[0];
 
         if (
@@ -575,6 +578,7 @@ class UsersController {
         ) {
           aggregatedResult[deviceUUID] = {
             [genDate]: {
+              deviceName: deviceName,
               gen_real: item.gen_real,
               gen_estimated: item.gen_estimated,
               gen_updated_at: item.gen_updated_at,
@@ -589,13 +593,16 @@ class UsersController {
         const latestDate = Object.keys(aggregatedResult[deviceUUID])
           .sort()
           .reverse()[0];
-        recentGenerations[deviceUUID] =
-          aggregatedResult[deviceUUID][latestDate];
+        recentGenerations[deviceUUID] = {
+          deviceName: aggregatedResult[deviceUUID][latestDate].deviceName,
+          ...aggregatedResult[deviceUUID][latestDate],
+        };
       });
 
       return res.status(200).json({
         message: "Geração para comparação retornada com sucesso!",
         recentGenerations,
+        result
       });
     } catch (error) {
       return res
@@ -603,6 +610,7 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+
   //Esta API assíncrona retorna a porcentagem e o nome da frequência de alertas associados a um usuário específico identificado pelo UUID fornecido.
   async alertFrequency(req, res) {
     const use = req.params.uuid;
@@ -2520,7 +2528,7 @@ class UsersController {
             bl_quant: element.quant_usinas,
             bl_check: "validating",
             use_uuid: use_uuid,
-            bl_deleted:1
+            bl_deleted: 1,
           });
         })
       );
@@ -2772,6 +2780,6 @@ class UsersController {
 }
 
 const usersController = new UsersController();
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
