@@ -576,6 +576,7 @@ class UsersController {
             include: [
               {
                 association: "brand_login",
+                attributes: ["bl_name"], 
                 where: {
                   use_uuid: use_uuid,
                 },
@@ -589,11 +590,15 @@ class UsersController {
         attributes: ["gen_date", "gen_real", "gen_estimated", "gen_updated_at"],
         order: [["gen_updated_at", "DESC"]],
       });
+
       const filteredResult = {};
 
       result.forEach((generation) => {
-        const { devices, gen_updated_at } = generation;
+        const { devices, gen_updated_at, gen_real, gen_estimated } = generation;
         const deviceUUID = devices.dev_uuid;
+        const deviceName = devices.dev_name; 
+        const brandLogin = devices.brand_login; 
+        const brandName = brandLogin ? brandLogin.bl_name : null; 
         const generationDate = gen_updated_at.toISOString().split("T")[0];
 
         if (!filteredResult[generationDate]) {
@@ -605,19 +610,49 @@ class UsersController {
           gen_updated_at >
             filteredResult[generationDate][deviceUUID].gen_updated_at
         ) {
-          filteredResult[generationDate][deviceUUID] = generation;
+          filteredResult[generationDate][deviceUUID] = {
+            gen_real,
+            gen_estimated,
+            dev_name: deviceName,
+            bl_name: brandName,
+          };
         }
       });
 
+
+      const deviceSums = {};
+
+ 
+      Object.keys(filteredResult).forEach((date) => {
+        const devices = filteredResult[date];
+
+        
+        Object.keys(devices).forEach((deviceUUID) => {
+          const generation = devices[deviceUUID];
+          const { gen_real, gen_estimated, dev_name, bl_name } = generation;
+
+         
+          if (!deviceSums[deviceUUID]) {
+            deviceSums[deviceUUID] = {
+              gen_real: 0,
+              gen_estimated: 0,
+              dev_name,
+              bl_name,
+            };
+          }
+
+         
+          deviceSums[deviceUUID].gen_real += gen_real;
+          deviceSums[deviceUUID].gen_estimated += gen_estimated;
+        });
+      });
+
       //Fluxo de verificação igual ou abaixo de x%
-      
-
-
-
 
       return res.status(200).json({
         message: "Geração para comparação retornada com sucesso!",
         filteredResult,
+        deviceSums,
       });
     } catch (error) {
       return res
