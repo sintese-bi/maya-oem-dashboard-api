@@ -576,6 +576,7 @@ class UsersController {
             include: [
               {
                 association: "brand_login",
+                attributes: ["bl_name"],
                 where: {
                   use_uuid: use_uuid,
                 },
@@ -589,13 +590,16 @@ class UsersController {
         attributes: ["gen_date", "gen_real", "gen_estimated", "gen_updated_at"],
         order: [["gen_updated_at", "DESC"]],
       });
+
       const filteredResult = {};
       const sums = {};
 
       result.forEach((generation) => {
         const { devices, gen_updated_at, gen_real, gen_estimated } = generation;
         const deviceUUID = devices.dev_uuid;
+        const deviceName = devices.dev_name;
         const generationDate = gen_updated_at.toISOString().split("T")[0];
+        const brandName = devices.brand_login.bl_name;
 
         if (!filteredResult[generationDate]) {
           filteredResult[generationDate] = {};
@@ -609,9 +613,14 @@ class UsersController {
         ) {
           filteredResult[generationDate][deviceUUID] = generation;
         }
-       
+
         if (!sums[generationDate][deviceUUID]) {
-          sums[generationDate][deviceUUID] = { gen_real: 0, gen_estimated: 0 };
+          sums[generationDate][deviceUUID] = {
+            gen_real: 0,
+            gen_estimated: 0,
+            dev_name: deviceName,
+            bl_name: brandName,
+          };
         }
 
         sums[generationDate][deviceUUID].gen_real += parseFloat(
