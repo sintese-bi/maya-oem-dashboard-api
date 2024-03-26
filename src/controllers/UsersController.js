@@ -505,12 +505,11 @@ class UsersController {
   //Ela recebe os novos valores, como a porcentagem e o nome da frequência, e os aplica ao usuário identificado pelo UUID fornecido.
   async alertFrequencyDefinition(req, res) {
     try {
-      const { use_uuid, use_percentage, use_frequency_data, use_alert_email } =
-        req.body;
+      const { use_uuid, use_percentage, use_date, use_alert_email } = req.body;
       const result = await Users.update(
         {
           use_percentage: use_percentage,
-          use_frequency_data: use_frequency_data,
+          use_date: use_date,
           use_alert_email: use_alert_email,
         },
 
@@ -538,33 +537,30 @@ class UsersController {
       const fimUltimaSemana = inicioUltimaSemana.clone().endOf("week");
       const inicioFormatado = inicioUltimaSemana.format("YYYY-MM-DD");
       const fimFormatado = fimUltimaSemana.format("YYYY-MM-DD");
-      const inicioMesCorrente = dataAtual.clone().startOf('month');
-      const fimMesCorrente = dataAtual.clone().endOf('month');
-      const inicioFormatadomes = inicioMesCorrente.format('YYYY-MM-DD');
-      const fimFormatadomes = fimMesCorrente.format('YYYY-MM-DD');
+      const inicioMesCorrente = dataAtual.clone().startOf("month");
+      const fimMesCorrente = dataAtual.clone().endOf("month");
+      const inicioFormatadomes = inicioMesCorrente.format("YYYY-MM-DD");
+      const fimFormatadomes = fimMesCorrente.format("YYYY-MM-DD");
       const startOfDay = new Date(currentDate);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(currentDate);
       endOfDay.setHours(23, 59, 59, 999);
       const consultUser = await Users.findOne({
-        attributes: ["use_percentage", "use_alert_email", "use_frequency_data"],
+        attributes: ["use_percentage", "use_alert_email", "use_date"],
         where: { use_uuid: use_uuid },
       });
       let dateInterval;
       //Intervalo diário, semanal e mensal
-      if (consultUser.use_frequency_data == 1) {
+      if (consultUser.use_date == 1) {
         dateInterval = currentDate;
-      } else if (consultUser.use_frequency_data == 2) {
+      } else if (consultUser.use_date == 2) {
         dateInterval = {
           [Op.between]: [inicioFormatado, fimFormatado],
         };
-      } else if(consultUser.use_frequency_data == 3){
-
+      } else if (consultUser.use_date == 3) {
         dateInterval = {
           [Op.between]: [inicioFormatadomes, fimFormatadomes],
         };
-
-
       }
       const result = await Generation.findAll({
         include: [
@@ -588,20 +584,30 @@ class UsersController {
           },
         ],
         where: {
-          gen_date: genDate,
+          gen_date: dateInterval,
         },
         attributes: ["gen_date", "gen_real", "gen_estimated", "gen_updated_at"],
         order: [["gen_updated_at", "DESC"]],
       });
-      const filteredResult = result.reduce((acc, current) => {
-        if (
-          !acc[current.devices.dev_uuid] ||
-          current.gen_updated_at > acc[current.devices.dev_uuid].gen_updated_at
-        ) {
-          acc[current.devices.dev_uuid] = current;
+      const filteredResult = {};
+
+      result.forEach((generation) => {
+        const { devices, gen_updated_at } = generation;
+        const deviceUUID = devices.dev_uuid;
+        const generationDate = gen_updated_at.toISOString().split("T")[0]; 
+
+        if (!filteredResult[generationDate]) {
+          filteredResult[generationDate] = {}; 
         }
-        return acc;
-      }, {});
+
+        if (
+          !filteredResult[generationDate][deviceUUID] ||
+          gen_updated_at >
+            filteredResult[generationDate][deviceUUID].gen_updated_at
+        ) {
+          filteredResult[generationDate][deviceUUID] = generation;
+        }
+      });
 
       return res.status(200).json({
         message: "Geração para comparação retornada com sucesso!",
