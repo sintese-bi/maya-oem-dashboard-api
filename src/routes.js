@@ -180,15 +180,15 @@ routes.get(
 //   UsersController.alertFrequencyDefinition
 // );
 
-// routes.post(
-//   `${apiVersion}/emailalertsend`,
-//   checkToken,
-//   UsersController.emailAlertSend
-// );
+routes.post(
+  `${apiVersion}/emailalertsend`,
+  
+  UsersController.emailAlertSend
+);
 
 routes.get(
   `${apiVersion}/alertFrequency/:uuid`,
-  checkToken,
+  
   UsersController.alertFrequency
 );
 routes.post(
