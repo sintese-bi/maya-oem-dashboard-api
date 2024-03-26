@@ -539,7 +539,7 @@ class UsersController {
         include: [
           {
             association: "devices",
-            attributes: ["dev_uuid", "dev_name"], 
+            attributes: ["dev_uuid", "dev_name"],
             where: {
               [Op.or]: [
                 { dev_deleted: false },
@@ -564,45 +564,19 @@ class UsersController {
         attributes: ["gen_date", "gen_real", "gen_estimated", "gen_updated_at"],
         order: [["gen_updated_at", "DESC"]],
       });
-
-      const aggregatedResult = {};
-
-      result.forEach((item) => {
-        const deviceUUID = item.devices.dev_uuid;
-        const deviceName = item.devices.dev_name;
-        const genDate = new Date(item.gen_date).toISOString().split("T")[0];
-
+      const filteredResult = result.reduce((acc, current) => {
         if (
-          !aggregatedResult[deviceUUID] ||
-          !aggregatedResult[deviceUUID][genDate]
+          !acc[current.devices.dev_uuid] ||
+          current.gen_updated_at > acc[current.devices.dev_uuid].gen_updated_at
         ) {
-          aggregatedResult[deviceUUID] = {
-            [genDate]: {
-              deviceName: deviceName,
-              gen_real: item.gen_real,
-              gen_estimated: item.gen_estimated,
-              gen_updated_at: item.gen_updated_at,
-            },
-          };
+          acc[current.devices.dev_uuid] = current;
         }
-      });
-
-      const recentGenerations = {};
-
-      Object.keys(aggregatedResult).forEach((deviceUUID) => {
-        const latestDate = Object.keys(aggregatedResult[deviceUUID])
-          .sort()
-          .reverse()[0];
-        recentGenerations[deviceUUID] = {
-          deviceName: aggregatedResult[deviceUUID][latestDate].deviceName,
-          ...aggregatedResult[deviceUUID][latestDate],
-        };
-      });
+        return acc;
+      }, {});
 
       return res.status(200).json({
         message: "Geração para comparação retornada com sucesso!",
-        recentGenerations,
-        result
+        filteredResult,
       });
     } catch (error) {
       return res
