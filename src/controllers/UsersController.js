@@ -530,11 +530,42 @@ class UsersController {
     try {
       const { use_uuid } = req.body;
       const currentDate = new Date();
+      const dataAtual = moment(new Date());
+      const inicioUltimaSemana = dataAtual
+        .clone()
+        .subtract(1, "weeks")
+        .startOf("week");
+      const fimUltimaSemana = inicioUltimaSemana.clone().endOf("week");
+      const inicioFormatado = inicioUltimaSemana.format("YYYY-MM-DD");
+      const fimFormatado = fimUltimaSemana.format("YYYY-MM-DD");
+      const inicioMesCorrente = dataAtual.clone().startOf('month');
+      const fimMesCorrente = dataAtual.clone().endOf('month');
+      const inicioFormatadomes = inicioMesCorrente.format('YYYY-MM-DD');
+      const fimFormatadomes = fimMesCorrente.format('YYYY-MM-DD');
       const startOfDay = new Date(currentDate);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(currentDate);
       endOfDay.setHours(23, 59, 59, 999);
+      const consultUser = await Users.findOne({
+        attributes: ["use_percentage", "use_alert_email", "use_frequency_data"],
+        where: { use_uuid: use_uuid },
+      });
+      let dateInterval;
+      //Intervalo diário, semanal e mensal
+      if (consultUser.use_frequency_data == 1) {
+        dateInterval = currentDate;
+      } else if (consultUser.use_frequency_data == 2) {
+        dateInterval = {
+          [Op.between]: [inicioFormatado, fimFormatado],
+        };
+      } else if(consultUser.use_frequency_data == 3){
 
+        dateInterval = {
+          [Op.between]: [inicioFormatadomes, fimFormatadomes],
+        };
+
+
+      }
       const result = await Generation.findAll({
         include: [
           {
@@ -557,9 +588,7 @@ class UsersController {
           },
         ],
         where: {
-          gen_date: {
-            [Op.between]: [startOfDay, endOfDay],
-          },
+          gen_date: genDate,
         },
         attributes: ["gen_date", "gen_real", "gen_estimated", "gen_updated_at"],
         order: [["gen_updated_at", "DESC"]],
