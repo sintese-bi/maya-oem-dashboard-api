@@ -590,14 +590,16 @@ class UsersController {
         order: [["gen_updated_at", "DESC"]],
       });
       const filteredResult = {};
+      const sums = {};
 
       result.forEach((generation) => {
-        const { devices, gen_updated_at } = generation;
+        const { devices, gen_updated_at, gen_real, gen_estimated } = generation;
         const deviceUUID = devices.dev_uuid;
-        const generationDate = gen_updated_at.toISOString().split("T")[0]; 
+        const generationDate = gen_updated_at.toISOString().split("T")[0];
 
         if (!filteredResult[generationDate]) {
-          filteredResult[generationDate] = {}; 
+          filteredResult[generationDate] = {};
+          sums[generationDate] = {};
         }
 
         if (
@@ -607,11 +609,25 @@ class UsersController {
         ) {
           filteredResult[generationDate][deviceUUID] = generation;
         }
+       
+        if (!sums[generationDate][deviceUUID]) {
+          sums[generationDate][deviceUUID] = { gen_real: 0, gen_estimated: 0 };
+        }
+
+        sums[generationDate][deviceUUID].gen_real += parseFloat(
+          gen_real.toFixed(2)
+        );
+        sums[generationDate][deviceUUID].gen_estimated += parseFloat(
+          gen_estimated.toFixed(2)
+        );
       });
+
+      //Fluxo de verificação igual ou abaixo de x%
 
       return res.status(200).json({
         message: "Geração para comparação retornada com sucesso!",
         filteredResult,
+        sums,
       });
     } catch (error) {
       return res
