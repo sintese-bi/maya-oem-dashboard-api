@@ -553,12 +553,28 @@ class UsersController {
           "use_uuid",
         ],
       });
-     
+
       consultUser.forEach(async (element) => {
-        if (!element.use_date || !element.use_alert_email || element.use_percentage) {
-          return; 
-      }
-        let dateInterval
+        if (
+          !element.use_date ||
+          !element.use_alert_email ||
+          !element.use_percentage
+        ) {
+          return;
+        }
+        if (
+          element.use_date === 2 &&
+          moment().isoWeekday() === 1 &&
+          moment().date() <= 7
+        ) {
+        } else if (element.use_date === 3 && moment().date() === 1) {
+        } else if (element.use_date === 1) {
+        } else {
+          return;
+        }
+
+        console.log(element.use_alert_email);
+        let dateInterval;
         //Intervalo diário, semanal e mensal
         if (element.use_date == 1) {
           dateInterval = currentDate;
@@ -571,7 +587,7 @@ class UsersController {
             [Op.between]: [inicioFormatadomes, fimFormatadomes],
           };
         }
-        
+
         const result = await Generation.findAll({
           include: [
             {
@@ -717,12 +733,9 @@ class UsersController {
             console.log("E-mail enviado:", info.res);
           }
         });
-
-       
       });
       return res.status(200).json({
-        message: "Email enviado com sucesso!",
-        sumPercentage,
+        message: "Emails enviados com sucesso!",
       });
     } catch (error) {
       return res
