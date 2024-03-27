@@ -179,6 +179,11 @@ routes.put(
   checkToken,
   UsersController.alertFrequencyDefinition
 );
+routes.put(
+  `${apiVersion}/devicerecover`,
+  checkToken,
+  DevicesControlle.deviceRecover
+);
 
 routes.get(
   `${apiVersion}/emailalertsend`,
