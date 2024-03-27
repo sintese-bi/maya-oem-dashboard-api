@@ -33,13 +33,13 @@ const transporter = nodemailer.createTransport({
   port: 587,
   pool: true,
 
-  secure: true,
+  secure: false,
   auth: {
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
   tls: {
-    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
+    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
   },
 });
 
@@ -528,19 +528,19 @@ class UsersController {
   async emailAlertSend(req, res) {
     try {
       const { use_uuid } = req.body;
-      const currentDate = new Date();
-      const dataAtual = moment(new Date());
+      const currentDate = new Date().toISOString(); 
+      const dataAtual = moment(currentDate); 
       const inicioUltimaSemana = dataAtual
         .clone()
         .subtract(1, "weeks")
         .startOf("week");
       const fimUltimaSemana = inicioUltimaSemana.clone().endOf("week");
-      const inicioFormatado = inicioUltimaSemana.format("YYYY-MM-DD");
-      const fimFormatado = fimUltimaSemana.format("YYYY-MM-DD");
+      const inicioFormatado = inicioUltimaSemana.toISOString(); 
+      const fimFormatado = fimUltimaSemana.toISOString(); 
       const inicioMesCorrente = dataAtual.clone().startOf("month");
       const fimMesCorrente = dataAtual.clone().endOf("month");
-      const inicioFormatadomes = inicioMesCorrente.format("YYYY-MM-DD");
-      const fimFormatadomes = fimMesCorrente.format("YYYY-MM-DD");
+      const inicioFormatadomes = inicioMesCorrente.toISOString(); 
+      const fimFormatadomes = fimMesCorrente.toISOString();
       const startOfDay = new Date(currentDate);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(currentDate);
@@ -576,7 +576,7 @@ class UsersController {
             include: [
               {
                 association: "brand_login",
-                attributes: ["bl_name"], 
+                attributes: ["bl_name"],
                 where: {
                   use_uuid: use_uuid,
                 },
@@ -592,13 +592,12 @@ class UsersController {
       });
 
       const filteredResult = {};
-
       result.forEach((generation) => {
         const { devices, gen_updated_at, gen_real, gen_estimated } = generation;
         const deviceUUID = devices.dev_uuid;
-        const deviceName = devices.dev_name; 
-        const brandLogin = devices.brand_login; 
-        const brandName = brandLogin ? brandLogin.bl_name : null; 
+        const deviceName = devices.dev_name;
+        const brandLogin = devices.brand_login;
+        const brandName = brandLogin ? brandLogin.bl_name : null;
         const generationDate = gen_updated_at.toISOString().split("T")[0];
 
         if (!filteredResult[generationDate]) {
@@ -618,20 +617,12 @@ class UsersController {
           };
         }
       });
-
-
       const deviceSums = {};
-
- 
       Object.keys(filteredResult).forEach((date) => {
         const devices = filteredResult[date];
-
-        
         Object.keys(devices).forEach((deviceUUID) => {
           const generation = devices[deviceUUID];
           const { gen_real, gen_estimated, dev_name, bl_name } = generation;
-
-         
           if (!deviceSums[deviceUUID]) {
             deviceSums[deviceUUID] = {
               gen_real: 0,
@@ -640,19 +631,78 @@ class UsersController {
               bl_name,
             };
           }
-
-         
           deviceSums[deviceUUID].gen_real += gen_real;
           deviceSums[deviceUUID].gen_estimated += gen_estimated;
         });
       });
 
       //Fluxo de verificação igual ou abaixo de x%
+      const percentage = consultUser.use_percentage / 100;
+      const deviceUUIDs = Object.keys(deviceSums);
+
+      const sumPercentage = deviceUUIDs
+        .map((uuid) => {
+          const device = deviceSums[uuid];
+
+          if (device.gen_real <= percentage * device.gen_estimated) {
+            return {
+              gen_real: device.gen_real.toFixed(2),
+              gen_estimated: device.gen_estimated.toFixed(2),
+              dev_name: device.dev_name,
+              bl_name: device.bl_name,
+            };
+          }
+          return null;
+        })
+        .filter((device) => device !== null);
+
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(sumPercentage);
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
+      const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
+
+      let interval;
+      if (consultUser.use_date == 1) {
+        interval = "diário";
+      } else if (consultUser.use_date == 2) {
+        interval = "semanal";
+      } else if (consultUser.use_date == 3) {
+        interval = "mensal";
+      }
+
+      let emailBody = `
+<p>Prezado(a),</p>
+<p>Segue em anexo um arquivo XLSX que contém informações sobre os dispositivos cuja geração real de energia foi igual ou inferior a ${consultUser.use_percentage}% da geração estimada no intervalo ${interval} definido no Dashboard. Os dados incluem a geração real, geração estimada, o nome do dispositivo e a marca associada.</p>
+<p>Por favor, revise o arquivo anexado para mais detalhes.</p>
+<p>Atenciosamente,</p>
+<p><strong>Maya X</strong></p>
+`;
+
+      const mailOptions = {
+        from: '"noreplymayawatch@gmail.com',
+        to: ["eloymjunior00@gmail.com"],
+        subject: "Alertas de geração abaixo do valor estipulado",
+        text: "",
+        html: emailBody,
+        attachments: [
+          {
+            filename: "listagem.xlsx",
+            content: buffer,
+            encoding: "base64",
+          },
+        ],
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Erro ao enviar o e-mail:", error);
+        } else {
+          console.log("E-mail enviado:", info.res);
+        }
+      });
 
       return res.status(200).json({
-        message: "Geração para comparação retornada com sucesso!",
-        filteredResult,
-        deviceSums,
+        message: "Email enviado com sucesso!",
+        sumPercentage,
       });
     } catch (error) {
       return res
