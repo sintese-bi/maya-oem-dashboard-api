@@ -2901,7 +2901,7 @@ class UsersController {
     // Agende a função para ser executada a cada dia
     cron.schedule("0 9 * * *", async () => {
       try {
-        await this.automaticmassEmailmassEmail();
+        await this.automaticmassEmail();
       } catch (error) {
         console.error("Erro durante o envio do relatório agendado:", error);
       }
