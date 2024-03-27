@@ -525,181 +525,201 @@ class UsersController {
     }
   }
   //Api para envio de alerta quando a geração real estiver x% abaixo da geração estimada
+  //add coluna banco servidor, foreach cronjob
   async emailAlertSend(req, res) {
     try {
-      const { use_uuid } = req.body;
-      const currentDate = new Date().toISOString(); 
-      const dataAtual = moment(currentDate); 
+      const currentDate = new Date().toISOString();
+      const dataAtual = moment(currentDate);
       const inicioUltimaSemana = dataAtual
         .clone()
         .subtract(1, "weeks")
         .startOf("week");
       const fimUltimaSemana = inicioUltimaSemana.clone().endOf("week");
-      const inicioFormatado = inicioUltimaSemana.toISOString(); 
-      const fimFormatado = fimUltimaSemana.toISOString(); 
+      const inicioFormatado = inicioUltimaSemana.toISOString();
+      const fimFormatado = fimUltimaSemana.toISOString();
       const inicioMesCorrente = dataAtual.clone().startOf("month");
       const fimMesCorrente = dataAtual.clone().endOf("month");
-      const inicioFormatadomes = inicioMesCorrente.toISOString(); 
+      const inicioFormatadomes = inicioMesCorrente.toISOString();
       const fimFormatadomes = fimMesCorrente.toISOString();
       const startOfDay = new Date(currentDate);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(currentDate);
       endOfDay.setHours(23, 59, 59, 999);
-      const consultUser = await Users.findOne({
-        attributes: ["use_percentage", "use_alert_email", "use_date"],
-        where: { use_uuid: use_uuid },
-      });
-      let dateInterval;
-      //Intervalo diário, semanal e mensal
-      if (consultUser.use_date == 1) {
-        dateInterval = currentDate;
-      } else if (consultUser.use_date == 2) {
-        dateInterval = {
-          [Op.between]: [inicioFormatado, fimFormatado],
-        };
-      } else if (consultUser.use_date == 3) {
-        dateInterval = {
-          [Op.between]: [inicioFormatadomes, fimFormatadomes],
-        };
-      }
-      const result = await Generation.findAll({
-        include: [
-          {
-            association: "devices",
-            attributes: ["dev_uuid", "dev_name"],
-            where: {
-              [Op.or]: [
-                { dev_deleted: false },
-                { dev_deleted: { [Op.is]: null } },
-              ],
-            },
-            include: [
-              {
-                association: "brand_login",
-                attributes: ["bl_name"],
-                where: {
-                  use_uuid: use_uuid,
-                },
-              },
-            ],
-          },
+      const consultUser = await Users.findAll({
+        attributes: [
+          "use_percentage",
+          "use_alert_email",
+          "use_date",
+          "use_uuid",
         ],
-        where: {
-          gen_date: dateInterval,
-        },
-        attributes: ["gen_date", "gen_real", "gen_estimated", "gen_updated_at"],
-        order: [["gen_updated_at", "DESC"]],
       });
-
-      const filteredResult = {};
-      result.forEach((generation) => {
-        const { devices, gen_updated_at, gen_real, gen_estimated } = generation;
-        const deviceUUID = devices.dev_uuid;
-        const deviceName = devices.dev_name;
-        const brandLogin = devices.brand_login;
-        const brandName = brandLogin ? brandLogin.bl_name : null;
-        const generationDate = gen_updated_at.toISOString().split("T")[0];
-
-        if (!filteredResult[generationDate]) {
-          filteredResult[generationDate] = {};
-        }
-
-        if (
-          !filteredResult[generationDate][deviceUUID] ||
-          gen_updated_at >
-            filteredResult[generationDate][deviceUUID].gen_updated_at
-        ) {
-          filteredResult[generationDate][deviceUUID] = {
-            gen_real,
-            gen_estimated,
-            dev_name: deviceName,
-            bl_name: brandName,
+     
+      consultUser.forEach(async (element) => {
+        if (!element.use_date || !element.use_alert_email || element.use_percentage) {
+          return; 
+      }
+        let dateInterval
+        //Intervalo diário, semanal e mensal
+        if (element.use_date == 1) {
+          dateInterval = currentDate;
+        } else if (element.use_date == 2) {
+          dateInterval = {
+            [Op.between]: [inicioFormatado, fimFormatado],
+          };
+        } else if (element.use_date == 3) {
+          dateInterval = {
+            [Op.between]: [inicioFormatadomes, fimFormatadomes],
           };
         }
-      });
-      const deviceSums = {};
-      Object.keys(filteredResult).forEach((date) => {
-        const devices = filteredResult[date];
-        Object.keys(devices).forEach((deviceUUID) => {
-          const generation = devices[deviceUUID];
-          const { gen_real, gen_estimated, dev_name, bl_name } = generation;
-          if (!deviceSums[deviceUUID]) {
-            deviceSums[deviceUUID] = {
-              gen_real: 0,
-              gen_estimated: 0,
-              dev_name,
-              bl_name,
-            };
-          }
-          deviceSums[deviceUUID].gen_real += gen_real;
-          deviceSums[deviceUUID].gen_estimated += gen_estimated;
-        });
-      });
-
-      //Fluxo de verificação igual ou abaixo de x%
-      const percentage = consultUser.use_percentage / 100;
-      const deviceUUIDs = Object.keys(deviceSums);
-
-      const sumPercentage = deviceUUIDs
-        .map((uuid) => {
-          const device = deviceSums[uuid];
-
-          if (device.gen_real <= percentage * device.gen_estimated) {
-            return {
-              gen_real: device.gen_real.toFixed(2),
-              gen_estimated: device.gen_estimated.toFixed(2),
-              dev_name: device.dev_name,
-              bl_name: device.bl_name,
-            };
-          }
-          return null;
-        })
-        .filter((device) => device !== null);
-
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.json_to_sheet(sumPercentage);
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
-      const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "buffer" });
-
-      let interval;
-      if (consultUser.use_date == 1) {
-        interval = "diário";
-      } else if (consultUser.use_date == 2) {
-        interval = "semanal";
-      } else if (consultUser.use_date == 3) {
-        interval = "mensal";
-      }
-
-      let emailBody = `
-<p>Prezado(a),</p>
-<p>Segue em anexo um arquivo XLSX que contém informações sobre os dispositivos cuja geração real de energia foi igual ou inferior a ${consultUser.use_percentage}% da geração estimada no intervalo ${interval} definido no Dashboard. Os dados incluem a geração real, geração estimada, o nome do dispositivo e a marca associada.</p>
-<p>Por favor, revise o arquivo anexado para mais detalhes.</p>
-<p>Atenciosamente,</p>
-<p><strong>Maya X</strong></p>
-`;
-
-      const mailOptions = {
-        from: '"noreplymayawatch@gmail.com',
-        to: ["eloymjunior00@gmail.com"],
-        subject: "Alertas de geração abaixo do valor estipulado",
-        text: "",
-        html: emailBody,
-        attachments: [
-          {
-            filename: "listagem.xlsx",
-            content: buffer,
-            encoding: "base64",
+        
+        const result = await Generation.findAll({
+          include: [
+            {
+              association: "devices",
+              attributes: ["dev_uuid", "dev_name"],
+              where: {
+                [Op.or]: [
+                  { dev_deleted: false },
+                  { dev_deleted: { [Op.is]: null } },
+                ],
+              },
+              include: [
+                {
+                  association: "brand_login",
+                  attributes: ["bl_name"],
+                  where: {
+                    use_uuid: element.use_uuid,
+                  },
+                },
+              ],
+            },
+          ],
+          where: {
+            gen_date: dateInterval,
           },
-        ],
-      };
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-          console.error("Erro ao enviar o e-mail:", error);
-        } else {
-          console.log("E-mail enviado:", info.res);
-        }
-      });
+          attributes: [
+            "gen_date",
+            "gen_real",
+            "gen_estimated",
+            "gen_updated_at",
+          ],
+          order: [["gen_updated_at", "DESC"]],
+        });
 
+        const filteredResult = {};
+        result.forEach((generation) => {
+          const { devices, gen_updated_at, gen_real, gen_estimated } =
+            generation;
+          const deviceUUID = devices.dev_uuid;
+          const deviceName = devices.dev_name;
+          const brandLogin = devices.brand_login;
+          const brandName = brandLogin ? brandLogin.bl_name : null;
+          const generationDate = gen_updated_at.toISOString().split("T")[0];
+
+          if (!filteredResult[generationDate]) {
+            filteredResult[generationDate] = {};
+          }
+
+          if (
+            !filteredResult[generationDate][deviceUUID] ||
+            gen_updated_at >
+              filteredResult[generationDate][deviceUUID].gen_updated_at
+          ) {
+            filteredResult[generationDate][deviceUUID] = {
+              gen_real,
+              gen_estimated,
+              dev_name: deviceName,
+              bl_name: brandName,
+            };
+          }
+        });
+        const deviceSums = {};
+        Object.keys(filteredResult).forEach((date) => {
+          const devices = filteredResult[date];
+          Object.keys(devices).forEach((deviceUUID) => {
+            const generation = devices[deviceUUID];
+            const { gen_real, gen_estimated, dev_name, bl_name } = generation;
+            if (!deviceSums[deviceUUID]) {
+              deviceSums[deviceUUID] = {
+                gen_real: 0,
+                gen_estimated: 0,
+                dev_name,
+                bl_name,
+              };
+            }
+            deviceSums[deviceUUID].gen_real += gen_real;
+            deviceSums[deviceUUID].gen_estimated += gen_estimated;
+          });
+        });
+
+        //Fluxo de verificação igual ou abaixo de x%
+        const percentage = element.use_percentage / 100;
+        const deviceUUIDs = Object.keys(deviceSums);
+
+        const sumPercentage = deviceUUIDs
+          .map((uuid) => {
+            const device = deviceSums[uuid];
+
+            if (device.gen_real <= percentage * device.gen_estimated) {
+              return {
+                Geração_real: device.gen_real.toFixed(2),
+                Geração_estimada: device.gen_estimated.toFixed(2),
+                Nome_dispositivo: device.dev_name,
+                Nome_marca: device.bl_name,
+              };
+            }
+            return null;
+          })
+          .filter((device) => device !== null);
+
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet(sumPercentage);
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
+        const buffer = XLSX.write(workbook, {
+          bookType: "xlsx",
+          type: "buffer",
+        });
+
+        // let interval;
+        // if (element.use_date == 1) {
+        //   interval = "diário";
+        // } else if (element.use_date == 2) {
+        //   interval = "semanal";
+        // } else if (element.use_date == 3) {
+        //   interval = "mensal";
+        // }
+
+        let emailBody = `
+  <p>Prezado(a),</p>
+  <p>Em anexo listagem de usinas que produziram abaixo do esperado definido.</p>
+  <p>Att,</p>
+  <p><strong>Equipe Maya Watch</strong></p>
+  `;
+
+        const mailOptions = {
+          from: '"noreplymayawatch@gmail.com',
+          to: ["eloymjunior00@gmail.com"],
+          subject: "Alertas de geração abaixo do valor estipulado",
+          text: "",
+          html: emailBody,
+          attachments: [
+            {
+              filename: "listagem.xlsx",
+              content: buffer,
+              encoding: "base64",
+            },
+          ],
+        };
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error("Erro ao enviar o e-mail:", error);
+          } else {
+            console.log("E-mail enviado:", info.res);
+          }
+        });
+
+       
+      });
       return res.status(200).json({
         message: "Email enviado com sucesso!",
         sumPercentage,
@@ -1127,7 +1147,7 @@ class UsersController {
       let result;
       let url;
       if (newnamebrand == "canadian" && bl_quant == 2) {
-        url = "https://monitoring.csisolar.com/login";
+        url = "https://webmonitoring-gl.csisolar.com/login";
       } else {
         result = await Brand_Info.findOne({
           attributes: ["bl_url"],
@@ -2828,6 +2848,16 @@ class UsersController {
       console.error(error);
     }
   }
+  async emailAlertSends(req, res) {
+    const consultUser = await Users.findAll({
+      attributes: ["use_percentage", "use_alert_email", "use_date", "use_uuid"],
+    });
+    consultUser.forEach((element) => {
+      console.log(element.use_uuid);
+    });
+    return res.status(200).json({ message: consultUser });
+  }
+
   async massemailScheduler(req, res) {
     try {
       // Date=dia do mês que foi definido pelo usuário
@@ -2877,9 +2907,21 @@ class UsersController {
       }
     });
   }
+
+  agendarAlertasGeracao() {
+    // Agende a função para ser executada a cada hora
+    cron.schedule("0 18 * * *", async () => {
+      try {
+        await this.emailAlertSend();
+      } catch (error) {
+        console.error("Erro durante a verificação de alertas:", error);
+      }
+    });
+  }
 }
 
 const usersController = new UsersController();
+// usersController.agendarAlertasGeracao();
 // usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();

@@ -81,7 +81,7 @@ routes.post(
 routes.get(`${apiVersion}/emailalert`, checkToken, UsersController.emailAlert);
 routes.post(
   `${apiVersion}/brandinfo`,
-  checkToken,
+  
   UsersController.brandInformation
 );
 routes.post(`${apiVersion}/helpcenter`, checkToken, UsersController.helpCenter);
@@ -180,7 +180,7 @@ routes.get(
 //   UsersController.alertFrequencyDefinition
 // );
 
-routes.post(
+routes.get(
   `${apiVersion}/emailalertsend`,
   
   UsersController.emailAlertSend
