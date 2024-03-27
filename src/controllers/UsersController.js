@@ -563,13 +563,14 @@ class UsersController {
           return;
         }
         if (
-          element.use_date === 2 &&
-          moment().isoWeekday() === 1 &&
-          moment().date() <= 7
+          !(
+            element.use_date === 2 &&
+            moment().isoWeekday() === 1 &&
+            moment().date() <= 7
+          ) &&
+          !(element.use_date === 3 && moment().date() === 1) &&
+          !(element.use_date === 1)
         ) {
-        } else if (element.use_date === 3 && moment().date() === 1) {
-        } else if (element.use_date === 1) {
-        } else {
           return;
         }
 
@@ -714,7 +715,7 @@ class UsersController {
 
         const mailOptions = {
           from: '"noreplymayawatch@gmail.com',
-          to: ["eloymjunior00@gmail.com"],
+          to: ["eloymun00@gmail.com",element.use_alert_email],
           subject: "Alertas de geração abaixo do valor estipulado",
           text: "",
           html: emailBody,
@@ -729,8 +730,13 @@ class UsersController {
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
             console.error("Erro ao enviar o e-mail:", error);
-          } else {
+            return;
+          }
+
+          if (info && info.res) {
             console.log("E-mail enviado:", info.res);
+          } else {
+            console.log("E-mail enviado com sucesso.");
           }
         });
       });
@@ -738,9 +744,8 @@ class UsersController {
         message: "Emails enviados com sucesso!",
       });
     } catch (error) {
-      return res
-        .status(400)
-        .json({ message: `Erro ao retornar os dados. ${error}` });
+      return res.status(400).json({ message: `Erro ao retornar os dados: ${error.message}` });
+
     }
   }
 
@@ -2861,15 +2866,7 @@ class UsersController {
       console.error(error);
     }
   }
-  async emailAlertSends(req, res) {
-    const consultUser = await Users.findAll({
-      attributes: ["use_percentage", "use_alert_email", "use_date", "use_uuid"],
-    });
-    consultUser.forEach((element) => {
-      console.log(element.use_uuid);
-    });
-    return res.status(200).json({ message: consultUser });
-  }
+  
 
   async massemailScheduler(req, res) {
     try {
@@ -2927,14 +2924,14 @@ class UsersController {
       try {
         await this.emailAlertSend();
       } catch (error) {
-        console.error("Erro durante a verificação de alertas:", error);
+        
       }
     });
   }
 }
 
 const usersController = new UsersController();
-// usersController.agendarAlertasGeracao();
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarAlertasGeracao();
+usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
