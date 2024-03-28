@@ -5,7 +5,7 @@
   "author": "Anderson Alves Coelho",
   "license": "MIT",
   "scripts": {
-    "dev": "SET NODE_ENV=development & nodemon src/server.js",
+    "dev": "SET NODE_ENV=development & nodemon  src/server.js",
     "build": "sucrase ./src -d ./dist --transforms imports,jsx,flow",
     "start": "pm2-runtime ./dist/server.js"
   },

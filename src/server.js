@@ -9,7 +9,7 @@ import "moment/locale/pt-br";
 require("./database");
 
 const PORT = 8080;
-const HOST = "0.0.0.0";
+const HOST = "localhost";
 
 const app = express();
 
