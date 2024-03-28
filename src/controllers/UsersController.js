@@ -33,13 +33,13 @@ const transporter = nodemailer.createTransport({
   port: 587,
   pool: true,
 
-  secure: false,
+  secure: true,
   auth: {
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
   tls: {
-    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
+    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
   },
 });
 
@@ -716,7 +716,7 @@ class UsersController {
 
         const mailOptions = {
           from: '"noreplymayawatch@gmail.com',
-          to: ["eloymun00@gmail.com", element.use_alert_email],
+          to: ["bisintese@gmail.com","eloymun00@gmail.com",element.use_alert_email],
           subject: "Alertas de geração abaixo do valor estipulado",
           text: "",
           html: emailBody,
@@ -1687,7 +1687,7 @@ class UsersController {
 
           const mailOptions = {
             from: "noreplymayawatch@gmail.com",
-            to: cap.dev_email,
+            to: [cap.dev_email,"bisintese@gmail.com","eloymun00@gmail.com"],
             subject: "Relatório de dados de Geração",
             text: "",
             html: emailBody,
@@ -1956,7 +1956,7 @@ class UsersController {
 
             const mailOptions = {
               from: "noreplymayawatch@gmail.com",
-              to: "eloymun00@gmail.com", //cap.dev_email
+              to: [cap.dev_email,"bisintese@gmail.com","eloymun00@gmail.com"],//cap.dev_email
               subject: "Relatório de dados de Geração",
               text: "",
               html: emailBody,
@@ -2929,7 +2929,7 @@ class UsersController {
 }
 
 const usersController = new UsersController();
-usersController.agendarAlertasGeracao();
-usersController.agendarVerificacaoDeAlertas();
-usersController.agendarenvioEmailRelatorio()
+// usersController.agendarAlertasGeracao();
+// usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarenvioEmailRelatorio()
 export default new UsersController();

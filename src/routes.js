@@ -214,7 +214,7 @@ routes.post(
 );
 
 routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
-routes.get(`${apiVersion}/automaticmassemail`,  UsersController.automaticmassEmail);
+routes.get(`${apiVersion}/automaticmassemail`, checkToken, UsersController.automaticmassEmail);
 routes.post(
   `${apiVersion}/emaildash`,
   checkToken,
@@ -238,7 +238,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/emailscheduler`, //Agendador data de envio relatorio
-  
+  checkToken,
   UsersController.massemailScheduler
 );
 routes.post(
