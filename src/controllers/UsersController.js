@@ -1,5 +1,4 @@
 //Pensar em uma maneira de criptografar as requests
-
 import bcrypt from "bcrypt";
 import fs from "fs";
 import { google } from "googleapis";
@@ -7,6 +6,7 @@ import jwt from "jsonwebtoken";
 import moment from "moment-timezone";
 import { Sequelize, Op } from "sequelize";
 import Brand from "../models/Brand";
+import DeletedDevices from "../models/DeletedDevices";
 import IrradiationCoefficient from "../models/IrradiationCoefficient";
 import ProfileLevel from "../models/ProfileLevel";
 import Users from "../models/Users";
@@ -26,22 +26,6 @@ import multer from "multer";
 import XLSX from "xlsx";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
-//Configuração das credenciais do email de envio
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  host: "smtp.gmail.com",
-  port: 587,
-  pool: true,
-
-  secure: true,
-  auth: {
-    user: "noreplymayawatch@gmail.com",
-    pass: "xbox ejjd wokp ystv",
-  },
-  tls: {
-    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
-  },
-});
 
 class UsersController {
   //Esta API exibe os detalhes de um usuário com base no UUID fornecido, incluindo nome e e-mail. Se o usuário não for encontrado, retorna uma mensagem de erro.
@@ -50,7 +34,7 @@ class UsersController {
       const use_uuid = req.params.uuid;
 
       const user = await Users.findByPk(use_uuid, {
-        attributes: ["use_name", "use_email"],
+        attributes: ["use_name", "use_email", "use_code_pagar_me"],
       });
 
       if (!user) {
@@ -241,17 +225,6 @@ class UsersController {
     try {
       const { use_email, use_password } = req.body;
       console.log("req", req);
-      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-      if (!emailRegex.test(use_email)) {
-        return res.status(400).json({ message: "O email não é válido." });
-      }
-      const existingEmail = await Users.findOne({
-        attributes: ["use_email"],
-        where: { use_email: use_email },
-      });
-      if (!existingEmail) {
-        return res.status(400).json({ message: "O email não existe!" });
-      }
       const result = await Users.findOne({
         attributes: [
           "use_uuid",
@@ -539,7 +512,7 @@ class UsersController {
         include: [
           {
             association: "devices",
-            attributes: ["dev_uuid", "dev_name"], 
+            attributes: ["dev_uuid", "dev_name"],
             where: {
               [Op.or]: [
                 { dev_deleted: false },
@@ -602,7 +575,7 @@ class UsersController {
       return res.status(200).json({
         message: "Geração para comparação retornada com sucesso!",
         recentGenerations,
-        result
+        result,
       });
     } catch (error) {
       return res
@@ -662,18 +635,11 @@ class UsersController {
             include: [
               {
                 association: "devices",
-                where: whereCondition,
                 attributes: [
                   "dev_uuid",
                   "dev_name",
                   "dev_brand",
                   "dev_deleted",
-                  "dev_capacity",
-                  "dev_address",
-                  "dev_lat",
-                  "dev_long",
-                  "dev_email",
-                  "dev_image",
                 ],
                 include: [
                   {
@@ -1066,58 +1032,6 @@ class UsersController {
         .json({ message: `Erro ao criar o Login/device: ${error.message}` });
     }
   }
-  async updateBrands(req, res) {
-    try {
-      const { use_uuid, bl_name, bl_login, bl_password, bl_url } = req.body;
-
-      const result = await Brand.findOne({
-        where: { use_uuid: use_uuid, bl_name: bl_name, bl_login: bl_login },
-      });
-
-      if (result) {
-        if (bl_url == "") {
-          const update0 = await Brand.update(
-            {
-              bl_password: bl_password,
-            },
-            {
-              where: {
-                use_uuid: use_uuid,
-                bl_name: bl_name,
-                bl_login: bl_login,
-              },
-            }
-          );
-        } else {
-          const update1 = await Brand.update(
-            {
-              bl_password: bl_password,
-              bl_url: bl_url,
-            },
-            {
-              where: {
-                use_uuid: use_uuid,
-                bl_name: bl_name,
-                bl_login: bl_login,
-              },
-            }
-          );
-        }
-      } else {
-        return res.status(400).json({
-          message: "Esse login não existe em nosso banco de dados!",
-        });
-      }
-      return res.status(201).json({ message: "Senha atualizada com sucesso!" });
-    } catch (error) {
-      console.error(error);
-      return res
-        .status(500)
-        .json({ message: `Erro ao atualizar a senha: ${error.message}` });
-    }
-  }
-  //Essa API cria um novo dispositivo de marca associado a um usuário específico. Ela recebe informações como o UUID do usuário, login, nome e senha do dispositivo.
-  //A API verifica se o dispositivo já está associado ao usuário e, se não estiver, cria um novo dispositivo na tabela Brand e associa a ele um novo registro na tabela Devices.
   async deleteDevice(req, res) {
     try {
       const { devUuid } = req.body;
@@ -1136,8 +1050,6 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  //Esta API chamada sendEmail, trata da recuperação de senhas.
-  //Ela gera um token JWT para a recuperação de senha, envia um e-mail com o token e atualiza o registro do usuário.
   async sendEmail(req, res) {
     try {
       const { use_email } = req.body;

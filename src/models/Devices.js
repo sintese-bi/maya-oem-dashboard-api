@@ -36,13 +36,11 @@ class Devices extends Model {
         dev_capacity: {
           type: DataTypes.FLOAT,
         },
-        dev_email: {
-          type: DataTypes.STRING,
-        },
-        dev_image: {
-          type: DataTypes.TEXT, //BLOB e banco para bytea
+        dev_deleted: {
+          type: DataTypes.BOOLEAN,
         },
         sta_uuid: { type: DataTypes.UUIDV4 },
+        bl_uuid: { type: DataTypes.UUIDV4 },
       },
       {
         sequelize,
@@ -63,10 +61,6 @@ class Devices extends Model {
     this.hasMany(models.Alerts, {
       foreignKey: "dev_uuid",
       as: "alerts",
-    });
-    this.belongsTo(models.Brand, {
-      foreignKey: "bl_uuid",
-      as: "brand_login",
     });
     this.hasMany(models.Temperature, {
       foreignKey: "dev_uuid",
