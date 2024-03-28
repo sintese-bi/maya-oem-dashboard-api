@@ -179,6 +179,7 @@ routes.put(
   checkToken,
   UsersController.alertFrequencyDefinition
 );
+
 routes.put(
   `${apiVersion}/devicerecover`,
   checkToken,
@@ -213,7 +214,7 @@ routes.post(
 );
 
 routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
-// routes.post(`${apiVersion}/automaticmassemail`, checkToken, UsersController.automaticmassEmail);
+routes.get(`${apiVersion}/automaticmassemail`,  UsersController.automaticmassEmail);
 routes.post(
   `${apiVersion}/emaildash`,
   checkToken,
@@ -235,11 +236,11 @@ routes.post(
   checkToken,
   UsersController.csvDownload
 );
-// routes.post(
-//   `${apiVersion}/emailscheduler`, //Agendador data de envio relatorio
-//   checkToken,
-//   UsersController.massemailScheduler
-// );
+routes.post(
+  `${apiVersion}/emailscheduler`, //Agendador data de envio relatorio
+  
+  UsersController.massemailScheduler
+);
 routes.post(
   `${apiVersion}/xlsxportal`,
   upload.single("arquivo"),
