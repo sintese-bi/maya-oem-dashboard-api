@@ -179,11 +179,11 @@ routes.get(
 
 //   GenerationController.testQuery
 // );
-// routes.put(
-//   `${apiVersion}/alertfrequency`,
-//   checkToken,
-//   UsersController.alertFrequencyDefinition
-// );
+routes.put(
+  `${apiVersion}/alertfrequency`,
+  checkToken,
+  UsersController.alertFrequencyDefinition
+);
 
 routes.put(
   `${apiVersion}/devicerecover`,
