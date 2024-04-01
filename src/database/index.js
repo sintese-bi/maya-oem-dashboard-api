@@ -16,6 +16,7 @@ import Address from "../models/Address";
 import Invoice_received from "../models/Invoice_received";
 import Proposal from "../models/Proposal";
 import DeletedDevices from "../models/DeletedDevices";
+import Reports from "../models/Reports";
 
 const modelsDbMayaEnergy = [
   Temperature,

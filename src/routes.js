@@ -81,7 +81,7 @@ routes.post(
 routes.get(`${apiVersion}/emailalert`, checkToken, UsersController.emailAlert);
 routes.post(
   `${apiVersion}/brandinfo`,
-  checkToken,
+  
   UsersController.brandInformation
 );
 routes.post(`${apiVersion}/helpcenter`, checkToken, UsersController.helpCenter);
@@ -170,15 +170,20 @@ routes.get(
 
   DevicesControlle.index
 );
-// routes.put(
-//   `${apiVersion}/alertfrequency`,
-//   checkToken,
-//   UsersController.alertFrequencyDefinition
-// );
+routes.put(
+  `${apiVersion}/alertfrequency`,
+  checkToken,
+  UsersController.alertFrequencyDefinition
+);
+routes.put(
+  `${apiVersion}/devicerecover`,
+  checkToken,
+  DevicesControlle.deviceRecover
+);
 
-routes.post(
+routes.get(
   `${apiVersion}/emailalertsend`,
-  
+  checkToken,
   UsersController.emailAlertSend
 );
 
