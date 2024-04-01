@@ -2520,8 +2520,8 @@ class UsersController {
         },
       });
       const result = await Brand_Info.findAll({
-        attributes: ["bl_name","bl_url"],
-        group: ['bl_name',"bl_url"]
+        attributes: ["bl_name","bl_url"]
+       
       });
       const brandNamesSet = new Set();
       const brandinfo = [];
@@ -2540,7 +2540,7 @@ class UsersController {
         }
       }
 
-      return res.status(200).json({ message: [brandinfo, infoBrand,result] });
+      return res.status(200).json({ message: [brandinfo, infoBrand] });
     } catch (error) {
       return res
         .status(400)
