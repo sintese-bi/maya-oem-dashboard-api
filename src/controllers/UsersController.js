@@ -1687,7 +1687,7 @@ class UsersController {
 
           const mailOptions = {
             from: "noreplymayawatch@gmail.com",
-            to: [cap.dev_email,"bisintese@gmail.com","eloymun00@gmail.com"],
+            to: [cap.dev_email,"eloymun00@gmail.com"],
             subject: "Relatório de dados de Geração",
             text: "",
             html: emailBody,
