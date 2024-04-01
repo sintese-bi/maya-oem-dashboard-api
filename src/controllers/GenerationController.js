@@ -439,27 +439,48 @@ class GenerationController {
     }
   }
 
-  async teste(req, res) {
+  async testQuery(req, res) {
     try {
-      const { use_uuid, startDate, endDate } = req.body;
-
+      const { use_uuid } = req.body;
       const result = await Generation.findAll({
+        attributes: ["gen_date", "gen_updated_at", "gen_real", "gen_estimated"],
+        include: [
+          {
+            association: "devices",
+            attributes: ["dev_uuid"],
+            as: "devices",
+            where: {
+              [Op.or]: [
+                { dev_deleted: false },
+                { dev_deleted: { [Op.is]: null } },
+              ],
+            },
 
-        
+            include: [
+              {
+                association: "brand_login",
+                attributes: ["bl_uuid"],
+                as: "brand_login",
+                include: [
+                  {
+                    association: "users",
 
+                    as: "users",
+                    where: { use_uuid: use_uuid },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        where: { gen_date: { [Op.between]: ["2024-03-09", "2024-03-10"] } },
+      });
 
-
-
-
-      })
-
-
-
-
-
-
+      return res.status(200).json({ message: result });
     } catch (error) {
-      res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
 }

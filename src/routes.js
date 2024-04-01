@@ -81,7 +81,7 @@ routes.post(
 routes.get(`${apiVersion}/emailalert`, checkToken, UsersController.emailAlert);
 routes.post(
   `${apiVersion}/brandinfo`,
-  checkToken,
+
   UsersController.brandInformation
 );
 routes.post(`${apiVersion}/helpcenter`, checkToken, UsersController.helpCenter);
@@ -174,21 +174,32 @@ routes.get(
 
   DevicesControlle.index
 );
-// routes.put(
-//   `${apiVersion}/alertfrequency`,
-//   checkToken,
-//   UsersController.alertFrequencyDefinition
-// );
+// routes.post(
+//   `${apiVersion}/testquery`,
 
-routes.post(
+//   GenerationController.testQuery
+// );
+routes.put(
+  `${apiVersion}/alertfrequency`,
+  checkToken,
+  UsersController.alertFrequencyDefinition
+);
+
+routes.put(
+  `${apiVersion}/devicerecover`,
+  checkToken,
+  DevicesControlle.deviceRecover
+);
+
+routes.get(
   `${apiVersion}/emailalertsend`,
-  
+  checkToken,
   UsersController.emailAlertSend
 );
 
 routes.get(
   `${apiVersion}/alertFrequency/:uuid`,
-  
+
   UsersController.alertFrequency
 );
 routes.post(
@@ -208,7 +219,11 @@ routes.post(
 );
 
 routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
-// routes.post(`${apiVersion}/automaticmassemail`, checkToken, UsersController.automaticmassEmail);
+// routes.get(
+//   `${apiVersion}/automaticmassemail`,
+//   checkToken,
+//   UsersController.automaticmassEmail
+// );
 routes.post(
   `${apiVersion}/emaildash`,
   checkToken,

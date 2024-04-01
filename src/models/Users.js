@@ -26,6 +26,7 @@ class Users extends Model {
         use_telephone: { type: DataTypes.STRING },
         use_percentage: { type: DataTypes.FLOAT },
         use_frequency_data: { type: DataTypes.DATE },
+        use_date: { type: DataTypes.INTEGER },
         use_frequency_name: { type: DataTypes.STRING },
         use_cpf: { type: DataTypes.STRING },
         use_cnpj: { type: DataTypes.STRING },
@@ -48,6 +49,10 @@ class Users extends Model {
         use_token: { type: DataTypes.TEXT, allowNull: true },
         use_alert_email: { type: DataTypes.STRING },
         use_deleted: { type: DataTypes.BOOLEAN },
+        // use_date_report: {
+        //   type: DataTypes.STRING,
+        // },
+        // use_set_report: { type: DataTypes.BOOLEAN },
       },
       {
         sequelize,

@@ -505,13 +505,12 @@ class UsersController {
   //Ela recebe os novos valores, como a porcentagem e o nome da frequência, e os aplica ao usuário identificado pelo UUID fornecido.
   async alertFrequencyDefinition(req, res) {
     try {
-      const { use_uuid, use_percentage, use_frequency_data, use_alert_email } =
-        req.body;
+      const { use_uuid, use_percentage, use_date} = req.body;
       const result = await Users.update(
         {
           use_percentage: use_percentage,
-          use_frequency_data: use_frequency_data,
-          use_alert_email: use_alert_email,
+          use_date: use_date,
+        
         },
 
         { where: { use_uuid: use_uuid } }
@@ -525,89 +524,230 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  
   //Api para envio de alerta quando a geração real estiver x% abaixo da geração estimada
+  //add coluna banco servidor, foreach cronjob
   async emailAlertSend(req, res) {
     try {
-      const { use_uuid } = req.body;
-      const currentDate = new Date();
+      const currentDate = new Date().toISOString();
+      const dataAtual = moment(currentDate);
+      const inicioUltimaSemana = dataAtual
+        .clone()
+        .subtract(1, "weeks")
+        .startOf("week");
+      const fimUltimaSemana = inicioUltimaSemana.clone().endOf("week");
+      const inicioFormatado = inicioUltimaSemana.toISOString();
+      const fimFormatado = fimUltimaSemana.toISOString();
+      const inicioMesCorrente = dataAtual.clone().startOf("month");
+      const fimMesCorrente = dataAtual.clone().endOf("month");
+      const inicioFormatadomes = inicioMesCorrente.toISOString();
+      const fimFormatadomes = fimMesCorrente.toISOString();
       const startOfDay = new Date(currentDate);
       startOfDay.setHours(0, 0, 0, 0);
       const endOfDay = new Date(currentDate);
       endOfDay.setHours(23, 59, 59, 999);
-
-      const result = await Generation.findAll({
-        include: [
-          {
-            association: "devices",
-            attributes: ["dev_uuid", "dev_name"], 
-            where: {
-              [Op.or]: [
-                { dev_deleted: false },
-                { dev_deleted: { [Op.is]: null } },
-              ],
-            },
-            include: [
-              {
-                association: "brand_login",
-                where: {
-                  use_uuid: use_uuid,
-                },
-              },
-            ],
-          },
+      const consultUser = await Users.findAll({
+        attributes: [
+          "use_percentage",
+          "use_alert_email",
+          "use_date",
+          "use_uuid",
         ],
-        where: {
-          gen_date: {
-            [Op.between]: [startOfDay, endOfDay],
-          },
-        },
-        attributes: ["gen_date", "gen_real", "gen_estimated", "gen_updated_at"],
-        order: [["gen_updated_at", "DESC"]],
       });
 
-      const aggregatedResult = {};
-
-      result.forEach((item) => {
-        const deviceUUID = item.devices.dev_uuid;
-        const deviceName = item.devices.dev_name;
-        const genDate = new Date(item.gen_date).toISOString().split("T")[0];
-
+      consultUser.forEach(async (element) => {
         if (
-          !aggregatedResult[deviceUUID] ||
-          !aggregatedResult[deviceUUID][genDate]
+          !element.use_date ||
+          !element.use_alert_email ||
+          !element.use_percentage
         ) {
-          aggregatedResult[deviceUUID] = {
-            [genDate]: {
-              deviceName: deviceName,
-              gen_real: item.gen_real,
-              gen_estimated: item.gen_estimated,
-              gen_updated_at: item.gen_updated_at,
-            },
+          return;
+        }
+        if (
+          !(
+            element.use_date === 2 &&
+            moment().isoWeekday() === 1 &&
+            moment().date() <= 7
+          ) &&
+          !(element.use_date === 3 && moment().date() === 1) &&
+          !(element.use_date === 1)
+        ) {
+          return;
+        }
+
+        console.log(element.use_alert_email);
+        let dateInterval;
+        //Intervalo diário, semanal e mensal
+        if (element.use_date == 1) {
+          dateInterval = currentDate;
+        } else if (element.use_date == 2) {
+          dateInterval = {
+            [Op.between]: [inicioFormatado, fimFormatado],
+          };
+        } else if (element.use_date == 3) {
+          dateInterval = {
+            [Op.between]: [inicioFormatadomes, fimFormatadomes],
           };
         }
-      });
 
-      const recentGenerations = {};
+        const result = await Generation.findAll({
+          include: [
+            {
+              association: "devices",
+              attributes: ["dev_uuid", "dev_name"],
+              where: {
+                [Op.or]: [
+                  { dev_deleted: false },
+                  { dev_deleted: { [Op.is]: null } },
+                ],
+              },
+              include: [
+                {
+                  association: "brand_login",
+                  attributes: ["bl_name"],
+                  where: {
+                    use_uuid: element.use_uuid,
+                  },
+                },
+              ],
+            },
+          ],
+          where: {
+            gen_date: dateInterval,
+          },
+          attributes: [
+            "gen_date",
+            "gen_real",
+            "gen_estimated",
+            "gen_updated_at",
+          ],
+          order: [["gen_updated_at", "DESC"]],
+        });
 
-      Object.keys(aggregatedResult).forEach((deviceUUID) => {
-        const latestDate = Object.keys(aggregatedResult[deviceUUID])
-          .sort()
-          .reverse()[0];
-        recentGenerations[deviceUUID] = {
-          deviceName: aggregatedResult[deviceUUID][latestDate].deviceName,
-          ...aggregatedResult[deviceUUID][latestDate],
+        const filteredResult = {};
+        result.forEach((generation) => {
+          const { devices, gen_updated_at, gen_real, gen_estimated } =
+            generation;
+          const deviceUUID = devices.dev_uuid;
+          const deviceName = devices.dev_name;
+          const brandLogin = devices.brand_login;
+          const brandName = brandLogin ? brandLogin.bl_name : null;
+          const generationDate = gen_updated_at.toISOString().split("T")[0];
+
+          if (!filteredResult[generationDate]) {
+            filteredResult[generationDate] = {};
+          }
+
+          if (
+            !filteredResult[generationDate][deviceUUID] ||
+            gen_updated_at >
+              filteredResult[generationDate][deviceUUID].gen_updated_at
+          ) {
+            filteredResult[generationDate][deviceUUID] = {
+              gen_real,
+              gen_estimated,
+              dev_name: deviceName,
+              bl_name: brandName,
+            };
+          }
+        });
+        const deviceSums = {};
+        Object.keys(filteredResult).forEach((date) => {
+          const devices = filteredResult[date];
+          Object.keys(devices).forEach((deviceUUID) => {
+            const generation = devices[deviceUUID];
+            const { gen_real, gen_estimated, dev_name, bl_name } = generation;
+            if (!deviceSums[deviceUUID]) {
+              deviceSums[deviceUUID] = {
+                gen_real: 0,
+                gen_estimated: 0,
+                dev_name,
+                bl_name,
+              };
+            }
+            deviceSums[deviceUUID].gen_real += gen_real;
+            deviceSums[deviceUUID].gen_estimated += gen_estimated;
+          });
+        });
+
+        //Fluxo de verificação igual ou abaixo de x%
+        const percentage = element.use_percentage / 100;
+        const deviceUUIDs = Object.keys(deviceSums);
+
+        const sumPercentage = deviceUUIDs
+          .map((uuid) => {
+            const device = deviceSums[uuid];
+
+            if (device.gen_real <= percentage * device.gen_estimated) {
+              return {
+                Geração_real: device.gen_real.toFixed(2),
+                Geração_estimada: device.gen_estimated.toFixed(2),
+                Nome_dispositivo: device.dev_name,
+                Nome_marca: device.bl_name,
+              };
+            }
+            return null;
+          })
+          .filter((device) => device !== null);
+
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet(sumPercentage);
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
+        const buffer = XLSX.write(workbook, {
+          bookType: "xlsx",
+          type: "buffer",
+        });
+
+        // let interval;
+        // if (element.use_date == 1) {
+        //   interval = "diário";
+        // } else if (element.use_date == 2) {
+        //   interval = "semanal";
+        // } else if (element.use_date == 3) {
+        //   interval = "mensal";
+        // }
+
+        let emailBody = `
+  <p>Prezado(a),</p>
+  <p>Em anexo listagem de usinas que produziram abaixo do esperado definido.</p>
+  <p>Att,</p>
+  <p><strong>Equipe Maya Watch</strong></p>
+  `;
+
+        const mailOptions = {
+          from: '"noreplymayawatch@gmail.com',
+          to: ["bisintese@gmail.com","eloymun00@gmail.com",element.use_alert_email],
+          subject: "Alertas de geração abaixo do valor estipulado",
+          text: "",
+          html: emailBody,
+          attachments: [
+            {
+              filename: "listagem.xlsx",
+              content: buffer,
+              encoding: "base64",
+            },
+          ],
         };
-      });
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            console.error("Erro ao enviar o e-mail:", error);
+            return;
+          }
 
+          if (info && info.res) {
+            console.log("E-mail enviado:", info.res);
+          } else {
+            console.log("E-mail enviado com sucesso.");
+          }
+        });
+      });
       return res.status(200).json({
-        message: "Geração para comparação retornada com sucesso!",
-        recentGenerations,
-        result
+        message: "Emails enviados com sucesso!",
       });
     } catch (error) {
       return res
         .status(400)
-        .json({ message: `Erro ao retornar os dados. ${error}` });
+        .json({ message: `Erro ao retornar os dados: ${error.message}` });
     }
   }
 
@@ -1027,7 +1167,7 @@ class UsersController {
       let result;
       let url;
       if (newnamebrand == "canadian" && bl_quant == 2) {
-        url = "https://monitoring.csisolar.com/login";
+        url = "https://webmonitoring-gl.csisolar.com/login";
       } else {
         result = await Brand_Info.findOne({
           attributes: ["bl_url"],
@@ -1547,7 +1687,7 @@ class UsersController {
 
           const mailOptions = {
             from: "noreplymayawatch@gmail.com",
-            to: cap.dev_email,
+            to: [cap.dev_email,"eloymun00@gmail.com"],
             subject: "Relatório de dados de Geração",
             text: "",
             html: emailBody,
@@ -1584,38 +1724,47 @@ class UsersController {
   async automaticmassEmail(req, res) {
     try {
       const users = await Users.findAll({
-        attributes: ["use_uuid", "use_date_report"],
+        attributes: ["use_uuid", "use_date_report", "use_set_report"],
         where: { use_set_report: false },
       });
-
-      const {
-        Readable,
-        Writable,
-        pipeline,
-        Transform,
-      } = require("node:stream");
-      const util = require("util");
-
-      const pipelineAsync = util.promisify(pipeline);
+      
       const currentDate = new Date();
-      const firstDayOfMonth = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        1
-      );
-      const lastDayOfMonth = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1,
-        0
-      );
-      for (const user of users) {
+      const currentDay = ("0" + currentDate.getDate()).slice(-2);
+      if (currentDay == "01") {
+        await Users.update({ use_set_report: false });
+      }
+      users.forEach(async (element) => {
+        if (element.use_date_report != currentDay) {
+          return;
+        }
+        const {
+          Readable,
+          Writable,
+          pipeline,
+          Transform,
+        } = require("node:stream");
+        const util = require("util");
+
+        const pipelineAsync = util.promisify(pipeline);
+
+        const firstDayOfMonth = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          1
+        );
+        const lastDayOfMonth = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() + 1,
+          0
+        );
+
         const result = await Devices.findAll({
           include: [
             {
               association: "brand_login",
               attributes: [],
               where: {
-                use_uuid: user.use_uuid,
+                use_uuid: element.use_uuid,
               },
             },
           ],
@@ -1632,7 +1781,7 @@ class UsersController {
         });
         const dev_uuids = result.map((device) => device.dev_uuid);
         const quant = dev_uuids.length;
-        console.log(quant);
+        console.log({quantidade:quant});
         const readableStream = Readable({
           async read() {
             try {
@@ -1648,12 +1797,12 @@ class UsersController {
                       },
                       gen_updated_at: {
                         [Op.in]: Generation.sequelize.literal(`
-                        (SELECT MAX(gen_updated_at) 
-                        FROM generation 
-                        WHERE dev_uuid = :dev_uuid 
-                        AND gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
-                        GROUP BY gen_date)
-                      `),
+                          (SELECT MAX(gen_updated_at) 
+                          FROM generation 
+                          WHERE dev_uuid = :dev_uuid 
+                          AND gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
+                          GROUP BY gen_date)
+                        `),
                       },
                     },
                     replacements: { dev_uuid, firstDayOfMonth, lastDayOfMonth },
@@ -1797,17 +1946,17 @@ class UsersController {
             //   <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
             // `;
             const emailBody = `
-          Prezado usuário,<br><br>
-
-          Em anexo, relatório com a performance da sua usina no mês atual. Estamos à disposição para quaisquer dúvidas e sugestões.<br><br>
-      
-          <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
-          https://mayax.com.br/
-      `;
+            Prezado usuário,<br><br>
+  
+            Em anexo, relatório com a performance da sua usina no mês atual. Estamos à disposição para quaisquer dúvidas e sugestões.<br><br>
+        
+            <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
+            https://mayax.com.br/
+        `;
 
             const mailOptions = {
               from: "noreplymayawatch@gmail.com",
-              to: cap.dev_email,
+              to: [cap.dev_email,"bisintese@gmail.com","eloymun00@gmail.com"],//cap.dev_email
               subject: "Relatório de dados de Geração",
               text: "",
               html: emailBody,
@@ -1816,6 +1965,10 @@ class UsersController {
 
             try {
               await transporter.sendMail(mailOptions);
+              await Users.update(
+                { use_set_report: true },
+                { where: { use_uuid: element.use_uuid } }
+              );
               console.log({
                 success: true,
                 message: `Email enviado com sucesso para dev_uuid: ${
@@ -1835,23 +1988,8 @@ class UsersController {
         });
 
         pipelineAsync(readableStream, transformStream, writableStream);
-        try {
-          await Users.update(
-            { use_set_report: true },
-            {
-              where: { use_uuid: user.use_uuid },
-            }
-          );
-          console.log(
-            `Status de envio de e-mails atualizado no banco de dados para o usuário com use_uuid: ${user.use_uuid}`
-          );
-        } catch (error) {
-          console.error(
-            `Erro ao atualizar o status de envio de e-mails para o usuário com use_uuid: ${user.use_uuid}`,
-            error
-          );
-        }
-      }
+      });
+
       res.status(200).json({ message: "Envio de relatórios em andamento" });
     } catch (error) {
       res.status(500).json({ message: "Erro ao retornar os dados!" });
@@ -2728,23 +2866,25 @@ class UsersController {
       console.error(error);
     }
   }
+
   async massemailScheduler(req, res) {
     try {
       // Date=dia do mês que foi definido pelo usuário
-      const { use_uuid, date } = req.body;
+      const { use_uuid, use_date_report } = req.body;
       const result = await Users.findOne({
-        attributes: ["use_date_report"],
-
+        attributes: ["use_date_report", "use_set_report"],
         where: { use_uuid: use_uuid },
       });
-      // if (result.use_set_report == true) {
-      //   return res
-      //     .status(409)
-      //     .json({ message: "O relatório já foi enviado este mês!" });
-      // }
+
+      if (result.use_set_report == true) {
+        return res.status(409).json({
+          message:
+            "O relatório já foi enviado este mês!Você poderá trocar a data a partir do início do mês que vem!",
+        });
+      }
       await Users.update(
         {
-          use_date_report: date,
+          use_date_report: use_date_report,
         },
         { where: { use_uuid: use_uuid } }
       );
@@ -2759,9 +2899,9 @@ class UsersController {
 
   agendarenvioEmailRelatorio() {
     // Agende a função para ser executada a cada dia
-    cron.schedule("0 9 * * *", async () => {
+    cron.schedule("0 7 * * *", async () => {
       try {
-        await this.automaticmassEmailmassEmail();
+        await this.automaticmassEmail();
       } catch (error) {
         console.error("Erro durante o envio do relatório agendado:", error);
       }
@@ -2777,9 +2917,19 @@ class UsersController {
       }
     });
   }
+
+  agendarAlertasGeracao() {
+    // Agende a função para ser executada a cada hora
+    cron.schedule("0 18 * * *", async () => {
+      try {
+        await this.emailAlertSend();
+      } catch (error) {}
+    });
+  }
 }
 
 const usersController = new UsersController();
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarAlertasGeracao();
+usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();

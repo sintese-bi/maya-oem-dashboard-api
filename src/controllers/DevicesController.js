@@ -218,8 +218,6 @@ class DevicesController {
         );
       });
 
-   
-
       return res.status(200).json({
         message: "Somas calculadas com sucesso!",
         // somaPorDiaReal: somaGenRealDia,
@@ -303,6 +301,26 @@ class DevicesController {
       return res.status(400).json({
         message: `Erro ao retornar os dados. ${error.message || error}`,
       });
+    }
+  }
+  async deviceRecover(req, res) {
+    try {
+      const { dev_uuid } = req.body;
+      await Devices.update(
+        {
+          dev_deleted: false,
+        },
+        {
+          where: { dev_uuid: dev_uuid },
+        }
+      );
+      return res
+        .status(200)
+        .json({ message: "O dispositivo foi recuperado com sucesso!" });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
 }
