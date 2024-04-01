@@ -85,11 +85,11 @@ routes.post(
   UsersController.brandInformation
 );
 routes.post(`${apiVersion}/helpcenter`, checkToken, UsersController.helpCenter);
-// routes.post(
-//   `${apiVersion}/usealertemail`,
-//   checkToken,
-//   UsersController.useAlertEmail
-// );
+routes.post(
+  `${apiVersion}/usealertemail`,
+  checkToken,
+  UsersController.useAlertEmail
+);
 
 routes.post(
   `${apiVersion}/brandupdate`,
@@ -191,11 +191,11 @@ routes.put(
   DevicesControlle.deviceRecover
 );
 
-// routes.get(
-//   `${apiVersion}/emailalertsend`,
-//   checkToken,
-//   UsersController.emailAlertSend
-// );
+routes.get(
+  `${apiVersion}/emailalertsend`,
+  checkToken,
+  UsersController.emailAlertSend
+);
 
 routes.get(
   `${apiVersion}/alertFrequency/:uuid`,
