@@ -81,15 +81,15 @@ routes.post(
 routes.get(`${apiVersion}/emailalert`, checkToken, UsersController.emailAlert);
 routes.post(
   `${apiVersion}/brandinfo`,
-  
+
   UsersController.brandInformation
 );
 routes.post(`${apiVersion}/helpcenter`, checkToken, UsersController.helpCenter);
-routes.post(
-  `${apiVersion}/usealertemail`,
-  checkToken,
-  UsersController.useAlertEmail
-);
+// routes.post(
+//   `${apiVersion}/usealertemail`,
+//   checkToken,
+//   UsersController.useAlertEmail
+// );
 
 routes.post(
   `${apiVersion}/brandupdate`,
@@ -148,7 +148,11 @@ routes.get(
 routes.post(`${apiVersion}/sendingemail`, UsersController.sendEmail);
 routes.post(`${apiVersion}/passrecover`, UsersController.passwordRecover);
 routes.post(`${apiVersion}/deviceLogin`, checkToken, UsersController.newDevice);
-routes.post(`${apiVersion}/deleteDevice`, checkToken, UsersController.deleteDevice)
+routes.post(
+  `${apiVersion}/deleteDevice`,
+  checkToken,
+  UsersController.deleteDevice
+);
 routes.get(
   `${apiVersion}/alerts/:devUuid`,
   checkToken,
@@ -170,26 +174,32 @@ routes.get(
 
   DevicesControlle.index
 );
+// routes.post(
+//   `${apiVersion}/testquery`,
+
+//   GenerationController.testQuery
+// );
 routes.put(
   `${apiVersion}/alertfrequency`,
   checkToken,
   UsersController.alertFrequencyDefinition
 );
+
 routes.put(
   `${apiVersion}/devicerecover`,
   checkToken,
   DevicesControlle.deviceRecover
 );
 
-routes.get(
-  `${apiVersion}/emailalertsend`,
-  checkToken,
-  UsersController.emailAlertSend
-);
+// routes.get(
+//   `${apiVersion}/emailalertsend`,
+//   checkToken,
+//   UsersController.emailAlertSend
+// );
 
 routes.get(
   `${apiVersion}/alertFrequency/:uuid`,
-  
+
   UsersController.alertFrequency
 );
 routes.post(
@@ -209,7 +219,11 @@ routes.post(
 );
 
 routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
-// routes.post(`${apiVersion}/automaticmassemail`, checkToken, UsersController.automaticmassEmail);
+// routes.get(
+//   `${apiVersion}/automaticmassemail`,
+//   checkToken,
+//   UsersController.automaticmassEmail
+// );
 routes.post(
   `${apiVersion}/emaildash`,
   checkToken,
