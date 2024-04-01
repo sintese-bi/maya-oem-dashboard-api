@@ -49,10 +49,10 @@ class Users extends Model {
         use_token: { type: DataTypes.TEXT, allowNull: true },
         use_alert_email: { type: DataTypes.STRING },
         use_deleted: { type: DataTypes.BOOLEAN },
-        use_date_report: {
-          type: DataTypes.STRING,
-        },
-        use_set_report: { type: DataTypes.BOOLEAN },
+        // use_date_report: {
+        //   type: DataTypes.STRING,
+        // },
+        // use_set_report: { type: DataTypes.BOOLEAN },
       },
       {
         sequelize,
