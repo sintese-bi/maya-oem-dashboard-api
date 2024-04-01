@@ -2930,6 +2930,6 @@ class UsersController {
 
 const usersController = new UsersController();
 // usersController.agendarAlertasGeracao();
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();

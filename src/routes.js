@@ -81,15 +81,15 @@ routes.post(
 routes.get(`${apiVersion}/emailalert`, checkToken, UsersController.emailAlert);
 routes.post(
   `${apiVersion}/brandinfo`,
-  
+
   UsersController.brandInformation
 );
 routes.post(`${apiVersion}/helpcenter`, checkToken, UsersController.helpCenter);
-routes.post(
-  `${apiVersion}/usealertemail`,
-  checkToken,
-  UsersController.useAlertEmail
-);
+// routes.post(
+//   `${apiVersion}/usealertemail`,
+//   checkToken,
+//   UsersController.useAlertEmail
+// );
 
 routes.post(
   `${apiVersion}/brandupdate`,
@@ -174,11 +174,16 @@ routes.get(
 
   DevicesControlle.index
 );
-routes.put(
-  `${apiVersion}/alertfrequency`,
-  checkToken,
-  UsersController.alertFrequencyDefinition
-);
+// routes.post(
+//   `${apiVersion}/testquery`,
+
+//   GenerationController.testQuery
+// );
+// routes.put(
+//   `${apiVersion}/alertfrequency`,
+//   checkToken,
+//   UsersController.alertFrequencyDefinition
+// );
 
 routes.put(
   `${apiVersion}/devicerecover`,
@@ -186,15 +191,15 @@ routes.put(
   DevicesControlle.deviceRecover
 );
 
-routes.get(
-  `${apiVersion}/emailalertsend`,
-  checkToken,
-  UsersController.emailAlertSend
-);
+// routes.get(
+//   `${apiVersion}/emailalertsend`,
+//   checkToken,
+//   UsersController.emailAlertSend
+// );
 
 routes.get(
   `${apiVersion}/alertFrequency/:uuid`,
-  
+
   UsersController.alertFrequency
 );
 routes.post(
@@ -214,7 +219,11 @@ routes.post(
 );
 
 routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
-routes.get(`${apiVersion}/automaticmassemail`, checkToken, UsersController.automaticmassEmail);
+// routes.get(
+//   `${apiVersion}/automaticmassemail`,
+//   checkToken,
+//   UsersController.automaticmassEmail
+// );
 routes.post(
   `${apiVersion}/emaildash`,
   checkToken,
@@ -236,11 +245,11 @@ routes.post(
   checkToken,
   UsersController.csvDownload
 );
-routes.post(
-  `${apiVersion}/emailscheduler`, //Agendador data de envio relatorio
-  checkToken,
-  UsersController.massemailScheduler
-);
+// routes.post(
+//   `${apiVersion}/emailscheduler`, //Agendador data de envio relatorio
+//   checkToken,
+//   UsersController.massemailScheduler
+// );
 routes.post(
   `${apiVersion}/xlsxportal`,
   upload.single("arquivo"),
