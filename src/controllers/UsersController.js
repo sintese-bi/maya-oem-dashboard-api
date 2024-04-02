@@ -282,7 +282,7 @@ class UsersController {
       //   return res.status(404).json({ message: "Senha inválida" });
       // }
       if (!checkPassword) {
-        return res.status(404).json({ message: "Senha inválida" });
+        return res.status(401).json({ message: "Senha inválida" });
       }
       const without_password = result.get({ plain: true });
       delete without_password.use_password;
@@ -562,8 +562,6 @@ class UsersController {
         ) {
           return;
         }
-
-        console.log(element.use_alert_email);
         let dateInterval;
         //Intervalo diário, semanal e mensal
         if (element.use_date == 1) {
@@ -784,6 +782,8 @@ class UsersController {
         whereCondition = {
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         };
+      } else if (par === "no") {
+        whereCondition = { dev_deleted: true };
       }
       const brand = await Users.findByPk(use, {
         include: [
@@ -968,6 +968,14 @@ class UsersController {
               gen_real_day: dailySums[today]
                 ? parseFloat(dailySums[today].gen_real).toFixed(2)
                 : 0,
+              gen_performance:
+                ((dailySums[today]
+                  ? parseFloat(dailySums[today].gen_real).toFixed(2)
+                  : 0) /
+                  (dailySums[today]
+                    ? parseFloat(dailySums[today].gen_estimated).toFixed(2)
+                    : 0)) *
+                  100 || 0,
 
               weeklySum: {
                 gen_real: Object.values(weeklySumsReal)
