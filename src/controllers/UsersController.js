@@ -573,8 +573,6 @@ class UsersController {
         ) {
           return;
         }
-
-        console.log(element.use_alert_email);
         let dateInterval;
         //Intervalo diário, semanal e mensal
         if (element.use_date == 1) {
@@ -795,6 +793,8 @@ class UsersController {
         whereCondition = {
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         };
+      } else if (par === "no") {
+        whereCondition = { dev_deleted: true };
       }
       const brand = await Users.findByPk(use, {
         include: [
