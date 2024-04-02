@@ -2928,7 +2928,7 @@ class UsersController {
 }
 
 const usersController = new UsersController();
-// usersController.agendarAlertasGeracao();
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarAlertasGeracao();
+usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
