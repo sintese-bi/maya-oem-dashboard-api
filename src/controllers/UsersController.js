@@ -795,6 +795,8 @@ class UsersController {
         whereCondition = {
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         };
+      } else if (par === "no") {
+        whereCondition = { dev_deleted: true };
       }
       const brand = await Users.findByPk(use, {
         include: [
@@ -2949,7 +2951,7 @@ class UsersController {
 }
 
 const usersController = new UsersController();
-usersController.agendarAlertasGeracao();
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarAlertasGeracao();
+// usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
