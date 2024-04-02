@@ -2940,7 +2940,7 @@ class UsersController {
 
   agendarAlertasGeracao() {
     // Agende a função para ser executada a cada hora
-    cron.schedule("0 18 * * *", async () => {
+    cron.schedule("0 16 * * *", async () => {
       try {
         await this.emailAlertSend();
       } catch (error) {}
