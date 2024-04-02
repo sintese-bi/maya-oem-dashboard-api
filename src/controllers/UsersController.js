@@ -764,10 +764,18 @@ class UsersController {
     try {
       const use = req.params.uuid;
       const par = req.params.par;
-      const today = moment.utc().format("YYYY-MM-DD");
+      const today = moment.utc().subtract(3, "hours").format("YYYY-MM-DD");
 
-      const startOfMonth = moment.utc().startOf("month").toDate();
-      const endOfMonth = moment.utc().endOf("month").toDate();
+      const startOfMonth = moment
+        .utc()
+        .startOf("month")
+        .subtract(3, "hours")
+        .toDate();
+      const endOfMonth = moment
+        .utc()
+        .endOf("month")
+        .subtract(3, "hours")
+        .toDate();
       console.log(startOfMonth, endOfMonth);
 
       let whereCondition = {};
@@ -794,11 +802,18 @@ class UsersController {
             include: [
               {
                 association: "devices",
+                where: whereCondition,
                 attributes: [
                   "dev_uuid",
                   "dev_name",
                   "dev_brand",
                   "dev_deleted",
+                  "dev_capacity",
+                  "dev_address",
+                  "dev_lat",
+                  "dev_long",
+                  "dev_email",
+                  "dev_image",
                 ],
                 include: [
                   {
@@ -823,7 +838,7 @@ class UsersController {
                     separate: true,
                     where: {
                       alert_created_at: {
-                        [Op.gte]: moment.utc().subtract(1, "hour").toDate(),
+                        [Op.gte]: moment.utc().subtract(4, "hours").toDate(),
                       },
                     },
                   },
@@ -934,7 +949,7 @@ class UsersController {
               alerts: alerts.filter((alert) =>
                 moment
                   .utc(alert.alert_created_at)
-                  .isAfter(moment.utc().subtract(1, "hour"))
+                  .isAfter(moment.utc().subtract(4, "hours"))
               ),
               dev_capacity: device.dev_capacity,
               dev_address: device.dev_address,
@@ -2452,6 +2467,7 @@ class UsersController {
       });
       const result = await Brand_Info.findAll({
         attributes: ["bl_name", "bl_url"],
+        group: ["bl_name", "bl_url"],
       });
       const brandNamesSet = new Set();
       const brandinfo = [];
@@ -2470,7 +2486,7 @@ class UsersController {
         }
       }
 
-      return res.status(200).json({ message: [brandinfo, infoBrand] });
+      return res.status(200).json({ message: [result, infoBrand] });
     } catch (error) {
       return res
         .status(400)
