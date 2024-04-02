@@ -2940,7 +2940,7 @@ class UsersController {
 
   agendarAlertasGeracao() {
     
-    cron.schedule("30 21 * * *", async () => {
+    cron.schedule("30 23 * * *", async () => {
       try {
         await this.emailAlertSend();
       } catch (error) {
