@@ -573,8 +573,6 @@ class UsersController {
         ) {
           return;
         }
-
-        console.log(element.use_alert_email);
         let dateInterval;
         //Intervalo diário, semanal e mensal
         if (element.use_date == 1) {
@@ -2951,7 +2949,7 @@ class UsersController {
 }
 
 const usersController = new UsersController();
-// usersController.agendarAlertasGeracao();
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarAlertasGeracao();
+usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
