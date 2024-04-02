@@ -2939,11 +2939,15 @@ class UsersController {
   }
 
   agendarAlertasGeracao() {
-    // Agende a função para ser executada a cada hora
-    cron.schedule("30 17 * * *", async () => {
+    
+    cron.schedule("30 21 * * *", async () => {
       try {
         await this.emailAlertSend();
-      } catch (error) {}
+      } catch (error) {
+        console.error("Erro durante a verificação de alertas:", error);
+      }
+    }, {
+      timezone: "America/Sao_Paulo"
     });
   }
 }
