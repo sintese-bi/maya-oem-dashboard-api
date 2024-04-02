@@ -505,12 +505,11 @@ class UsersController {
   //Ela recebe os novos valores, como a porcentagem e o nome da frequência, e os aplica ao usuário identificado pelo UUID fornecido.
   async alertFrequencyDefinition(req, res) {
     try {
-      const { use_uuid, use_percentage, use_date} = req.body;
+      const { use_uuid, use_percentage, use_date } = req.body;
       const result = await Users.update(
         {
           use_percentage: use_percentage,
           use_date: use_date,
-        
         },
 
         { where: { use_uuid: use_uuid } }
@@ -524,7 +523,7 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  
+
   //Api para envio de alerta quando a geração real estiver x% abaixo da geração estimada
   //add coluna banco servidor, foreach cronjob
   async emailAlertSend(req, res) {
@@ -716,7 +715,11 @@ class UsersController {
 
         const mailOptions = {
           from: '"noreplymayawatch@gmail.com',
-          to: ["bisintese@gmail.com","eloymun00@gmail.com",element.use_alert_email],
+          to: [
+            "bisintese@gmail.com",
+            "eloymun00@gmail.com",
+            element.use_alert_email,
+          ],
           subject: "Alertas de geração abaixo do valor estipulado",
           text: "",
           html: emailBody,
@@ -774,8 +777,10 @@ class UsersController {
       const par = req.params.par;
       const today = moment.utc().format("YYYY-MM-DD");
 
-      const startOfMonth = moment.utc().startOf("month").toDate();
-      const endOfMonth = moment.utc().endOf("month").toDate();
+      
+      const localTime = moment().format("YYYY-MM-DD HH:mm:ss");
+      const startOfMonth = moment(localTime).startOf("month").toDate();
+      const endOfMonth = moment(localTime).endOf("month").toDate();
       console.log(startOfMonth, endOfMonth);
 
       let whereCondition = {};
@@ -838,7 +843,9 @@ class UsersController {
                     separate: true,
                     where: {
                       alert_created_at: {
-                        [Op.gte]: moment.utc().subtract(1, "hour").toDate(),
+                        [Op.gte]: moment(localTime)
+                          .subtract(1, "hour")
+                          .toDate(),
                       },
                     },
                   },
@@ -949,7 +956,7 @@ class UsersController {
               alerts: alerts.filter((alert) =>
                 moment
                   .utc(alert.alert_created_at)
-                  .isAfter(moment.utc().subtract(1, "hour"))
+                  .isAfter(moment(localTime).subtract(1, "hour"))
               ),
               dev_capacity: device.dev_capacity,
               dev_address: device.dev_address,
@@ -1687,7 +1694,7 @@ class UsersController {
 
           const mailOptions = {
             from: "noreplymayawatch@gmail.com",
-            to: [cap.dev_email,"eloymun00@gmail.com"],
+            to: [cap.dev_email, "eloymun00@gmail.com"],
             subject: "Relatório de dados de Geração",
             text: "",
             html: emailBody,
@@ -1727,7 +1734,7 @@ class UsersController {
         attributes: ["use_uuid", "use_date_report", "use_set_report"],
         where: { use_set_report: false },
       });
-      
+
       const currentDate = new Date();
       const currentDay = ("0" + currentDate.getDate()).slice(-2);
       if (currentDay == "01") {
@@ -1781,7 +1788,7 @@ class UsersController {
         });
         const dev_uuids = result.map((device) => device.dev_uuid);
         const quant = dev_uuids.length;
-        console.log({quantidade:quant});
+        console.log({ quantidade: quant });
         const readableStream = Readable({
           async read() {
             try {
@@ -1956,7 +1963,7 @@ class UsersController {
 
             const mailOptions = {
               from: "noreplymayawatch@gmail.com",
-              to: [cap.dev_email,"bisintese@gmail.com","eloymun00@gmail.com"],//cap.dev_email
+              to: [cap.dev_email, "bisintese@gmail.com", "eloymun00@gmail.com"], //cap.dev_email
               subject: "Relatório de dados de Geração",
               text: "",
               html: emailBody,
@@ -2520,8 +2527,7 @@ class UsersController {
         },
       });
       const result = await Brand_Info.findAll({
-        attributes: ["bl_name","bl_url"]
-       
+        attributes: ["bl_name", "bl_url"],
       });
       const brandNamesSet = new Set();
       const brandinfo = [];
