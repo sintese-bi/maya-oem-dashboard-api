@@ -980,12 +980,13 @@ class UsersController {
                 ? parseFloat(dailySums[today].gen_real).toFixed(2)
                 : 0,
               gen_performance:
-                (dailySums[today]
+                ((dailySums[today]
                   ? parseFloat(dailySums[today].gen_real).toFixed(2)
                   : 0) /
                   (dailySums[today]
                     ? parseFloat(dailySums[today].gen_estimated).toFixed(2)
-                    : 0)*100 || 0,
+                    : 0)) *
+                  100 || 0,
 
               weeklySum: {
                 gen_real: Object.values(weeklySumsReal)
