@@ -2969,22 +2969,32 @@ class UsersController {
       const filteredDevices = filteredResult.filter(
         (brand) => brand.devices.length > 0
       );
-      const response = filteredDevices.map((brand) => {
-        return {
-          Info: brand.devices.map((device) => {
-            return {
-              "Portal": brand.bl_name,
-              "Cliente": device.dev_name,
-              "Produção(KWh)": device.generation[0].gen_real,
-              "Esperado(KWh)": device.generation[0].gen_estimated,
-              "Desempenho(%)":
-                (((device.generation[0].gen_real).toFixed(2) /
-                  (device.generation[0].gen_estimated).toFixed(2)) *
-                100).toFixed(2),
-            };
-          }),
-        };
-      });
+      const response = filteredDevices
+        .map((brand) => {
+          return {
+            Info: brand.devices
+              .filter(
+                (device) =>
+                  device.generation[0].gen_real >=
+                  device.generation[0].gen_estimated
+              )
+              .map((device) => {
+                return {
+                  Portal: brand.bl_name,
+                  Cliente: device.dev_name,
+                  "Produção(KWh)": device.generation[0].gen_real,
+                  "Esperado(KWh)": device.generation[0].gen_estimated,
+                  "Desempenho(%)": (
+                    (device.generation[0].gen_real.toFixed(2) /
+                      device.generation[0].gen_estimated.toFixed(2)) *
+                    100
+                  ).toFixed(2),
+                  Status: `Parabéns! Sua produção está acima do esperado para sua região, que é de ${device.generation[0].gen_estimated}`,
+                };
+              }),
+          };
+        })
+        .filter((obj) => obj.Info.length > 0);
 
       return res.status(200).json({ message: response });
     } catch (error) {
@@ -3033,7 +3043,7 @@ class UsersController {
 }
 
 const usersController = new UsersController();
-usersController.agendarAlertasGeracao();
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarAlertasGeracao();
+// usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
