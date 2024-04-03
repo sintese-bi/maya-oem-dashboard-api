@@ -528,8 +528,11 @@ class UsersController {
   //add coluna banco servidor, foreach cronjob
   async emailAlertSend(req, res) {
     try {
-      const currentDate = new Date().toISOString();
-      const dataAtual = moment(currentDate);
+      const currentDate = new Date();
+      currentDate.setHours(currentDate.getHours() - 3);
+      const currentDateWithDelay = currentDate.toISOString();
+      console.log(currentDateWithDelay)
+      const dataAtual = moment(currentDateWithDelay);
       const inicioUltimaSemana = dataAtual
         .clone()
         .subtract(1, "weeks")
@@ -541,9 +544,9 @@ class UsersController {
       const fimMesCorrente = dataAtual.clone().endOf("month");
       const inicioFormatadomes = inicioMesCorrente.toISOString();
       const fimFormatadomes = fimMesCorrente.toISOString();
-      const startOfDay = new Date(currentDate);
+      const startOfDay = new Date(currentDateWithDelay);
       startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(currentDate);
+      const endOfDay = new Date(currentDateWithDelay);
       endOfDay.setHours(23, 59, 59, 999);
       const consultUser = await Users.findAll({
         attributes: [
@@ -576,7 +579,7 @@ class UsersController {
         let dateInterval;
         //Intervalo diário, semanal e mensal
         if (element.use_date == 1) {
-          dateInterval = currentDate;
+          dateInterval = currentDateWithDelay;
         } else if (element.use_date == 2) {
           dateInterval = {
             [Op.between]: [inicioFormatado, fimFormatado],
@@ -714,9 +717,11 @@ class UsersController {
         const mailOptions = {
           from: '"noreplymayawatch@gmail.com',
           to: [
+            
             "bisintese@gmail.com",
             "eloymun00@gmail.com",
             element.use_alert_email,
+            
           ],
           subject: "Alertas de geração abaixo do valor estipulado",
           text: "",
@@ -2940,7 +2945,7 @@ class UsersController {
 
   agendarAlertasGeracao() {
     
-    cron.schedule("30 23 * * *", async () => {
+    cron.schedule("30 17 * * *", async () => {
       try {
         await this.emailAlertSend();
       } catch (error) {
