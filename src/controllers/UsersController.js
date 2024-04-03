@@ -680,14 +680,15 @@ class UsersController {
 
             if (device.gen_real <= percentage * device.gen_estimated) {
               return {
-                "Portal": device.bl_name,
-                "Cliente": device.dev_name,
+                Portal: device.bl_name,
+                Cliente: device.dev_name,
                 "Produção(KWh)": device.gen_real.toFixed(2),
                 "Esperado(KWh)": device.gen_estimated.toFixed(2),
-                "Desempenho(%)":
-                  ((device.gen_real.toFixed(2) /
+                "Desempenho(%)": (
+                  (device.gen_real.toFixed(2) /
                     device.gen_estimated.toFixed(2)) *
-                  100).toFixed(2),
+                  100
+                ).toFixed(2),
               };
             }
             return null;
@@ -724,7 +725,6 @@ class UsersController {
             "bisintese@gmail.com",
             "eloymun00@gmail.com",
             element.use_alert_email,
-            
           ],
           subject: "Alertas de geração abaixo do valor estipulado",
           text: "",
@@ -2924,7 +2924,38 @@ class UsersController {
       return res.status(500).json({ message: `Erro: ${error}` });
     }
   }
+  async genMonitor(req, res) {
+    try {
+      const currentDate = new Date();
+      currentDate.setHours(currentDate.getHours() - 3);
+      const currentDateWithDelay = currentDate.toISOString();
 
+      const result = await Devices.findAll({
+        include: [
+          {
+            association: "generation",
+            attributes: ["gen_real", "gen_updated_at", "gen_estimated"],
+            order: [["gen_updated_at", "DESC"]],
+            limit:1,
+            where: {
+              gen_date: currentDateWithDelay,
+            },
+            
+          },
+        ],
+        where: {
+          [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
+        },
+        attributes: ["dev_uuid", "dev_name","dev_deleted"],
+      });
+
+      return res.status(200).json({ message: result });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados: ${error}` });
+    }
+  }
   agendarenvioEmailRelatorio() {
     // Agende a função para ser executada a cada dia
     cron.schedule("0 7 * * *", async () => {
@@ -2964,7 +2995,7 @@ class UsersController {
 }
 
 const usersController = new UsersController();
-usersController.agendarAlertasGeracao();
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarAlertasGeracao();
+// usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
