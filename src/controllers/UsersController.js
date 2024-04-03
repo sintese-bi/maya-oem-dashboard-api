@@ -2972,10 +2972,20 @@ class UsersController {
       const response = filteredDevices.map((brand) => {
         return {
           Info: brand.devices.map((device) => {
-            return { Geração: device.generation[0], Marca: brand.bl_name, Dispositivo:device.dev_name };
+            return {
+              "Portal": brand.bl_name,
+              "Cliente": device.dev_name,
+              "Produção(KWh)": device.generation[0].gen_real,
+              "Esperado(KWh)": device.generation[0].gen_estimated,
+              "Desempenho(%)":
+                (((device.generation[0].gen_real).toFixed(2) /
+                  (device.generation[0].gen_estimated).toFixed(2)) *
+                100).toFixed(2),
+            };
           }),
         };
       });
+
       return res.status(200).json({ message: response });
     } catch (error) {
       return res
