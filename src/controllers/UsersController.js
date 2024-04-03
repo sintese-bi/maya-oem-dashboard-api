@@ -531,7 +531,7 @@ class UsersController {
       const currentDate = new Date();
       currentDate.setHours(currentDate.getHours() - 3);
       const currentDateWithDelay = currentDate.toISOString();
-      console.log(currentDateWithDelay)
+      console.log(currentDateWithDelay);
       const dataAtual = moment(currentDateWithDelay);
       const inicioUltimaSemana = dataAtual
         .clone()
@@ -680,10 +680,14 @@ class UsersController {
 
             if (device.gen_real <= percentage * device.gen_estimated) {
               return {
-                Geração_real: device.gen_real.toFixed(2),
-                Geração_estimada: device.gen_estimated.toFixed(2),
-                Nome_dispositivo: device.dev_name,
-                Nome_marca: device.bl_name,
+                "Portal": device.bl_name,
+                "Cliente": device.dev_name,
+                "Produção(KWh)": device.gen_real.toFixed(2),
+                "Esperado(KWh)": device.gen_estimated.toFixed(2),
+                "Desempenho(%)":
+                  ((device.gen_real.toFixed(2) /
+                    device.gen_estimated.toFixed(2)) *
+                  100).toFixed(2),
               };
             }
             return null;
@@ -717,7 +721,6 @@ class UsersController {
         const mailOptions = {
           from: '"noreplymayawatch@gmail.com',
           to: [
-            
             "bisintese@gmail.com",
             "eloymun00@gmail.com",
             element.use_alert_email,
@@ -2944,16 +2947,19 @@ class UsersController {
   }
 
   agendarAlertasGeracao() {
-    
-    cron.schedule("30 17 * * *", async () => {
-      try {
-        await this.emailAlertSend();
-      } catch (error) {
-        console.error("Erro durante a verificação de alertas:", error);
+    cron.schedule(
+      "30 17 * * *",
+      async () => {
+        try {
+          await this.emailAlertSend();
+        } catch (error) {
+          console.error("Erro durante a verificação de alertas:", error);
+        }
+      },
+      {
+        timezone: "America/Sao_Paulo",
       }
-    }, {
-      timezone: "America/Sao_Paulo"
-    });
+    );
   }
 }
 
