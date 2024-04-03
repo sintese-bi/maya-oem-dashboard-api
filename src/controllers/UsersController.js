@@ -2930,23 +2930,31 @@ class UsersController {
       currentDate.setHours(currentDate.getHours() - 3);
       const currentDateWithDelay = currentDate.toISOString();
 
-      const result = await Devices.findAll({
+      const result = await Brand.findAll({
         include: [
           {
-            association: "generation",
-            attributes: ["gen_real", "gen_updated_at", "gen_estimated"],
-            order: [["gen_updated_at", "DESC"]],
-            limit:1,
+            association: "devices",
+            attributes: ["dev_uuid", "dev_name","dev_deleted"],
             where: {
-              gen_date: currentDateWithDelay,
+              [Op.or]: [
+                { dev_deleted: false },
+                { dev_deleted: { [Op.is]: null } },
+              ],
             },
-            
+            include: [
+              {
+                association: "generation",
+                attributes: ["gen_real", "gen_updated_at", "gen_estimated"],
+                order: [["gen_updated_at", "DESC"]],
+
+                where: {
+                  gen_date: currentDateWithDelay,
+                },
+              },
+            ],
           },
         ],
-        where: {
-          [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
-        },
-        attributes: ["dev_uuid", "dev_name","dev_deleted"],
+        attributes: ["bl_name"],
       });
 
       return res.status(200).json({ message: result });
