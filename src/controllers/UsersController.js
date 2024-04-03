@@ -2934,7 +2934,8 @@ class UsersController {
         include: [
           {
             association: "devices",
-            attributes: ["dev_uuid", "dev_name","dev_deleted"],
+            attributes: ["dev_uuid", "dev_name", "dev_deleted"],
+            separate: true,
             where: {
               [Op.or]: [
                 { dev_deleted: false },
@@ -2945,25 +2946,44 @@ class UsersController {
               {
                 association: "generation",
                 attributes: ["gen_real", "gen_updated_at", "gen_estimated"],
-                order: [["gen_updated_at", "DESC"]],
-
                 where: {
                   gen_date: currentDateWithDelay,
                 },
+                order: [["gen_updated_at", "DESC"]],
+                separate: true,
               },
             ],
           },
         ],
         attributes: ["bl_name"],
+        separate: true,
       });
 
-      return res.status(200).json({ message: result });
+      const filteredResult = result.map((brand) => {
+        const devices = brand.devices.filter(
+          (device) => device.generation.length > 0
+        );
+        return { ...brand.toJSON(), devices };
+      });
+
+      const filteredDevices = filteredResult.filter(
+        (brand) => brand.devices.length > 0
+      );
+      const response = filteredDevices.map((brand) => {
+        return {
+          Info: brand.devices.map((device) => {
+            return { Geração: device.generation[0], Marca: brand.bl_name, Dispositivo:device.dev_name };
+          }),
+        };
+      });
+      return res.status(200).json({ message: response });
     } catch (error) {
       return res
         .status(400)
         .json({ message: `Erro ao retornar os dados: ${error}` });
     }
   }
+
   agendarenvioEmailRelatorio() {
     // Agende a função para ser executada a cada dia
     cron.schedule("0 7 * * *", async () => {
@@ -3003,7 +3023,7 @@ class UsersController {
 }
 
 const usersController = new UsersController();
-// usersController.agendarAlertasGeracao();
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarAlertasGeracao();
+usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
