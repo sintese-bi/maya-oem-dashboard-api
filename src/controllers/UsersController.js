@@ -1537,9 +1537,14 @@ class UsersController {
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         },
       });
+      if (!result.dev_uuid) {
+        return res
+          .status(404)
+          .json({ message: "Não foram encontrados dispositivos!" });
+      }
       const dev_uuids = result.map((device) => device.dev_uuid);
       const quant = dev_uuids.length;
-      console.log(quant);
+      
       const readableStream = Readable({
         async read() {
           try {
@@ -1714,7 +1719,7 @@ class UsersController {
 
           const mailOptions = {
             from: "noreplymayawatch@gmail.com",
-            to: [cap.dev_email, "eloymun00@gmail.com"],
+            to: [cap.dev_email,"eloymun00@gmail.com"],
             subject: "Relatório de dados de Geração",
             text: "",
             html: emailBody,
@@ -2984,9 +2989,9 @@ class UsersController {
                   Cliente: device.dev_name,
                   "Produção(KWh)": device.generation[0].gen_real,
                   "Esperado(KWh)": device.generation[0].gen_estimated,
-                  "Desempenho(%)": (
-                    (device.generation[0].gen_real.toFixed(2) /
-                      device.generation[0].gen_estimated.toFixed(2)) *
+                  Desempenho: (
+                    (device.generation[0].gen_real /
+                      device.generation[0].gen_estimated) *
                     100
                   ).toFixed(2),
                   Status: `Parabéns! Sua produção está acima do esperado para sua região, que é de ${device.generation[0].gen_estimated}`,
@@ -2995,7 +3000,9 @@ class UsersController {
           };
         })
         .filter((obj) => obj.Info.length > 0);
-
+      response.forEach((element) => {
+        return [element.Info];
+      });
       return res.status(200).json({ message: response });
     } catch (error) {
       return res
@@ -3043,7 +3050,7 @@ class UsersController {
 }
 
 const usersController = new UsersController();
-// usersController.agendarAlertasGeracao();
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarAlertasGeracao();
+usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
