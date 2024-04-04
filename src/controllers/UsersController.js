@@ -2989,7 +2989,7 @@ class UsersController {
                   Cliente: device.dev_name,
                   "Produção(KWh)": device.generation[0].gen_real,
                   "Esperado(KWh)": device.generation[0].gen_estimated,
-                  Desempenho: (
+                  "Desempenho(%)": (
                     (device.generation[0].gen_real /
                       device.generation[0].gen_estimated) *
                     100
@@ -3003,13 +3003,17 @@ class UsersController {
       response.forEach((element) => {
         return [element.Info];
       });
-      let excel=[]
-     const list= response.map(element=>{
-        return element.Info
-      }).forEach(value=>{
-        excel=value
+      const value = response.map((element) => {
+        return element.Info;
+      });
+      let excel = [];
+      const acc = value.map((element) => {
+        const count = element.length;
+        for (let i = 0; i < count; i++) {
+          excel.push(element[i]);
+        }
+      });
 
-      })
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.json_to_sheet(excel);
       XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
@@ -3026,8 +3030,8 @@ class UsersController {
 
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
-        to: ["eloymun00@gmail.com"],
-        subject: "Alertas de geração abaixo do valor estipulado",
+        to: ["bisintese@gmail.com","eloymun00@gmail.com"],
+        subject: "Alertas de geração acima do valor estipulado",
         text: "",
         html: emailBody,
         attachments: [
@@ -3113,8 +3117,6 @@ class UsersController {
 }
 
 const usersController = new UsersController();
-// usersController.agendarmonitorGeração();
-usersController.agendarAlertasGeracao();
-usersController.agendarVerificacaoDeAlertas();
+
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
