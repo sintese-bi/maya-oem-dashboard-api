@@ -2960,7 +2960,7 @@ class UsersController {
             ],
           },
         ],
-        attributes: ["bl_name"],
+        attributes: ["bl_name", "use_uuid"],
         separate: true,
       });
 
@@ -2986,10 +2986,11 @@ class UsersController {
               .map((device) => {
                 return {
                   Portal: brand.bl_name,
+                  Use_uuid: brand.use_uuid,
                   Cliente: device.dev_name,
                   "Produção(KWh)": device.generation[0].gen_real,
                   "Esperado(KWh)": device.generation[0].gen_estimated,
-                  Desempenho: (
+                  "Desempenho(%)": (
                     (device.generation[0].gen_real /
                       device.generation[0].gen_estimated) *
                     100
@@ -3003,13 +3004,28 @@ class UsersController {
       response.forEach((element) => {
         return [element.Info];
       });
-      let excel=[]
-     const list= response.map(element=>{
-        return element.Info
-      }).forEach(value=>{
-        excel=value
+      const value = response.map((element) => {
+        return element.Info;
+      });
+      let excel = [];
+      const acc = value.map((element) => {
+        const count = element.length;
+        for (let i = 0; i < count; i++) {
+          excel.push(element[i]);
+        }
+      });
 
-      })
+      for (const element of excel) {
+        console.log(element.Use_uuid);
+        const search = await Users.findOne({
+            attributes: ["use_name", "use_email"],
+            where: { use_uuid: element.Use_uuid }
+        });
+        delete element.Use_uuid
+        element.Nome = search.use_name;
+        element.Email = search.use_email;
+    }
+
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.json_to_sheet(excel);
       XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
@@ -3026,8 +3042,8 @@ class UsersController {
 
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
-        to: ["eloymun00@gmail.com"],
-        subject: "Alertas de geração abaixo do valor estipulado",
+        to: ["bisintese@gmail.com","eloymun00@gmail.com"],
+        subject: "Alertas de geração acima do valor estipulado",
         text: "",
         html: emailBody,
         attachments: [
@@ -3113,7 +3129,7 @@ class UsersController {
 }
 
 const usersController = new UsersController();
-// usersController.agendarmonitorGeração();
+usersController.agendarmonitorGeração();
 usersController.agendarAlertasGeracao();
 usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()

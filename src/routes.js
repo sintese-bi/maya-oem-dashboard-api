@@ -73,11 +73,11 @@ routes.get(
 
   UsersController.invoiceReturn
 );
-// routes.get(
-//   `${apiVersion}/genmonitor`,
-
-//   UsersController.genMonitor
-// );
+routes.get(
+  `${apiVersion}/genmonitor`,
+  checkToken,
+  UsersController.genMonitor
+);
 routes.post(
   `${apiVersion}/invoicereceived`,
 
