@@ -680,14 +680,15 @@ class UsersController {
 
             if (device.gen_real <= percentage * device.gen_estimated) {
               return {
-                "Portal": device.bl_name,
-                "Cliente": device.dev_name,
+                Portal: device.bl_name,
+                Cliente: device.dev_name,
                 "Produção(KWh)": device.gen_real.toFixed(2),
                 "Esperado(KWh)": device.gen_estimated.toFixed(2),
-                "Desempenho(%)":
-                  ((device.gen_real.toFixed(2) /
+                "Desempenho(%)": (
+                  (device.gen_real.toFixed(2) /
                     device.gen_estimated.toFixed(2)) *
-                  100).toFixed(2),
+                  100
+                ).toFixed(2),
               };
             }
             return null;
@@ -724,7 +725,6 @@ class UsersController {
             "bisintese@gmail.com",
             "eloymun00@gmail.com",
             element.use_alert_email,
-            
           ],
           subject: "Alertas de geração abaixo do valor estipulado",
           text: "",
@@ -1537,9 +1537,14 @@ class UsersController {
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         },
       });
+      if (!result.dev_uuid) {
+        return res
+          .status(404)
+          .json({ message: "Não foram encontrados dispositivos!" });
+      }
       const dev_uuids = result.map((device) => device.dev_uuid);
       const quant = dev_uuids.length;
-      console.log(quant);
+      
       const readableStream = Readable({
         async read() {
           try {
@@ -1714,7 +1719,7 @@ class UsersController {
 
           const mailOptions = {
             from: "noreplymayawatch@gmail.com",
-            to: [cap.dev_email, "eloymun00@gmail.com"],
+            to: [cap.dev_email,"eloymun00@gmail.com"],
             subject: "Relatório de dados de Geração",
             text: "",
             html: emailBody,
@@ -2922,6 +2927,87 @@ class UsersController {
       });
     } catch (error) {
       return res.status(500).json({ message: `Erro: ${error}` });
+    }
+  }
+  async genMonitor(req, res) {
+    try {
+      const currentDate = new Date();
+      currentDate.setHours(currentDate.getHours() - 3);
+      const currentDateWithDelay = currentDate.toISOString();
+
+      const result = await Brand.findAll({
+        include: [
+          {
+            association: "devices",
+            attributes: ["dev_uuid", "dev_name", "dev_deleted"],
+            separate: true,
+            where: {
+              [Op.or]: [
+                { dev_deleted: false },
+                { dev_deleted: { [Op.is]: null } },
+              ],
+            },
+            include: [
+              {
+                association: "generation",
+                attributes: ["gen_real", "gen_updated_at", "gen_estimated"],
+                where: {
+                  gen_date: currentDateWithDelay,
+                },
+                order: [["gen_updated_at", "DESC"]],
+                separate: true,
+              },
+            ],
+          },
+        ],
+        attributes: ["bl_name"],
+        separate: true,
+      });
+
+      const filteredResult = result.map((brand) => {
+        const devices = brand.devices.filter(
+          (device) => device.generation.length > 0
+        );
+        return { ...brand.toJSON(), devices };
+      });
+
+      const filteredDevices = filteredResult.filter(
+        (brand) => brand.devices.length > 0
+      );
+      const response = filteredDevices
+        .map((brand) => {
+          return {
+            Info: brand.devices
+              .filter(
+                (device) =>
+                  device.generation[0].gen_real >=
+                  device.generation[0].gen_estimated
+              )
+              .map((device) => {
+                return {
+                  Portal: brand.bl_name,
+                  Cliente: device.dev_name,
+                  "Produção(KWh)": device.generation[0].gen_real,
+                  "Esperado(KWh)": device.generation[0].gen_estimated,
+                  Desempenho: (
+                    (device.generation[0].gen_real /
+                      device.generation[0].gen_estimated) *
+                    100
+                  ).toFixed(2),
+                  Status: `Parabéns! Sua produção está acima do esperado para sua região, que é de ${device.generation[0].gen_estimated}`,
+                };
+              }),
+          };
+        })
+        .filter((obj) => obj.Info.length > 0);
+      response.forEach((element) => {
+        return [element.Info];
+      });
+      return res.status(200).json({ message: response });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados: ${error}` });
     }
   }
 
