@@ -33,13 +33,13 @@ const transporter = nodemailer.createTransport({
   port: 587,
   pool: true,
 
-  secure: true,
+  secure: false,
   auth: {
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
   tls: {
-    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
+    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
   },
 });
 
@@ -1544,7 +1544,7 @@ class UsersController {
       }
       const dev_uuids = result.map((device) => device.dev_uuid);
       const quant = dev_uuids.length;
-      
+
       const readableStream = Readable({
         async read() {
           try {
@@ -1719,7 +1719,7 @@ class UsersController {
 
           const mailOptions = {
             from: "noreplymayawatch@gmail.com",
-            to: [cap.dev_email,"eloymun00@gmail.com"],
+            to: [cap.dev_email, "eloymun00@gmail.com"],
             subject: "Relatório de dados de Geração",
             text: "",
             html: emailBody,
@@ -3003,7 +3003,55 @@ class UsersController {
       response.forEach((element) => {
         return [element.Info];
       });
-      return res.status(200).json({ message: response });
+      let excel=[]
+     const list= response.map(element=>{
+        return element.Info
+      }).forEach(value=>{
+        excel=value
+
+      })
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(excel);
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
+      const buffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "buffer",
+      });
+
+      let emailBody = `
+<p>Em anexo listagem de usinas que produziram <strong>acima</strong> do esperado definido.</p>
+<p>Att,</p>
+<p><strong>Equipe Maya Watch</strong></p>
+`;
+
+      const mailOptions = {
+        from: '"noreplymayawatch@gmail.com',
+        to: ["eloymun00@gmail.com"],
+        subject: "Alertas de geração abaixo do valor estipulado",
+        text: "",
+        html: emailBody,
+        attachments: [
+          {
+            filename: "listagem.xlsx",
+            content: buffer,
+            encoding: "base64",
+          },
+        ],
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Erro ao enviar o e-mail:", error);
+          return;
+        }
+
+        if (info && info.res) {
+          console.log("E-mail enviado:", info.res);
+        } else {
+          console.log("E-mail enviado com sucesso.");
+        }
+      });
+
+      return res.status(200).json({ excel });
     } catch (error) {
       return res
         .status(400)
@@ -3047,10 +3095,26 @@ class UsersController {
       }
     );
   }
+  agendarmonitorGeração() {
+    cron.schedule(
+      "45 17 * * *",
+      async () => {
+        try {
+          await this.genMonitor();
+        } catch (error) {
+          console.error("Erro durante a verificação de alertas:", error);
+        }
+      },
+      {
+        timezone: "America/Sao_Paulo",
+      }
+    );
+  }
 }
 
 const usersController = new UsersController();
-usersController.agendarAlertasGeracao();
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarmonitorGeração();
+// usersController.agendarAlertasGeracao();
+// usersController.agendarVerificacaoDeAlertas();
 // usersController.agendarenvioEmailRelatorio()
 export default new UsersController();
