@@ -1550,6 +1550,16 @@ class UsersController {
           try {
             const results = await Promise.all(
               dev_uuids.map(async (devUuid) => {
+                
+                
+                //Verifica se já foi enviado no mês corrente
+                const verify = Devices.findByPk(devUuid, {
+                  attributes: ["dev_verify_email"],
+                });
+                if(verify.dev_verify_email==true){
+                  return;
+                }
+
                 const dev_uuid = devUuid;
                 const result = await Generation.findAll({
                   attributes: ["gen_real", "gen_estimated", "gen_date"],
@@ -1728,12 +1738,17 @@ class UsersController {
 
           try {
             await transporter.sendMail(mailOptions);
+
             console.log({
               success: true,
               message: `Email enviado com sucesso para dev_uuid: ${
                 JSON.parse(chunk).dev_uuid
               }`,
+              
             });
+            await Devices.update({
+              dev_verify_email:true
+            })
           } catch (error) {
             console.log({
               success: false,
@@ -3139,7 +3154,7 @@ class UsersController {
       }
     );
   }
-  //Rotina todo dia primeiro do mes
+  //Rotina todo dia primeiro do mês
   agendarreinicioDispositivos() {
     cron.schedule(
       "0 0 1 * *",

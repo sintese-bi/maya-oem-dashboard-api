@@ -263,9 +263,6 @@ routes.post(
 //   UsersController.restartdevVerifyColumn
 // );
 
-
-
-
 routes.post(
   `${apiVersion}/xlsxportal`,
   upload.single("arquivo"),
