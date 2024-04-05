@@ -3018,13 +3018,13 @@ class UsersController {
       for (const element of excel) {
         console.log(element.Use_uuid);
         const search = await Users.findOne({
-            attributes: ["use_name", "use_email"],
-            where: { use_uuid: element.Use_uuid }
+          attributes: ["use_name", "use_email"],
+          where: { use_uuid: element.Use_uuid },
         });
-        delete element.Use_uuid
+        delete element.Use_uuid;
         element.Nome = search.use_name;
         element.Email = search.use_email;
-    }
+      }
 
       const workbook = XLSX.utils.book_new();
       const worksheet = XLSX.utils.json_to_sheet(excel);
@@ -3042,7 +3042,7 @@ class UsersController {
 
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
-        to: ["bisintese@gmail.com","eloymun00@gmail.com"],
+        to: ["bisintese@gmail.com", "eloymun00@gmail.com"],
         subject: "Alertas de geração acima do valor estipulado",
         text: "",
         html: emailBody,
@@ -3068,6 +3068,14 @@ class UsersController {
       });
 
       return res.status(200).json({ excel });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados: ${error}` });
+    }
+  }
+  async restartdevVerifyColumn(req, res) {
+    try {
     } catch (error) {
       return res
         .status(400)
@@ -3126,11 +3134,38 @@ class UsersController {
       }
     );
   }
+  //Rotina todo dia primeiro do mes
+  agendarreinicioDispositivos() {
+    cron.schedule(
+      "0 0 1 * *",
+      async () => {
+        try {
+          await this().restartdevVerifyColumn();
+        } catch (error) {
+          console.error("Erro durante a verificação de alertas:", error);
+        }
+      },
+      {
+        timezone: "America/Sao_Paulo",
+      }
+    );
+  }
 }
 
 const usersController = new UsersController();
-usersController.agendarmonitorGeração();
-usersController.agendarAlertasGeracao();
-usersController.agendarVerificacaoDeAlertas();
+//Reinicia a coluna(todo dia primeiro do mês) de dispositivos que tiveram os relatórios enviados
+// usersController.agendarreinicioDispositivos();
+
+//Envio relatorio de dispositivos acima do estimado
+// usersController.agendarmonitorGeração();
+
+//Cron para  envio de alerta quando a geração real estiver x% abaixo da geração estimada
+// usersController.agendarAlertasGeracao();
+
+//Envio alertas da tabela alerts do banco
+// usersController.agendarVerificacaoDeAlertas();
+
+//Envio automatico do 'envio massivo de relatorios'
 // usersController.agendarenvioEmailRelatorio()
+
 export default new UsersController();

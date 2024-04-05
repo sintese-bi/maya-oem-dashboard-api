@@ -255,6 +255,17 @@ routes.post(
 //   checkToken,
 //   UsersController.massemailScheduler
 // );
+
+
+// routes.get(
+//   `${apiVersion}/restartcolumn`,
+//   checkToken,
+//   UsersController.restartdevVerifyColumn
+// );
+
+
+
+
 routes.post(
   `${apiVersion}/xlsxportal`,
   upload.single("arquivo"),

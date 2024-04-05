@@ -39,6 +39,9 @@ class Devices extends Model {
         dev_email: {
           type: DataTypes.STRING,
         },
+        dev_verify_email:{
+          type: DataTypes.BOOLEAN,
+        },
         dev_image: {
           type: DataTypes.TEXT, //BLOB e banco para bytea
         },
