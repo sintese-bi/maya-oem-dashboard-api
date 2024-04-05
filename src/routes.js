@@ -257,7 +257,7 @@ routes.post(
 // );
 
 
-// routes.get(
+// routes.put(
 //   `${apiVersion}/restartcolumn`,
 //   checkToken,
 //   UsersController.restartdevVerifyColumn

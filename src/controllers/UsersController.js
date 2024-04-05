@@ -3076,6 +3076,11 @@ class UsersController {
   }
   async restartdevVerifyColumn(req, res) {
     try {
+      await Users.update({ dev_verify_email: false });
+
+      return res
+        .status(200)
+        .json({ message: "Os dados foram atualizados com sucesso!" });
     } catch (error) {
       return res
         .status(400)
