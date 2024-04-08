@@ -1881,6 +1881,11 @@ class UsersController {
             try {
               const results = await Promise.all(
                 dev_uuids.map(async (devUuid) => {
+                  await Reports.create({
+                    port_check: true,
+                    dev_uuid: devUuid,
+                    use_uuid: element.use_uuid,
+                  });
                   const dev_uuid = devUuid;
                   const result = await Generation.findAll({
                     attributes: ["gen_real", "gen_estimated", "gen_date"],
@@ -2050,7 +2055,7 @@ class UsersController {
 
             const mailOptions = {
               from: "noreplymayawatch@gmail.com",
-              
+              // ,
               to: [cap.dev_email, "bisintese@gmail.com","eloymun00@gmail.com"], //cap.dev_email
               subject: "Relatório de dados de Geração",
               text: "",
@@ -2967,10 +2972,10 @@ class UsersController {
     try {
       // Date=dia do mês que foi definido pelo usuário
       const { use_uuid, use_date_report } = req.body;
-      const result = await Users.findOne({
-        attributes: ["use_date_report"],
-        where: { use_uuid: use_uuid },
-      });
+      // const result = await Users.findOne({
+      //   attributes: ["use_date_report"],
+      //   where: { use_uuid: use_uuid },
+      // });
 
       // if (result.use_set_report == true) {
       //   return res.status(409).json({
@@ -3223,7 +3228,7 @@ class UsersController {
 
   agendarenvioEmailRelatorio() {
     // Agende a função para ser executada a cada dia
-    cron.schedule("0 7 * * *", async () => {
+    cron.schedule("0 17 * * *", async () => {
       try {
         await this.automaticmassEmail();
       } catch (error) {

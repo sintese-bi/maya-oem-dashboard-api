@@ -224,11 +224,11 @@ routes.post(
 );
 
 routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
-// routes.get(
-//   `${apiVersion}/automaticmassemail`,
-//   checkToken,
-//   UsersController.automaticmassEmail
-// );
+routes.get(
+  `${apiVersion}/automaticmassemail`,
+  checkToken,
+  UsersController.automaticmassEmail
+);
 routes.post(
   `${apiVersion}/emaildash`,
   checkToken,
