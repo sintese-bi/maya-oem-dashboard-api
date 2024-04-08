@@ -926,7 +926,7 @@ class UsersController {
                 ) {
                   dailySums[genDate] = {
                     gen_real: gen.gen_real,
-                    gen_estimated: gen.gen_estimated,
+                    gen_estimated: gen.gen_estimated ||100,
                     gen_date: gen.gen_date,
                     gen_updated_at: gen.gen_updated_at,
                   };
