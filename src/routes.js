@@ -75,7 +75,7 @@ routes.get(
 );
 routes.get(
   `${apiVersion}/genmonitor`,
-  checkToken,
+  
   UsersController.genMonitor
 );
 routes.post(
@@ -198,7 +198,7 @@ routes.put(
 
 routes.get(
   `${apiVersion}/emailalertsend`,
-  checkToken,
+ 
   UsersController.emailAlertSend
 );
 
@@ -255,6 +255,14 @@ routes.post(
 //   checkToken,
 //   UsersController.massemailScheduler
 // );
+
+
+// routes.put(
+//   `${apiVersion}/restartcolumn`,
+//   checkToken,
+//   UsersController.restartdevVerifyColumn
+// );
+
 routes.post(
   `${apiVersion}/xlsxportal`,
   upload.single("arquivo"),
