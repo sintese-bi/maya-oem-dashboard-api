@@ -520,7 +520,7 @@ class UsersController {
       const currentDate = new Date();
       currentDate.setHours(currentDate.getHours() - 3);
       const currentDateWithDelay = currentDate.toISOString();
-      console.log(currentDateWithDelay)
+      console.log(currentDateWithDelay);
       const dataAtual = moment(currentDateWithDelay);
       const inicioUltimaSemana = dataAtual
         .clone()
@@ -706,11 +706,9 @@ class UsersController {
         const mailOptions = {
           from: '"noreplymayawatch@gmail.com',
           to: [
-            
             "bisintese@gmail.com",
             "eloymun00@gmail.com",
             element.use_alert_email,
-            
           ],
           subject: "Alertas de geração abaixo do valor estipulado",
           text: "",
@@ -750,7 +748,7 @@ class UsersController {
   async alertFrequency(req, res) {
     const use = req.params.uuid;
     const result = await Users.findByPk(use, {
-      attributes: ["use_percentage", "use_frequency_name"],
+      attributes: ["use_percentage", "use_frequency_name", "use_alert_email"],
     });
 
     try {
@@ -2879,16 +2877,19 @@ class UsersController {
   }
 
   agendarAlertasGeracao() {
-    
-    cron.schedule("30 17 * * *", async () => {
-      try {
-        await this.emailAlertSend();
-      } catch (error) {
-        console.error("Erro durante a verificação de alertas:", error);
+    cron.schedule(
+      "30 17 * * *",
+      async () => {
+        try {
+          await this.emailAlertSend();
+        } catch (error) {
+          console.error("Erro durante a verificação de alertas:", error);
+        }
+      },
+      {
+        timezone: "America/Sao_Paulo",
       }
-    }, {
-      timezone: "America/Sao_Paulo"
-    });
+    );
   }
 }
 
