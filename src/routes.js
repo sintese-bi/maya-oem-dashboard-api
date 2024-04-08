@@ -75,7 +75,7 @@ routes.get(
 );
 routes.get(
   `${apiVersion}/genmonitor`,
-  checkToken,
+  
   UsersController.genMonitor
 );
 routes.post(
@@ -198,7 +198,7 @@ routes.put(
 
 routes.get(
   `${apiVersion}/emailalertsend`,
-  checkToken,
+ 
   UsersController.emailAlertSend
 );
 
