@@ -1807,15 +1807,15 @@ class UsersController {
   async automaticmassEmail(req, res) {
     try {
       const users = await Users.findAll({
-        attributes: ["use_uuid", "use_date_report", "use_set_report"],
+        attributes: ["use_uuid", "use_date_report"],
         where: { use_set_report: false },
       });
 
       const currentDate = new Date();
       const currentDay = ("0" + currentDate.getDate()).slice(-2);
-      if (currentDay == "01") {
-        await Users.update({ use_set_report: false });
-      }
+      // if (currentDay == "01") {
+      //   await Users.update({ use_set_report: false });
+      // }
       users.forEach(async (element) => {
         if (element.use_date_report != currentDay) {
           return;
@@ -2048,10 +2048,10 @@ class UsersController {
 
             try {
               await transporter.sendMail(mailOptions);
-              await Users.update(
-                { use_set_report: true },
-                { where: { use_uuid: element.use_uuid } }
-              );
+              // await Users.update(
+              //   { use_set_report: true },
+              //   { where: { use_uuid: element.use_uuid } }
+              // );
               console.log({
                 success: true,
                 message: `Email enviado com sucesso para dev_uuid: ${
@@ -2956,16 +2956,16 @@ class UsersController {
       // Date=dia do mês que foi definido pelo usuário
       const { use_uuid, use_date_report } = req.body;
       const result = await Users.findOne({
-        attributes: ["use_date_report", "use_set_report"],
+        attributes: ["use_date_report"],
         where: { use_uuid: use_uuid },
       });
 
-      if (result.use_set_report == true) {
-        return res.status(409).json({
-          message:
-            "O relatório já foi enviado este mês!Você poderá trocar a data a partir do início do mês que vem!",
-        });
-      }
+      // if (result.use_set_report == true) {
+      //   return res.status(409).json({
+      //     message:
+      //       "O relatório já foi enviado este mês!Você poderá trocar a data a partir do início do mês que vem!",
+      //   });
+      // }
       await Users.update(
         {
           use_date_report: use_date_report,
@@ -3289,7 +3289,7 @@ usersController.agendarmonitorGeração();
 usersController.agendarAlertasGeracao();
 
 //Envio alertas da tabela alerts do banco
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarVerificacaoDeAlertas();
 
 //Envio automatico do 'envio massivo de relatorios'
 // usersController.agendarenvioEmailRelatorio()
