@@ -1807,12 +1807,23 @@ class UsersController {
   async automaticmassEmail(req, res) {
     try {
       const users = await Users.findAll({
-        attributes: ["use_uuid", "use_date_report"],
-        where: { use_set_report: false },
+        attributes: ["use_uuid", "use_date_report"]
+        
       });
-
+      
       const currentDate = new Date();
       const currentDay = ("0" + currentDate.getDate()).slice(-2);
+      let count=0;
+      users.forEach(element=>{
+        if(element.use_date_report==currentDay){
+          count++
+        }
+
+      })
+      console.log({CONTAGEM:count})
+      if(count==0){
+        return res.status(404).json({message:"Não há disparo massivo de relatórios para hoje!"})
+      }
       // if (currentDay == "01") {
       //   await Users.update({ use_set_report: false });
       // }
@@ -2039,7 +2050,8 @@ class UsersController {
 
             const mailOptions = {
               from: "noreplymayawatch@gmail.com",
-              to: [cap.dev_email, "bisintese@gmail.com", "eloymun00@gmail.com"], //cap.dev_email
+              
+              to: [cap.dev_email, "bisintese@gmail.com","eloymun00@gmail.com"], //cap.dev_email
               subject: "Relatório de dados de Geração",
               text: "",
               html: emailBody,
@@ -3289,7 +3301,7 @@ usersController.agendarmonitorGeração();
 usersController.agendarAlertasGeracao();
 
 //Envio alertas da tabela alerts do banco
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarVerificacaoDeAlertas();
 
 //Envio automatico do 'envio massivo de relatorios'
 // usersController.agendarenvioEmailRelatorio()
