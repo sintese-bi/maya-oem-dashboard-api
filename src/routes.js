@@ -218,7 +218,7 @@ routes.get(
   UsersController.invoiceValues
 );
 routes.post(
-  `${apiVersion}/updateuser`,
+  `${apiVersion}/updateuser`,upload.single('image'),
   checkToken,
   UsersController.UpdateUserInformation
 );

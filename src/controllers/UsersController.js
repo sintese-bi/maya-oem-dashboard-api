@@ -1472,6 +1472,11 @@ class UsersController {
   }
   async UpdateUserInformation(req, res) {
     try {
+      if (!req.file) {
+        return res.status(400).send('Nenhum arquivo enviado.');
+    }
+
+    const base64Image = req.file.buffer.toString('base64');
       const { use_name, use_email, use_city_state, use_telephone, use_uuid } =
         req.body;
       const existingEmail = await Users.findOne({
@@ -1492,6 +1497,7 @@ class UsersController {
           use_name: use_name,
           use_city_state: use_city_state,
           use_telephone: use_telephone,
+          use_logo:base64Image
         },
         { where: { use_uuid: use_uuid } }
       );
@@ -1507,9 +1513,12 @@ class UsersController {
             "use_email",
             "use_city_state",
             "use_telephone",
+            "use_logo"
           ],
         }
       );
+
+      
       return res.status(200).json({
         message: "Seus dados foram atualizados com sucesso!",
         Informações: data,
