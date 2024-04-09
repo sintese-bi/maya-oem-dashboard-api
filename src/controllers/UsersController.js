@@ -3174,7 +3174,7 @@ class UsersController {
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
         to: ["bisintese@gmail.com", "eloymun00@gmail.com"],
-        subject: "Alertas de geração acima do valor estipulado",
+        subject: "Alertas de geração acima e abaixo do valor estipulado",
         text: "",
         html: emailBody,
         attachments: [
