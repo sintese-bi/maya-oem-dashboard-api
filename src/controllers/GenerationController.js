@@ -4,6 +4,7 @@ import Generation from "../models/Generation";
 import moment from "moment-timezone";
 import nodemailer from "nodemailer";
 import Brand from "../models/Brand";
+import Users from "../models/Users";
 import Temperature from "../models/Temperature";
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -442,41 +443,55 @@ class GenerationController {
   async testQuery(req, res) {
     try {
       const currentDate = new Date();
+      const { use_uuid } = req.body;
       currentDate.setHours(currentDate.getHours() - 3);
       const currentDateWithDelay = currentDate.toISOString().split("T");
       const currentDateSplit = currentDateWithDelay[0];
       console.log({ DATA: currentDateSplit });
-      const result = await Brand.findAll({
-        include: [
+      const result = await Users.findByPk(use_uuid, {
+        attributes:["use_name"]
+        
+,        include: [
           {
-            association: "devices",
-            attributes: ["dev_uuid", "dev_name", "dev_deleted"],
+            association: "brand_login",
+            attributes: ["bl_uuid", "bl_name"],
             separate: true,
-            where: {
-              [Op.or]: [
-                { dev_deleted: false },
-                { dev_deleted: { [Op.is]: null } },
-              ],
-            },
             include: [
               {
-                
-                association: "generation",
-                attributes: ["gen_real", "gen_updated_at", "gen_estimated","gen_date"],
-                
-                where: {
-                  gen_date: currentDateSplit,
-                },
-
-                order: [["gen_updated_at", "DESC"]],
-
+                association: "devices",
+                attributes: ["dev_uuid", "dev_name", "dev_deleted"],
                 separate: true,
+                where: {
+                  [Op.or]: [
+                    { dev_deleted: false },
+                    { dev_deleted: { [Op.is]: null } },
+                  ],
+                },
+                include: [
+                  {
+                    association: "generation",
+                    attributes: [
+                      "gen_real",
+                      "gen_updated_at",
+                      "gen_estimated",
+                      "gen_date",
+                      "gen_uuid"
+                    ],
+
+                    where: {
+                      gen_date: currentDateSplit,
+                    },
+
+                    order: [["gen_updated_at", "DESC"]],
+                    
+                    separate: true,
+                  },
+                ],
               },
             ],
           },
         ],
-        attributes: ["bl_name", "use_uuid"],
-        separate: true,
+        
       });
 
       return res.status(200).json({ message: result });
