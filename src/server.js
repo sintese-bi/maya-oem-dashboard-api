@@ -22,7 +22,10 @@ app.use((req, res, next) => {
   }
 });
 
-app.use(cors());
+const corsOptions = {
+  origin: 'https://dashboard.mayaoem.com.br' 
+};
+app.use(cors(corsOptions));cmd
 app.use(routes);
 
 app.listen(PORT, HOST);

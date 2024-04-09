@@ -1807,15 +1807,26 @@ class UsersController {
   async automaticmassEmail(req, res) {
     try {
       const users = await Users.findAll({
-        attributes: ["use_uuid", "use_date_report", "use_set_report"],
-        where: { use_set_report: false },
+        attributes: ["use_uuid", "use_date_report"]
+        
       });
-
+      
       const currentDate = new Date();
       const currentDay = ("0" + currentDate.getDate()).slice(-2);
-      if (currentDay == "01") {
-        await Users.update({ use_set_report: false });
+      let count=0;
+      users.forEach(element=>{
+        if(element.use_date_report==currentDay){
+          count++
+        }
+
+      })
+      console.log({CONTAGEM:count})
+      if(count==0){
+        return res.status(404).json({message:"Não há disparo massivo de relatórios para hoje!"})
       }
+      // if (currentDay == "01") {
+      //   await Users.update({ use_set_report: false });
+      // }
       users.forEach(async (element) => {
         if (element.use_date_report != currentDay) {
           return;
@@ -1870,6 +1881,11 @@ class UsersController {
             try {
               const results = await Promise.all(
                 dev_uuids.map(async (devUuid) => {
+                  await Reports.create({
+                    port_check: true,
+                    dev_uuid: devUuid,
+                    use_uuid: element.use_uuid,
+                  });
                   const dev_uuid = devUuid;
                   const result = await Generation.findAll({
                     attributes: ["gen_real", "gen_estimated", "gen_date"],
@@ -2039,7 +2055,8 @@ class UsersController {
 
             const mailOptions = {
               from: "noreplymayawatch@gmail.com",
-              to: [cap.dev_email, "bisintese@gmail.com", "eloymun00@gmail.com"], //cap.dev_email
+              // ,
+              to: [cap.dev_email, "bisintese@gmail.com","eloymun00@gmail.com"], //cap.dev_email
               subject: "Relatório de dados de Geração",
               text: "",
               html: emailBody,
@@ -2048,10 +2065,10 @@ class UsersController {
 
             try {
               await transporter.sendMail(mailOptions);
-              await Users.update(
-                { use_set_report: true },
-                { where: { use_uuid: element.use_uuid } }
-              );
+              // await Users.update(
+              //   { use_set_report: true },
+              //   { where: { use_uuid: element.use_uuid } }
+              // );
               console.log({
                 success: true,
                 message: `Email enviado com sucesso para dev_uuid: ${
@@ -2955,17 +2972,17 @@ class UsersController {
     try {
       // Date=dia do mês que foi definido pelo usuário
       const { use_uuid, use_date_report } = req.body;
-      const result = await Users.findOne({
-        attributes: ["use_date_report", "use_set_report"],
-        where: { use_uuid: use_uuid },
-      });
+      // const result = await Users.findOne({
+      //   attributes: ["use_date_report"],
+      //   where: { use_uuid: use_uuid },
+      // });
 
-      if (result.use_set_report == true) {
-        return res.status(409).json({
-          message:
-            "O relatório já foi enviado este mês!Você poderá trocar a data a partir do início do mês que vem!",
-        });
-      }
+      // if (result.use_set_report == true) {
+      //   return res.status(409).json({
+      //     message:
+      //       "O relatório já foi enviado este mês!Você poderá trocar a data a partir do início do mês que vem!",
+      //   });
+      // }
       await Users.update(
         {
           use_date_report: use_date_report,
@@ -3211,7 +3228,7 @@ class UsersController {
 
   agendarenvioEmailRelatorio() {
     // Agende a função para ser executada a cada dia
-    cron.schedule("0 7 * * *", async () => {
+    cron.schedule("0 17 * * *", async () => {
       try {
         await this.automaticmassEmail();
       } catch (error) {
