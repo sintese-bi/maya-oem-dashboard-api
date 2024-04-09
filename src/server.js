@@ -25,7 +25,7 @@ app.use((req, res, next) => {
 const corsOptions = {
   origin: 'https://dashboard.mayaoem.com.br' 
 };
-app.use(cors(corsOptions));cmd
+app.use(cors(corsOptions));
 app.use(routes);
 
 app.listen(PORT, HOST);

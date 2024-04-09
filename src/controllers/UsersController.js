@@ -3174,7 +3174,7 @@ class UsersController {
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
         to: ["bisintese@gmail.com", "eloymun00@gmail.com"],
-        subject: "Alertas de geração acima do valor estipulado",
+        subject: "Alertas de geração acima e abaixo do valor estipulado",
         text: "",
         html: emailBody,
         attachments: [
@@ -3300,13 +3300,13 @@ const usersController = new UsersController();
 // usersController.agendarreinicioDispositivos();
 
 //Envio relatorio de dispositivos acima e abaixo do estimado
-usersController.agendarmonitorGeração();
+// usersController.agendarmonitorGeração();
 
 //Cron para  envio de alerta quando a geração real estiver x% abaixo da geração estimada
-usersController.agendarAlertasGeracao();
+// usersController.agendarAlertasGeracao();
 
 //Envio alertas da tabela alerts do banco
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarVerificacaoDeAlertas();
 
 //Envio automatico do 'envio massivo de relatorios'
 // usersController.agendarenvioEmailRelatorio()
