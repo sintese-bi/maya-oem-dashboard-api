@@ -444,14 +444,24 @@ class GenerationController {
     try {
       const currentDate = new Date();
       const { use_uuid } = req.body;
+      const startOfMonth = moment
+        .utc()
+        .startOf("month")
+        .subtract(3, "hours")
+        .toDate();
+      const endOfMonth = moment
+        .utc()
+        .endOf("month")
+        .subtract(3, "hours")
+        .toDate();
       currentDate.setHours(currentDate.getHours() - 3);
       const currentDateWithDelay = currentDate.toISOString().split("T");
       const currentDateSplit = currentDateWithDelay[0];
       console.log({ DATA: currentDateSplit });
       const result = await Users.findByPk(use_uuid, {
-        attributes:["use_name"]
-        
-,        include: [
+        attributes: ["use_name"],
+
+        include: [
           {
             association: "brand_login",
             attributes: ["bl_uuid", "bl_name"],
@@ -475,15 +485,15 @@ class GenerationController {
                       "gen_updated_at",
                       "gen_estimated",
                       "gen_date",
-                      "gen_uuid"
+                      "gen_uuid",
                     ],
-
+                    //{ [Op.between]: [startOfMonth, endOfMonth] }
                     where: {
                       gen_date: currentDateSplit,
                     },
 
                     order: [["gen_updated_at", "DESC"]],
-                    
+
                     separate: true,
                   },
                 ],
@@ -491,7 +501,6 @@ class GenerationController {
             ],
           },
         ],
-        
       });
 
       return res.status(200).json({ message: result });
