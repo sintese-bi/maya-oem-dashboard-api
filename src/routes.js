@@ -179,7 +179,7 @@ routes.get(
 
   DevicesControlle.index
 );
-// routes.post(
+// routes.get(
 //   `${apiVersion}/testquery`,
 
 //   GenerationController.testQuery

@@ -3,7 +3,7 @@ import Devices from "../models/Devices";
 import Generation from "../models/Generation";
 import moment from "moment-timezone";
 import nodemailer from "nodemailer";
-
+import Brand from "../models/Brand";
 import Temperature from "../models/Temperature";
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -441,39 +441,42 @@ class GenerationController {
 
   async testQuery(req, res) {
     try {
-      const { use_uuid } = req.body;
-      const result = await Generation.findAll({
-        attributes: ["gen_date", "gen_updated_at", "gen_real", "gen_estimated"],
+      const currentDate = new Date();
+      currentDate.setHours(currentDate.getHours() - 3);
+      const currentDateWithDelay = currentDate.toISOString().split("T");
+      const currentDateSplit = currentDateWithDelay[0];
+      console.log({ DATA: currentDateSplit });
+      const result = await Brand.findAll({
         include: [
           {
             association: "devices",
-            attributes: ["dev_uuid"],
-            as: "devices",
+            attributes: ["dev_uuid", "dev_name", "dev_deleted"],
+            separate: true,
             where: {
               [Op.or]: [
                 { dev_deleted: false },
                 { dev_deleted: { [Op.is]: null } },
               ],
             },
-
             include: [
               {
-                association: "brand_login",
-                attributes: ["bl_uuid"],
-                as: "brand_login",
-                include: [
-                  {
-                    association: "users",
+                
+                association: "generation",
+                attributes: ["gen_real", "gen_updated_at", "gen_estimated","gen_date"],
+                
+                where: {
+                  gen_date: currentDateSplit,
+                },
 
-                    as: "users",
-                    where: { use_uuid: use_uuid },
-                  },
-                ],
+                order: [["gen_updated_at", "DESC"]],
+
+                separate: true,
               },
             ],
           },
         ],
-        where: { gen_date: { [Op.between]: ["2024-03-09", "2024-03-10"] } },
+        attributes: ["bl_name", "use_uuid"],
+        separate: true,
       });
 
       return res.status(200).json({ message: result });
