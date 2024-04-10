@@ -487,9 +487,9 @@ class GenerationController {
                       "gen_date",
                       "gen_uuid",
                     ],
-                    //{ [Op.between]: [startOfMonth, endOfMonth] }
+                    //
                     where: {
-                      gen_date: currentDateSplit,
+                      gen_date: { [Op.between]: [startOfMonth, endOfMonth] },
                     },
 
                     order: [["gen_updated_at", "DESC"]],
