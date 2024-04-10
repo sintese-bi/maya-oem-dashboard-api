@@ -24,10 +24,13 @@ app.use((req, res, next) => {
   }
 });
 
-app.use(cors());
+const corsOptions = {
+  origin: "http://localhost:3000",
+};
+app.use(cors(corsOptions));
 app.use(routes);
 
 app.listen(PORT, HOST);
-app.get('/', function (req, res, next) {
-    res.send("Olá!");
-}); 
+app.get("/", function (req, res, next) {
+  res.send("Olá!");
+});

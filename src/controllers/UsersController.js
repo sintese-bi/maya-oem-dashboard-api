@@ -251,6 +251,7 @@ class UsersController {
           "use_email",
           "use_city_state",
           "use_telephone",
+          "use_logo",
         ],
         where: { use_email: use_email },
         include: [
@@ -495,7 +496,8 @@ class UsersController {
   async alertFrequencyDefinition(req, res) {
     try {
       const { use_uuid, use_percentage, use_date } = req.body;
-      const result = await Users.update(
+
+      await Users.update(
         {
           use_percentage: use_percentage,
           use_date: use_date,
@@ -1409,6 +1411,11 @@ class UsersController {
   }
   async UpdateUserInformation(req, res) {
     try {
+      if (!req.file) {
+        return res.status(400).send("Nenhum arquivo enviado.");
+      }
+
+      const base64Image = req.file.buffer.toString("base64");
       const { use_name, use_email, use_city_state, use_telephone, use_uuid } =
         req.body;
       const existingEmail = await Users.findOne({
@@ -1429,6 +1436,7 @@ class UsersController {
           use_name: use_name,
           use_city_state: use_city_state,
           use_telephone: use_telephone,
+          use_logo: base64Image,
         },
         { where: { use_uuid: use_uuid } }
       );
@@ -1444,9 +1452,11 @@ class UsersController {
             "use_email",
             "use_city_state",
             "use_telephone",
+            "use_logo",
           ],
         }
       );
+
       return res.status(200).json({
         message: "Seus dados foram atualizados com sucesso!",
         Informações: data,
@@ -1741,15 +1751,26 @@ class UsersController {
   async automaticmassEmail(req, res) {
     try {
       const users = await Users.findAll({
-        attributes: ["use_uuid", "use_date_report", "use_set_report"],
-        where: { use_set_report: false },
+        attributes: ["use_uuid", "use_date_report"],
       });
 
       const currentDate = new Date();
       const currentDay = ("0" + currentDate.getDate()).slice(-2);
-      if (currentDay == "01") {
-        await Users.update({ use_set_report: false });
+      let count = 0;
+      users.forEach((element) => {
+        if (element.use_date_report == currentDay) {
+          count++;
+        }
+      });
+      console.log({ CONTAGEM: count });
+      if (count == 0) {
+        return res
+          .status(404)
+          .json({ message: "Não há disparo massivo de relatórios para hoje!" });
       }
+      // if (currentDay == "01") {
+      //   await Users.update({ use_set_report: false });
+      // }
       users.forEach(async (element) => {
         if (element.use_date_report != currentDay) {
           return;
@@ -1804,6 +1825,11 @@ class UsersController {
             try {
               const results = await Promise.all(
                 dev_uuids.map(async (devUuid) => {
+                  await Reports.create({
+                    port_check: true,
+                    dev_uuid: devUuid,
+                    use_uuid: element.use_uuid,
+                  });
                   const dev_uuid = devUuid;
                   const result = await Generation.findAll({
                     attributes: ["gen_real", "gen_estimated", "gen_date"],
@@ -1973,6 +1999,7 @@ class UsersController {
 
             const mailOptions = {
               from: "noreplymayawatch@gmail.com",
+              // ,
               to: [cap.dev_email, "bisintese@gmail.com", "eloymun00@gmail.com"], //cap.dev_email
               subject: "Relatório de dados de Geração",
               text: "",
@@ -1982,10 +2009,10 @@ class UsersController {
 
             try {
               await transporter.sendMail(mailOptions);
-              await Users.update(
-                { use_set_report: true },
-                { where: { use_uuid: element.use_uuid } }
-              );
+              // await Users.update(
+              //   { use_set_report: true },
+              //   { where: { use_uuid: element.use_uuid } }
+              // );
               console.log({
                 success: true,
                 message: `Email enviado com sucesso para dev_uuid: ${
@@ -2889,17 +2916,17 @@ class UsersController {
     try {
       // Date=dia do mês que foi definido pelo usuário
       const { use_uuid, use_date_report } = req.body;
-      const result = await Users.findOne({
-        attributes: ["use_date_report", "use_set_report"],
-        where: { use_uuid: use_uuid },
-      });
+      // const result = await Users.findOne({
+      //   attributes: ["use_date_report"],
+      //   where: { use_uuid: use_uuid },
+      // });
 
-      if (result.use_set_report == true) {
-        return res.status(409).json({
-          message:
-            "O relatório já foi enviado este mês!Você poderá trocar a data a partir do início do mês que vem!",
-        });
-      }
+      // if (result.use_set_report == true) {
+      //   return res.status(409).json({
+      //     message:
+      //       "O relatório já foi enviado este mês!Você poderá trocar a data a partir do início do mês que vem!",
+      //   });
+      // }
       await Users.update(
         {
           use_date_report: use_date_report,
@@ -3091,7 +3118,7 @@ class UsersController {
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
         to: ["bisintese@gmail.com", "eloymun00@gmail.com"],
-        subject: "Alertas de geração acima do valor estipulado",
+        subject: "Alertas de geração acima e abaixo do valor estipulado",
         text: "",
         html: emailBody,
         attachments: [
@@ -3145,7 +3172,7 @@ class UsersController {
 
   agendarenvioEmailRelatorio() {
     // Agende a função para ser executada a cada dia
-    cron.schedule("0 7 * * *", async () => {
+    cron.schedule("0 17 * * *", async () => {
       try {
         await this.automaticmassEmail();
       } catch (error) {
@@ -3222,7 +3249,7 @@ usersController.agendarmonitorGeração();
 //Cron para  envio de alerta quando a geração real estiver x% abaixo da geração estimada
 usersController.agendarAlertasGeracao();
 
-//Envio alertas da tabela alerts do banco
+// //Envio alertas da tabela alerts do banco
 usersController.agendarVerificacaoDeAlertas();
 
 //Envio automatico do 'envio massivo de relatorios'
