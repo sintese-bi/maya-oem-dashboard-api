@@ -262,6 +262,7 @@ class UsersController {
           "use_email",
           "use_city_state",
           "use_telephone",
+          "use_logo"
         ],
         where: { use_email: use_email },
         include: [
@@ -310,6 +311,7 @@ class UsersController {
         message: "Autenticado!",
         token,
         result: {
+          
           use_data: without_password,
           use_devices_amount: userDevices.length,
         },
@@ -3314,7 +3316,7 @@ usersController.agendarmonitorGeração();
 //Cron para  envio de alerta quando a geração real estiver x% abaixo da geração estimada
 usersController.agendarAlertasGeracao();
 
-//Envio alertas da tabela alerts do banco
+// //Envio alertas da tabela alerts do banco
 usersController.agendarVerificacaoDeAlertas();
 
 //Envio automatico do 'envio massivo de relatorios'
