@@ -198,7 +198,7 @@ routes.put(
 
 routes.get(
   `${apiVersion}/emailalertsend`,
- 
+  checkToken,
   UsersController.emailAlertSend
 );
 
