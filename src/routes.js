@@ -53,12 +53,13 @@ routes.get(
   `${apiVersion}/irrcoef_2/:ic_states/:ic_city`,
   UsersController.irradiation_2
 );
+
 routes.get(
   `${apiVersion}/irradiationCoefficient`,
   IrradiationCoefficientController.index
 );
 routes.post(`${apiVersion}/pandadoc`, PandaDocController.handler);
-
+routes.get(`${apiVersion}/uselogo`, checkToken,UsersController.useLogo);
 routes.get(`${apiVersion}/report/:blUuid`, UsersController.report);
 routes.get(`${apiVersion}/reportclient/:devUuid`, UsersController.reportClient);
 // ----------------------------------------------------------------------------
