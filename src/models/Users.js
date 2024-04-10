@@ -49,6 +49,7 @@ class Users extends Model {
         use_token: { type: DataTypes.TEXT, allowNull: true },
         use_alert_email: { type: DataTypes.STRING },
         use_deleted: { type: DataTypes.BOOLEAN },
+        use_logo: { type: DataTypes.TEXT },
         use_date_report: {
           type: DataTypes.STRING,
         },

@@ -198,7 +198,7 @@ routes.put(
 
 routes.get(
   `${apiVersion}/emailalertsend`,
- 
+  checkToken,
   UsersController.emailAlertSend
 );
 
@@ -218,7 +218,7 @@ routes.get(
   UsersController.invoiceValues
 );
 routes.post(
-  `${apiVersion}/updateuser`,
+  `${apiVersion}/updateuser`,upload.single('image'),
   checkToken,
   UsersController.UpdateUserInformation
 );

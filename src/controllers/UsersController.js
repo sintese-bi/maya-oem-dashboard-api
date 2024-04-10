@@ -262,6 +262,7 @@ class UsersController {
           "use_email",
           "use_city_state",
           "use_telephone",
+          "use_logo"
         ],
         where: { use_email: use_email },
         include: [
@@ -310,6 +311,7 @@ class UsersController {
         message: "Autenticado!",
         token,
         result: {
+          
           use_data: without_password,
           use_devices_amount: userDevices.length,
         },
@@ -506,10 +508,13 @@ class UsersController {
   async alertFrequencyDefinition(req, res) {
     try {
       const { use_uuid, use_percentage, use_date } = req.body;
-      const result = await Users.update(
+
+      await Users.update(
         {
           use_percentage: use_percentage,
           use_date: use_date,
+          use_frequency_name:
+            use_date == "1" ? "day" : use_date == "2" ? "week" : "month",
         },
 
         { where: { use_uuid: use_uuid } }
@@ -926,7 +931,7 @@ class UsersController {
                 ) {
                   dailySums[genDate] = {
                     gen_real: gen.gen_real,
-                    gen_estimated: gen.gen_estimated ||100,
+                    gen_estimated: gen.gen_estimated || 100,
                     gen_date: gen.gen_date,
                     gen_updated_at: gen.gen_updated_at,
                   };
@@ -1472,6 +1477,11 @@ class UsersController {
   }
   async UpdateUserInformation(req, res) {
     try {
+      if (!req.file) {
+        return res.status(400).send("Nenhum arquivo enviado.");
+      }
+
+      const base64Image = req.file.buffer.toString("base64");
       const { use_name, use_email, use_city_state, use_telephone, use_uuid } =
         req.body;
       const existingEmail = await Users.findOne({
@@ -1492,6 +1502,7 @@ class UsersController {
           use_name: use_name,
           use_city_state: use_city_state,
           use_telephone: use_telephone,
+          use_logo: base64Image,
         },
         { where: { use_uuid: use_uuid } }
       );
@@ -1507,9 +1518,11 @@ class UsersController {
             "use_email",
             "use_city_state",
             "use_telephone",
+            "use_logo",
           ],
         }
       );
+
       return res.status(200).json({
         message: "Seus dados foram atualizados com sucesso!",
         Informações: data,
@@ -1758,7 +1771,7 @@ class UsersController {
           const mailOptions = {
             from: "noreplymayawatch@gmail.com",
             //cap.dev_email,
-            to: [cap.dev_email,"eloymun00@gmail.com"],
+            to: [cap.dev_email, "eloymun00@gmail.com"],
             subject: "Relatório de dados de Geração",
             text: "",
             html: emailBody,
@@ -1793,13 +1806,11 @@ class UsersController {
 
       pipelineAsync(readableStream, transformStream, writableStream);
 
-      res
-        .status(200)
-        .json({
-          message: "Envio de relatórios em andamento",
-          resultado: result,
-          teste: dev_uuids,
-        });
+      res.status(200).json({
+        message: "Envio de relatórios em andamento",
+        resultado: result,
+        teste: dev_uuids,
+      });
     } catch (error) {
       res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
@@ -1807,22 +1818,22 @@ class UsersController {
   async automaticmassEmail(req, res) {
     try {
       const users = await Users.findAll({
-        attributes: ["use_uuid", "use_date_report"]
-        
+        attributes: ["use_uuid", "use_date_report"],
       });
-      
+
       const currentDate = new Date();
       const currentDay = ("0" + currentDate.getDate()).slice(-2);
-      let count=0;
-      users.forEach(element=>{
-        if(element.use_date_report==currentDay){
-          count++
+      let count = 0;
+      users.forEach((element) => {
+        if (element.use_date_report == currentDay) {
+          count++;
         }
-
-      })
-      console.log({CONTAGEM:count})
-      if(count==0){
-        return res.status(404).json({message:"Não há disparo massivo de relatórios para hoje!"})
+      });
+      console.log({ CONTAGEM: count });
+      if (count == 0) {
+        return res
+          .status(404)
+          .json({ message: "Não há disparo massivo de relatórios para hoje!" });
       }
       // if (currentDay == "01") {
       //   await Users.update({ use_set_report: false });
@@ -2056,7 +2067,7 @@ class UsersController {
             const mailOptions = {
               from: "noreplymayawatch@gmail.com",
               // ,
-              to: [cap.dev_email, "bisintese@gmail.com","eloymun00@gmail.com"], //cap.dev_email
+              to: [cap.dev_email, "bisintese@gmail.com", "eloymun00@gmail.com"], //cap.dev_email
               subject: "Relatório de dados de Geração",
               text: "",
               html: emailBody,
@@ -3305,7 +3316,7 @@ usersController.agendarmonitorGeração();
 //Cron para  envio de alerta quando a geração real estiver x% abaixo da geração estimada
 usersController.agendarAlertasGeracao();
 
-//Envio alertas da tabela alerts do banco
+// //Envio alertas da tabela alerts do banco
 usersController.agendarVerificacaoDeAlertas();
 
 //Envio automatico do 'envio massivo de relatorios'
