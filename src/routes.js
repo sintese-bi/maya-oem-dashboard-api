@@ -73,6 +73,11 @@ routes.get(
 
   UsersController.invoiceReturn
 );
+routes.get(
+  `${apiVersion}/genmonitor`,
+
+  UsersController.genMonitor
+);
 routes.post(
   `${apiVersion}/invoicereceived`,
 
@@ -193,7 +198,7 @@ routes.put(
 
 routes.get(
   `${apiVersion}/emailalertsend`,
-  checkToken,
+
   UsersController.emailAlertSend
 );
 
@@ -245,11 +250,18 @@ routes.post(
   checkToken,
   UsersController.csvDownload
 );
-routes.post(
-  `${apiVersion}/emailscheduler`, //Agendador data de envio relatorio
-  checkToken,
-  UsersController.massemailScheduler
-);
+// routes.post(
+//   `${apiVersion}/emailscheduler`, //Agendador data de envio relatorio
+//   checkToken,
+//   UsersController.massemailScheduler
+// );
+
+// routes.put(
+//   `${apiVersion}/restartcolumn`,
+//   checkToken,
+//   UsersController.restartdevVerifyColumn
+// );
+
 routes.post(
   `${apiVersion}/xlsxportal`,
   upload.single("arquivo"),

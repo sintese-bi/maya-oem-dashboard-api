@@ -499,6 +499,8 @@ class UsersController {
         {
           use_percentage: use_percentage,
           use_date: use_date,
+          use_frequency_name:
+            use_date == "1" ? "day" : use_date == "2" ? "week" : "month",
         },
 
         { where: { use_uuid: use_uuid } }
@@ -669,23 +671,20 @@ class UsersController {
 
             if (device.gen_real <= percentage * device.gen_estimated) {
               return {
-                Geração_real: device.gen_real.toFixed(2),
-                Geração_estimada: device.gen_estimated.toFixed(2),
-                Nome_dispositivo: device.dev_name,
-                Nome_marca: device.bl_name,
+                Portal: device.bl_name,
+                Cliente: device.dev_name,
+                "Produção(KWh)": device.gen_real.toFixed(2),
+                "Esperado(KWh)": device.gen_estimated.toFixed(2),
+                "Desempenho(%)": (
+                  (device.gen_real.toFixed(2) /
+                    device.gen_estimated.toFixed(2)) *
+                  100
+                ).toFixed(2),
               };
             }
             return null;
           })
           .filter((device) => device !== null);
-
-        const workbook = XLSX.utils.book_new();
-        const worksheet = XLSX.utils.json_to_sheet(sumPercentage);
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
-        const buffer = XLSX.write(workbook, {
-          bookType: "xlsx",
-          type: "buffer",
-        });
 
         // let interval;
         // if (element.use_date == 1) {
@@ -695,32 +694,65 @@ class UsersController {
         // } else if (element.use_date == 3) {
         //   interval = "mensal";
         // }
+        const num = sumPercentage.length;
+        console.log(num);
+        let mailOptions;
+        let buffer;
+        let emailBody;
+        if (num == 0) {
+          emailBody = `
+          <p>Prezado(a),</p>
+          <p>Não houve usinas que produziram abaixo do esperado conforme definido.</p>
+          <p>Att,</p>
+          <p><strong>Equipe Maya Watch</strong></p>
+          `;
+          mailOptions = {
+            from: '"noreplymayawatch@gmail.com',
+            to: [
+              "bisintese@gmail.com",
+              "eloymun00@gmail.com",
+              element.use_alert_email,
+            ],
+            subject: "Alertas de geração abaixo do valor estipulado",
+            text: "",
+            html: emailBody,
+          };
+        } else {
+          const workbook = XLSX.utils.book_new();
+          const worksheet = XLSX.utils.json_to_sheet(sumPercentage);
+          XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
+          buffer = XLSX.write(workbook, {
+            bookType: "xlsx",
+            type: "buffer",
+          });
 
-        let emailBody = `
-  <p>Prezado(a),</p>
-  <p>Em anexo listagem de usinas que produziram abaixo do esperado definido.</p>
-  <p>Att,</p>
-  <p><strong>Equipe Maya Watch</strong></p>
-  `;
+          emailBody = `
+        <p>Prezado(a),</p>
+        <p>Em anexo listagem de usinas que produziram abaixo do esperado definido.</p>
+        <p>Att,</p>
+        <p><strong>Equipe Maya Watch</strong></p>
+        `;
 
-        const mailOptions = {
-          from: '"noreplymayawatch@gmail.com',
-          to: [
-            "bisintese@gmail.com",
-            "eloymun00@gmail.com",
-            element.use_alert_email,
-          ],
-          subject: "Alertas de geração abaixo do valor estipulado",
-          text: "",
-          html: emailBody,
-          attachments: [
-            {
-              filename: "listagem.xlsx",
-              content: buffer,
-              encoding: "base64",
-            },
-          ],
-        };
+          mailOptions = {
+            from: '"noreplymayawatch@gmail.com',
+            to: [
+              "bisintese@gmail.com",
+              "eloymun00@gmail.com",
+              element.use_alert_email,
+            ],
+            subject: "Alertas de geração abaixo do valor estipulado",
+            text: "",
+            html: emailBody,
+            attachments: [
+              {
+                filename: "listagem.xlsx",
+                content: buffer,
+                encoding: "base64",
+              },
+            ],
+          };
+        }
+
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
             console.error("Erro ao enviar o e-mail:", error);
@@ -750,7 +782,7 @@ class UsersController {
     const result = await Users.findByPk(use, {
       attributes: ["use_percentage", "use_frequency_name", "use_alert_email"],
     });
-
+    console.log(result);
     try {
       return res.status(200).json(result);
     } catch (error) {
@@ -885,7 +917,7 @@ class UsersController {
                 ) {
                   dailySums[genDate] = {
                     gen_real: gen.gen_real,
-                    gen_estimated: gen.gen_estimated,
+                    gen_estimated: gen.gen_estimated || 100,
                     gen_date: gen.gen_date,
                     gen_updated_at: gen.gen_updated_at,
                   };
@@ -1467,14 +1499,32 @@ class UsersController {
           [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
         },
       });
+
       const dev_uuids = result.map((device) => device.dev_uuid);
+      if (dev_uuids.length === 0) {
+        return res
+          .status(404)
+          .json({ message: "Não foram encontrados dispositivos!" });
+      }
       const quant = dev_uuids.length;
-      console.log(quant);
+
       const readableStream = Readable({
         async read() {
           try {
             const results = await Promise.all(
               dev_uuids.map(async (devUuid) => {
+                //Verifica se já foi enviado no mês corrente
+                // const verify = Devices.findByPk(devUuid, {
+                //   attributes: ["dev_verify_email"],
+                // });
+                // if (verify.dev_verify_email == true) {
+                //   return;
+                // }
+                await Reports.create({
+                  port_check: true,
+                  dev_uuid: devUuid,
+                  use_uuid: use_uuid,
+                });
                 const dev_uuid = devUuid;
                 const result = await Generation.findAll({
                   attributes: ["gen_real", "gen_estimated", "gen_date"],
@@ -1653,12 +1703,18 @@ class UsersController {
 
           try {
             await transporter.sendMail(mailOptions);
+
             console.log({
               success: true,
               message: `Email enviado com sucesso para dev_uuid: ${
                 JSON.parse(chunk).dev_uuid
               }`,
             });
+
+            // //Adicionar atualização tabela report
+            // await Devices.update({
+            //   dev_verify_email: true,
+            // });
           } catch (error) {
             console.log({
               success: false,
@@ -1673,7 +1729,11 @@ class UsersController {
 
       pipelineAsync(readableStream, transformStream, writableStream);
 
-      res.status(200).json({ message: "Envio de relatórios em andamento" });
+      res.status(200).json({
+        message: "Envio de relatórios em andamento",
+        resultado: result,
+        teste: dev_uuids,
+      });
     } catch (error) {
       res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
@@ -2854,6 +2914,234 @@ class UsersController {
       return res.status(500).json({ message: `Erro: ${error}` });
     }
   }
+  async genMonitor(req, res) {
+    try {
+      const currentDate = new Date();
+      currentDate.setHours(currentDate.getHours() - 3);
+      const currentDateWithDelay = currentDate.toISOString();
+
+      const result = await Brand.findAll({
+        include: [
+          {
+            association: "devices",
+            attributes: ["dev_uuid", "dev_name", "dev_deleted"],
+            separate: true,
+            where: {
+              [Op.or]: [
+                { dev_deleted: false },
+                { dev_deleted: { [Op.is]: null } },
+              ],
+            },
+            include: [
+              {
+                association: "generation",
+                attributes: ["gen_real", "gen_updated_at", "gen_estimated"],
+                where: {
+                  gen_date: currentDateWithDelay,
+                },
+                order: [["gen_updated_at", "DESC"]],
+                separate: true,
+              },
+            ],
+          },
+        ],
+        attributes: ["bl_name", "use_uuid"],
+        separate: true,
+      });
+
+      const filteredResult = result.map((brand) => {
+        const devices = brand.devices.filter(
+          (device) => device.generation.length > 0
+        );
+        return { ...brand.toJSON(), devices };
+      });
+
+      const filteredDevices = filteredResult.filter(
+        (brand) => brand.devices.length > 0
+      );
+
+      //Tratamento de dados de geração acima do esperado
+      const responseAbove = filteredDevices
+        .map((brand) => {
+          return {
+            Info: brand.devices
+              .filter(
+                (device) =>
+                  device.generation[0].gen_real >=
+                  device.generation[0].gen_estimated
+              )
+              .map((device) => {
+                return {
+                  Portal: brand.bl_name,
+                  Use_uuid: brand.use_uuid,
+                  Cliente: device.dev_name,
+                  "Produção(KWh)": device.generation[0].gen_real,
+                  "Esperado(KWh)": device.generation[0].gen_estimated,
+                  "Desempenho(%)": (
+                    (device.generation[0].gen_real /
+                      device.generation[0].gen_estimated) *
+                    100
+                  ).toFixed(2),
+                  Status: `Parabéns! Sua produção está acima do esperado para sua região, que é de ${device.generation[0].gen_estimated}`,
+                };
+              }),
+          };
+        })
+        .filter((obj) => obj.Info.length > 0);
+      responseAbove.forEach((element) => {
+        return [element.Info];
+      });
+      const valueAbove = responseAbove.map((element) => {
+        return element.Info;
+      });
+      let excelAbove = [];
+      const accAbove = valueAbove.map((element) => {
+        const countAbove = element.length;
+        for (let i = 0; i < countAbove; i++) {
+          excelAbove.push(element[i]);
+        }
+      });
+
+      for (const element of excelAbove) {
+        console.log(element.Use_uuid);
+        const search = await Users.findOne({
+          attributes: ["use_name", "use_email"],
+          where: { use_uuid: element.Use_uuid },
+        });
+        delete element.Use_uuid;
+        element.Nome = search.use_name;
+        element.Email = search.use_email;
+      }
+
+      const workbookAbove = XLSX.utils.book_new();
+      const worksheetAbove = XLSX.utils.json_to_sheet(excelAbove);
+      XLSX.utils.book_append_sheet(workbookAbove, worksheetAbove, "Sheet 1");
+      const bufferAbove = XLSX.write(workbookAbove, {
+        bookType: "xlsx",
+        type: "buffer",
+      });
+
+      //Tratamento de dados de geração abaixo do esperado
+      const response = filteredDevices
+        .map((brand) => {
+          return {
+            Info: brand.devices
+              .filter(
+                (device) =>
+                  device.generation[0].gen_real <
+                  device.generation[0].gen_estimated
+              )
+              .map((device) => {
+                return {
+                  Portal: brand.bl_name,
+                  Use_uuid: brand.use_uuid,
+                  Cliente: device.dev_name,
+                  "Produção(KWh)": device.generation[0].gen_real,
+                  "Esperado(KWh)": device.generation[0].gen_estimated,
+                  "Desempenho(%)": (
+                    (device.generation[0].gen_real /
+                      device.generation[0].gen_estimated) *
+                    100
+                  ).toFixed(2),
+                  Status: `Sua produção está abaixo do esperado para sua região, que é de ${device.generation[0].gen_estimated}`,
+                };
+              }),
+          };
+        })
+        .filter((obj) => obj.Info.length > 0);
+      response.forEach((element) => {
+        return [element.Info];
+      });
+      const value = response.map((element) => {
+        return element.Info;
+      });
+      let excel = [];
+      const acc = value.map((element) => {
+        const count = element.length;
+        for (let i = 0; i < count; i++) {
+          excel.push(element[i]);
+        }
+      });
+
+      for (const element of excel) {
+        console.log(element.Use_uuid);
+        const search = await Users.findOne({
+          attributes: ["use_name", "use_email"],
+          where: { use_uuid: element.Use_uuid },
+        });
+        delete element.Use_uuid;
+        element.Nome = search.use_name;
+        element.Email = search.use_email;
+      }
+
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(excel);
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
+      const buffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "buffer",
+      });
+
+      let emailBody = `
+<p>Em anexo listagem de todas usinas que produziram <strong>acima</strong> e <strong>abaixo</strong> do esperado definido.</p>
+<p>Att,</p>
+<p><strong>Equipe Maya Watch</strong></p>
+`;
+
+      const mailOptions = {
+        from: '"noreplymayawatch@gmail.com',
+        to: ["bisintese@gmail.com", "eloymun00@gmail.com"],
+        subject: "Alertas de geração acima do valor estipulado",
+        text: "",
+        html: emailBody,
+        attachments: [
+          {
+            filename: "listagemAcima.xlsx",
+            content: bufferAbove,
+            encoding: "base64",
+          },
+          {
+            filename: "listagemAbaixo.xlsx",
+            content: buffer,
+            encoding: "base64",
+          },
+        ],
+      };
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Erro ao enviar o e-mail:", error);
+          return;
+        }
+
+        if (info && info.res) {
+          console.log("E-mail enviado:", info.res);
+        } else {
+          console.log("E-mail enviado com sucesso.");
+        }
+      });
+
+      return res
+        .status(200)
+        .json({ message: "Informações enviadas com sucesso!" });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados: ${error}` });
+    }
+  }
+  // async restartdevVerifyColumn(req, res) {
+  //   try {
+  //     await Users.update({ dev_verify_email: false });
+
+  //     return res
+  //       .status(200)
+  //       .json({ message: "Os dados foram atualizados com sucesso!" });
+  //   } catch (error) {
+  //     return res
+  //       .status(400)
+  //       .json({ message: `Erro ao retornar os dados: ${error}` });
+  //   }
+  // }
 
   agendarenvioEmailRelatorio() {
     // Agende a função para ser executada a cada dia
@@ -2891,10 +3179,53 @@ class UsersController {
       }
     );
   }
+  agendarmonitorGeração() {
+    cron.schedule(
+      "45 17 * * *",
+      async () => {
+        try {
+          await this.genMonitor();
+        } catch (error) {
+          console.error("Erro durante a verificação de alertas:", error);
+        }
+      },
+      {
+        timezone: "America/Sao_Paulo",
+      }
+    );
+  }
+  //Rotina todo dia primeiro do mês
+  agendarreinicioDispositivos() {
+    cron.schedule(
+      "0 0 1 * *",
+      async () => {
+        try {
+          await this().restartdevVerifyColumn();
+        } catch (error) {
+          console.error("Erro durante a verificação de alertas:", error);
+        }
+      },
+      {
+        timezone: "America/Sao_Paulo",
+      }
+    );
+  }
 }
 
 const usersController = new UsersController();
+//Reinicia a coluna(todo dia primeiro do mês) de dispositivos que tiveram os relatórios enviados
+// usersController.agendarreinicioDispositivos();
+
+//Envio relatorio de dispositivos acima e abaixo do estimado
+usersController.agendarmonitorGeração();
+
+//Cron para  envio de alerta quando a geração real estiver x% abaixo da geração estimada
 usersController.agendarAlertasGeracao();
+
+//Envio alertas da tabela alerts do banco
 usersController.agendarVerificacaoDeAlertas();
+
+//Envio automatico do 'envio massivo de relatorios'
 // usersController.agendarenvioEmailRelatorio()
+
 export default new UsersController();

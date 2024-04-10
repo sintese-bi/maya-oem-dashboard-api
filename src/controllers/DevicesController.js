@@ -1,7 +1,7 @@
 import moment from "moment-timezone";
 import Devices from "../models/Devices";
 import Generation from "../models/Generation";
-import { Op } from "sequelize";
+import { Op, literal } from "sequelize";
 import Users from "../models/Users";
 class DevicesController {
   //Esta função index processa dados de dispositivos, recuperando informações de gerações associadas a eles.
@@ -166,7 +166,7 @@ class DevicesController {
             [Op.between]: [start, end],
           },
         },
-        attributes: ["gen_date", "gen_real", "gen_estimated", "gen_updated_at"],
+        attributes: ["gen_date", "gen_real", [literal('COALESCE(gen_estimated, 0)'), 'gen_estimated'], "gen_updated_at"],
         order: [["gen_updated_at", "DESC"]],
       });
 
@@ -205,7 +205,7 @@ class DevicesController {
           totalByDate[genDate].gen_real +=
             aggregatedResult[deviceUUID][genDate].gen_real;
           totalByDate[genDate].gen_estimated +=
-            aggregatedResult[deviceUUID][genDate].gen_estimated;
+            aggregatedResult[deviceUUID][genDate].gen_estimated|| 100;
         });
       });
 
