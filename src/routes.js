@@ -74,6 +74,11 @@ routes.get(
 
   UsersController.invoiceReturn
 );
+routes.put(
+  `${apiVersion}/updatelogo`,checkToken,
+  upload.single('image'),
+  UsersController.updateLogo
+);
 routes.get(
   `${apiVersion}/genmonitor`,
   
@@ -219,8 +224,8 @@ routes.get(
   UsersController.invoiceValues
 );
 routes.post(
-  `${apiVersion}/updateuser`,upload.single('image'),
-  checkToken,
+  `${apiVersion}/updateuser`,
+ 
   UsersController.UpdateUserInformation
 );
 
