@@ -1430,7 +1430,6 @@ class UsersController {
           use_name: use_name,
           use_city_state: use_city_state,
           use_telephone: use_telephone,
-          
         },
         { where: { use_uuid: use_uuid } }
       );
@@ -1446,7 +1445,6 @@ class UsersController {
             "use_email",
             "use_city_state",
             "use_telephone",
-         
           ],
         }
       );
@@ -1459,30 +1457,24 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao atualizar os dados!" });
     }
   }
-  async updateLogo(req,res){
-    try{
+  async updateLogo(req, res) {
+    try {
       if (!req.file) {
         return res.status(400).send("Nenhum arquivo enviado.");
       }
       const base64Image = req.file.buffer.toString("base64");
-      const {use_uuid}=req.body
+      const { use_uuid } = req.body;
       await Users.update(
         {
-        
           use_logo: base64Image,
         },
         { where: { use_uuid: use_uuid } }
       );
       return res.status(200).json({
         message: "Seus dados foram atualizados com sucesso!",
-        
       });
-
-    }catch(error){
-
+    } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar os dados!" });
-
-
     }
   }
   //Essa API é responsável por enviar e-mails com relatórios em formato PDF para os endereços associados a dispositivos específicos.
