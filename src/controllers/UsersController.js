@@ -251,7 +251,6 @@ class UsersController {
           "use_email",
           "use_city_state",
           "use_telephone",
-          "use_logo",
         ],
         where: { use_email: use_email },
         include: [
@@ -2939,6 +2938,19 @@ class UsersController {
       });
     } catch (error) {
       return res.status(500).json({ message: `Erro: ${error}` });
+    }
+  }
+  async useLogo(req, res) {
+    try {
+      const { use_uuid } = req.body;
+      const result = await Users.findByPk(use_uuid, {
+        attributes: ["use_logo"],
+      });
+      return res.status(200).json({ message: result });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: "Não foi possível retornar o logo do usuário!" });
     }
   }
   async genMonitor(req, res) {
