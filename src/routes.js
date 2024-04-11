@@ -289,7 +289,7 @@ routes.get(
 );
 // routes.get(
 //   `${apiVersion}/dashboardall/:uuid`,
-  
+//   checkToken,
 //   UsersController.dashboardAll
 // );
 
