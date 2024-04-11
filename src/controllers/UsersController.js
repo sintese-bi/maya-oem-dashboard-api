@@ -792,7 +792,11 @@ class UsersController {
   async alertFrequency(req, res) {
     const use = req.params.uuid;
     const result = await Users.findByPk(use, {
-      attributes: ["use_percentage", "use_frequency_name","use_frequency_name"],
+      attributes: [
+        "use_percentage",
+        "use_frequency_name",
+        "use_frequency_name",
+      ],
     });
 
     try {
@@ -877,6 +881,7 @@ class UsersController {
                         [Op.between]: [startOfMonth, endOfMonth],
                       },
                     },
+                    separate:true,
                     required: false,
                   },
                   {
@@ -1057,8 +1062,253 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  
+  async dashboardAll(req, res) {
+    try {
+      const use = req.params.uuid;
+      const par = req.params.par;
+      const today = moment.utc().subtract(3, "hours").format("YYYY-MM-DD");
 
+      const startOfMonth = moment
+        .utc()
+        .startOf("month")
+        .subtract(3, "hours")
+        .toDate();
+      const endOfMonth = moment
+        .utc()
+        .endOf("month")
+        .subtract(3, "hours")
+        .toDate();
+      console.log(startOfMonth, endOfMonth);
+
+     
+      const brand = await Users.findByPk(use, {
+        include: [
+          {
+            association: "brand_login",
+            attributes: ["bl_name", "bl_uuid"],
+          },
+        ],
+      });
+      const result = await Users.findByPk(use, {
+        attributes: ["use_name"],
+        include: [
+          {
+            association: "brand_login",
+            attributes: ["bl_name", "bl_uuid"],
+            include: [
+              {
+                association: "devices",
+                
+                attributes: [
+                  "dev_uuid",
+                  "dev_name",
+                  "dev_brand",
+                  "dev_deleted",
+                  "dev_capacity",
+                  "dev_address",
+                  "dev_lat",
+                  "dev_long",
+                  "dev_email",
+                  "dev_image",
+                ],
+                include: [
+                  {
+                    association: "generation",
+                    attributes: [
+                      "gen_real",
+                      "gen_estimated",
+                      "gen_date",
+                      "gen_updated_at",
+                    ],
+                    order: [["gen_updated_at", "DESC"]],
+                    where: {
+                      gen_date: {
+                        [Op.between]: [startOfMonth, endOfMonth],
+                      },
+                    },
+                    
+                    separate:true,
+                    required: true,
+                    
+                  },
+                  {
+                    association: "alerts",
+                    attributes: ["al_alerts", "al_inv", "alert_created_at"],
+                    separate: true,
+                    where: {
+                      alert_created_at: {
+                        [Op.gte]: moment.utc().subtract(4, "hours").toDate(),
+                      },
+                    },
+                  },
+                  {
+                    association: "status",
+                    attributes: ["sta_code", "sta_name"],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const devicesData = [];
+
+      if (result) {
+        const brandLogin = result.brand_login;
+
+        for (const brand of brandLogin) {
+          const devices = brand.devices;
+
+          for (const device of devices) {
+            const generations = device.generation;
+            const alerts = device.alerts || [];
+            const dailySums = {};
+            const weeklySumsReal = {};
+            const weeklySumsEstimated = {};
+            const monthlySumsReal = {};
+            const monthlySumsEstimated = {};
+
+            if (generations) {
+              for (const gen of generations) {
+                const genDate = moment.utc(gen.gen_date).format("YYYY-MM-DD");
+
+                if (
+                  !dailySums[genDate] ||
+                  moment
+                    .utc(dailySums[genDate].gen_updated_at)
+                    .isSameOrBefore(moment.utc(gen.gen_updated_at))
+                ) {
+                  dailySums[genDate] = {
+                    gen_real: gen.gen_real,
+                    gen_estimated: gen.gen_estimated || 100,
+                    gen_date: gen.gen_date,
+                    gen_updated_at: gen.gen_updated_at,
+                  };
+                }
+              }
+
+              Object.values(dailySums).forEach((gen) => {
+                const genDate = moment
+                  .utc(gen.gen_updated_at)
+                  .format("YYYY-MM-DD");
+                const weekStartDate = moment
+                  .utc()
+                  .startOf("isoWeek")
+                  .format("YYYY-MM-DD");
+                const weekEndDate = moment
+                  .utc()
+                  .endOf("isoWeek")
+                  .format("YYYY-MM-DD");
+
+                if (
+                  moment.utc(gen.gen_updated_at).isSameOrAfter(weekStartDate) &&
+                  moment.utc(gen.gen_updated_at).isBefore(weekEndDate)
+                ) {
+                  if (!weeklySumsReal[weekStartDate]) {
+                    weeklySumsReal[weekStartDate] = 0;
+                  }
+                  if (!weeklySumsEstimated[weekStartDate]) {
+                    weeklySumsEstimated[weekStartDate] = 0;
+                  }
+
+                  weeklySumsReal[weekStartDate] += gen.gen_real;
+                  weeklySumsEstimated[weekStartDate] += gen.gen_estimated;
+                }
+
+                const monthStartDate = moment
+                  .utc(gen.gen_updated_at)
+                  .startOf("month")
+                  .format("YYYY-MM-DD");
+
+                if (!monthlySumsReal[monthStartDate]) {
+                  monthlySumsReal[monthStartDate] = 0;
+                }
+                if (!monthlySumsEstimated[monthStartDate]) {
+                  monthlySumsEstimated[monthStartDate] = 0;
+                }
+
+                monthlySumsReal[monthStartDate] += gen.gen_real;
+                monthlySumsEstimated[monthStartDate] += gen.gen_estimated;
+              });
+            }
+
+            const deviceData = {
+              dev_uuid: device.dev_uuid,
+              dev_name: device.dev_name,
+              dev_brand: device.dev_brand,
+              dev_lat: device.dev_lat,
+              dev_email: device.dev_email,
+              dev_deleted: device.dev_deleted,
+              dev_long: device.dev_long,
+              status: {
+                sta_name: device.status ? device.status.sta_name : null,
+                sta_code: device.status ? device.status.sta_code : null,
+              },
+              alerts: alerts.filter((alert) =>
+                moment
+                  .utc(alert.alert_created_at)
+                  .isAfter(moment.utc().subtract(4, "hours"))
+              ),
+              dev_capacity: device.dev_capacity,
+              dev_address: device.dev_address,
+              gen_updated_at: dailySums[today]
+                ? dailySums[today].gen_updated_at
+                : null,
+              gen_date: dailySums[today] ? dailySums[today].gen_date : null,
+              brand_login: {
+                bl_name: brand.bl_name,
+                bl_uuid: brand.bl_uuid,
+              },
+
+              gen_estimated_day: dailySums[today]
+                ? parseFloat(dailySums[today].gen_estimated).toFixed(2)
+                : 0,
+              gen_real_day: dailySums[today]
+                ? parseFloat(dailySums[today].gen_real).toFixed(2)
+                : 0,
+              gen_performance:
+                ((dailySums[today]
+                  ? parseFloat(dailySums[today].gen_real).toFixed(2)
+                  : 0) /
+                  (dailySums[today]
+                    ? parseFloat(dailySums[today].gen_estimated).toFixed(2)
+                    : 0)) *
+                  100 || 0,
+
+              weeklySum: {
+                gen_real: Object.values(weeklySumsReal)
+                  .reduce((acc, value) => acc + value, 0)
+                  .toFixed(2),
+                gen_estimated: Object.values(weeklySumsEstimated)
+                  .reduce((acc, value) => acc + value, 0)
+                  .toFixed(2),
+              },
+              monthlySum: {
+                gen_real: Object.values(monthlySumsReal)
+                  .reduce((acc, value) => acc + value, 0)
+                  .toFixed(2),
+                gen_estimated: Object.values(monthlySumsEstimated)
+                  .reduce((acc, value) => acc + value, 0)
+                  .toFixed(2),
+              },
+            };
+
+            devicesData.push(deviceData);
+          }
+        }
+      }
+
+      return res.status(200).json({
+        devicesData,
+        brand,
+      });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
 
   //localhost:8080/v1/irrcoef/SERGIPE/Areia%20Branca?potSistema=30
   //Esta API assíncrona calcula e atualiza estimativas de geração de energia para um dispositivo específico, com base em dados de irradiação solar fornecidos. Ela recebe informações sobre o estado, cidade, UUID do dispositivo, potência do sistema e nome do contrato.
@@ -3337,13 +3587,13 @@ const usersController = new UsersController();
 // usersController.agendarreinicioDispositivos();
 
 //Envio relatorio de dispositivos acima e abaixo do estimado
-// usersController.agendarmonitorGeração();
+usersController.agendarmonitorGeração();
 
 //Cron para  envio de alerta quando a geração real estiver x% abaixo da geração estimada
-// usersController.agendarAlertasGeracao();
+usersController.agendarAlertasGeracao();
 
 // //Envio alertas da tabela alerts do banco
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarVerificacaoDeAlertas();
 
 //Envio automatico do 'envio massivo de relatorios'
 // usersController.agendarenvioEmailRelatorio()

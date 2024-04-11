@@ -287,6 +287,10 @@ routes.get(
   checkToken,
   UsersController.dashboard
 );
-
+// routes.get(
+//   `${apiVersion}/dashboardall/:uuid`,
+  
+//   UsersController.dashboardAll
+// );
 
 export default routes;
