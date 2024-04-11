@@ -721,7 +721,7 @@ class UsersController {
           mailOptions = {
             from: '"noreplymayawatch@gmail.com',
             to: [
-              "bisintese@gmail.com",
+              "contato@mayax.com.br",
               "eloymun00@gmail.com",
               element.use_alert_email,
             ],
@@ -748,7 +748,7 @@ class UsersController {
           mailOptions = {
             from: '"noreplymayawatch@gmail.com',
             to: [
-              "bisintese@gmail.com",
+              "contato@mayax.com.br",
               "eloymun00@gmail.com",
               element.use_alert_email,
             ],
@@ -883,6 +883,7 @@ class UsersController {
                     },
                     separate:true,
                     required: false,
+                    
                   },
                   {
                     association: "alerts",
@@ -3208,7 +3209,7 @@ class UsersController {
               if (userEmail) {
                 const mailOptions = {
                   from: '"noreplymayawatch@gmail.com"',
-                  to: [userEmail, "bisintese@gmail.com", "eloymun00@gmail.com"],
+                  to: [userEmail, "contato@mayax.com.br", "eloymun00@gmail.com"],
                   subject: "Alertas dos dispositivos de geração",
                   text: "Lista de alertas",
                   html: additionalText + alertEmailBody,
@@ -3460,7 +3461,7 @@ class UsersController {
 
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
-        to: ["bisintese@gmail.com", "eloymun00@gmail.com"],
+        to: ["contato@mayax.com.br", "eloymun00@gmail.com"],
         subject: "Alertas de geração acima e abaixo do valor estipulado",
         text: "",
         html: emailBody,
