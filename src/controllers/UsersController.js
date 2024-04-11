@@ -792,7 +792,7 @@ class UsersController {
   async alertFrequency(req, res) {
     const use = req.params.uuid;
     const result = await Users.findByPk(use, {
-      attributes: ["use_percentage", "use_frequency_name"],
+      attributes: ["use_percentage", "use_frequency_name","use_frequency_name"],
     });
 
     try {
@@ -1057,6 +1057,7 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  
 
   //localhost:8080/v1/irrcoef/SERGIPE/Areia%20Branca?potSistema=30
   //Esta API assíncrona calcula e atualiza estimativas de geração de energia para um dispositivo específico, com base em dados de irradiação solar fornecidos. Ela recebe informações sobre o estado, cidade, UUID do dispositivo, potência do sistema e nome do contrato.
@@ -1495,7 +1496,6 @@ class UsersController {
           use_name: use_name,
           use_city_state: use_city_state,
           use_telephone: use_telephone,
-          
         },
         { where: { use_uuid: use_uuid } }
       );
@@ -1511,7 +1511,6 @@ class UsersController {
             "use_email",
             "use_city_state",
             "use_telephone",
-         
           ],
         }
       );
@@ -1524,30 +1523,24 @@ class UsersController {
       return res.status(500).json({ message: "Erro ao atualizar os dados!" });
     }
   }
-  async updateLogo(req,res){
-    try{
+  async updateLogo(req, res) {
+    try {
       if (!req.file) {
         return res.status(400).send("Nenhum arquivo enviado.");
       }
       const base64Image = req.file.buffer.toString("base64");
-      const {use_uuid}=req.body
+      const { use_uuid } = req.body;
       await Users.update(
         {
-        
           use_logo: base64Image,
         },
         { where: { use_uuid: use_uuid } }
       );
       return res.status(200).json({
         message: "Seus dados foram atualizados com sucesso!",
-        
       });
-
-    }catch(error){
-
+    } catch (error) {
       return res.status(500).json({ message: "Erro ao atualizar os dados!" });
-
-
     }
   }
   //Essa API é responsável por enviar e-mails com relatórios em formato PDF para os endereços associados a dispositivos específicos.
@@ -3343,13 +3336,13 @@ const usersController = new UsersController();
 // usersController.agendarreinicioDispositivos();
 
 //Envio relatorio de dispositivos acima e abaixo do estimado
-usersController.agendarmonitorGeração();
+// usersController.agendarmonitorGeração();
 
 //Cron para  envio de alerta quando a geração real estiver x% abaixo da geração estimada
-usersController.agendarAlertasGeracao();
+// usersController.agendarAlertasGeracao();
 
 // //Envio alertas da tabela alerts do banco
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarVerificacaoDeAlertas();
 
 //Envio automatico do 'envio massivo de relatorios'
 // usersController.agendarenvioEmailRelatorio()
