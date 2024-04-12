@@ -795,7 +795,7 @@ class UsersController {
       attributes: [
         "use_percentage",
         "use_frequency_name",
-        "use_frequency_name",
+        "use_alert_email",
       ],
     });
 
