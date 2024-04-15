@@ -201,12 +201,6 @@ class UsersController {
               
       <p>Seu registro foi efetuado com sucesso!</p>
                       
-      <p>Você pode conferir todas as funcionalidades e aprender a utilizar nosso dashboard através do contato (31) 9 8234-1415.</p>
-                          
-      <p>Se houver qualquer necessidade de alteração nos dados informados, por favor, não hesite em nos contactar para atualização pelo e-mail suportemayawatch@gmail.com.</p>
-                      
-      <p>Se você tiver alguma dúvida ou precisar de suporte adicional, estamos à sua disposição. Sua satisfação e sucesso são nossas principais prioridades!</p>
-
       <p>Seu login para acessar o Dashboard é: ${email} e a senha: ${password}<p>
       <p>Agradecemos pela confiança em nossos serviços.</p>
                       
@@ -792,11 +786,7 @@ class UsersController {
   async alertFrequency(req, res) {
     const use = req.params.uuid;
     const result = await Users.findByPk(use, {
-      attributes: [
-        "use_percentage",
-        "use_frequency_name",
-        "use_alert_email",
-      ],
+      attributes: ["use_percentage", "use_frequency_name", "use_alert_email"],
     });
 
     try {
@@ -881,9 +871,8 @@ class UsersController {
                         [Op.between]: [startOfMonth, endOfMonth],
                       },
                     },
-                    separate:true,
+                    separate: true,
                     required: false,
-                    
                   },
                   {
                     association: "alerts",
@@ -1081,7 +1070,6 @@ class UsersController {
         .toDate();
       console.log(startOfMonth, endOfMonth);
 
-     
       const brand = await Users.findByPk(use, {
         include: [
           {
@@ -1099,7 +1087,7 @@ class UsersController {
             include: [
               {
                 association: "devices",
-                
+
                 attributes: [
                   "dev_uuid",
                   "dev_name",
@@ -1127,10 +1115,9 @@ class UsersController {
                         [Op.between]: [startOfMonth, endOfMonth],
                       },
                     },
-                    
-                    separate:true,
+
+                    separate: true,
                     required: true,
-                    
                   },
                   {
                     association: "alerts",
@@ -2529,9 +2516,9 @@ class UsersController {
           } = devarray;
 
           if (ic_city != undefined && ic_states != undefined) {
-            let irr = await IrradiationCoefficient.findOne({
+            var irr = await IrradiationCoefficient.findOne({
               where: { ic_city, ic_states },
-              attributes: ["ic_yearly"],
+              attributes: ["ic_yearly", "ic_lat", "ic_lon"],
             });
 
             const result = await Devices.findOne({
@@ -2574,12 +2561,23 @@ class UsersController {
           }
           // const binaryImage = Buffer.from(dev_image, "base64");
           // console.log({ binario: binaryImage });
+
           await Devices.update(
             {
               dev_capacity: dev_capacity,
               dev_email: dev_email,
               dev_image: dev_image,
               dev_address: ic_city + "-" + ic_states,
+              dev_lat: irr
+                ? irr.ic_lat !== undefined
+                  ? irr.ic_lat
+                  : null
+                : null,
+              dev_long: irr
+                ? irr.ic_lon !== undefined
+                  ? irr.ic_lon
+                  : null
+                : null,
             },
             { where: { dev_uuid: dev_uuid } }
           );
@@ -3209,7 +3207,11 @@ class UsersController {
               if (userEmail) {
                 const mailOptions = {
                   from: '"noreplymayawatch@gmail.com"',
-                  to: [userEmail, "contato@mayax.com.br", "eloymun00@gmail.com"],
+                  to: [
+                    userEmail,
+                    "contato@mayax.com.br",
+                    "eloymun00@gmail.com",
+                  ],
                   subject: "Alertas dos dispositivos de geração",
                   text: "Lista de alertas",
                   html: additionalText + alertEmailBody,
