@@ -125,7 +125,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/updateplants`,
-
+  checkToken,
   UsersController.updatePlants
 );
 routes.post(
