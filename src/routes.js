@@ -283,9 +283,14 @@ routes.post(
 routes.post(`${apiVersion}/deleteuser`, checkToken, UsersController.deleteUser);
 //Api da Tabela
 routes.get(
-  `${apiVersion}/dashboard/:uuid/:par?`,
+  `${apiVersion}/dashboard/:uuid/:par`,
   checkToken,
   UsersController.dashboard
 );
+// routes.get(
+//   `${apiVersion}/dashboardall/:uuid`,
+//   checkToken,
+//   UsersController.dashboardAll
+// );
 
 export default routes;
