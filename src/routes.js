@@ -32,10 +32,10 @@ const routes = express.Router();
 // );
 routes.post(`${apiVersion}/genrealday`, DevicesControlle.sumGeneration);
 routes.post(`${apiVersion}/login`, UsersController.login);
-routes.post(
-  `${apiVersion}/stripe-webhook`,
-  StripeController.handleStripeWebhook
-);
+// routes.post(
+//   `${apiVersion}/stripe-webhook`,
+//   StripeController.handleStripeWebhook
+// );
 routes.get(`${apiVersion}/generationReport`, UsersController.generationReport);
 routes.get(`${apiVersion}/investment`, InvestmentController.index);
 routes.get(`${apiVersion}/kanban`, UsersController.kanban);
