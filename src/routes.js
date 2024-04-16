@@ -228,6 +228,11 @@ routes.post(
  
   UsersController.UpdateUserInformation
 );
+// routes.post(
+//   `${apiVersion}/liquidationreport`,
+ 
+//   DevicesController.liquidationReport
+// );
 
 // routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
 // routes.get(
