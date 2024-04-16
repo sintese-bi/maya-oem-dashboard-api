@@ -2568,16 +2568,7 @@ class UsersController {
               dev_email: dev_email,
               dev_image: dev_image,
               dev_address: ic_city + "-" + ic_states,
-              dev_lat: irr
-                ? irr.ic_lat !== undefined
-                  ? irr.ic_lat
-                  : null
-                : null,
-              dev_long: irr
-                ? irr.ic_lon !== undefined
-                  ? irr.ic_lon
-                  : null
-                : null,
+              
             },
             { where: { dev_uuid: dev_uuid } }
           );

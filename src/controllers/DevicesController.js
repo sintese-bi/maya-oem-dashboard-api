@@ -351,7 +351,7 @@ class DevicesController {
         }
       );
       //Informações recebidas do banco externo
-
+      
 
 
 
