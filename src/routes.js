@@ -123,11 +123,11 @@ routes.post(
   checkToken,
   GenerationController.reportgenerationEmailPDF
 );
-routes.post(
-  `${apiVersion}/updateplants`,
-  checkToken,
-  UsersController.updatePlants
-);
+// routes.post(
+//   `${apiVersion}/updateplants`,
+//   checkToken,
+//   UsersController.updatePlants
+// );
 routes.post(
   `${apiVersion}/updateemail`,
   checkToken,
@@ -229,7 +229,7 @@ routes.post(
   UsersController.UpdateUserInformation
 );
 
-routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
+// routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
 // routes.get(
 //   `${apiVersion}/automaticmassemail`,
 //   checkToken,
