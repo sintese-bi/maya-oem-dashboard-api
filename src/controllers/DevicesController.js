@@ -1,5 +1,6 @@
 import moment from "moment-timezone";
 import Devices from "../models/Devices";
+import axios from "axios";
 import Generation from "../models/Generation";
 import { Op, literal } from "sequelize";
 import Users from "../models/Users";
@@ -166,7 +167,12 @@ class DevicesController {
             [Op.between]: [start, end],
           },
         },
-        attributes: ["gen_date", "gen_real", [literal('COALESCE(gen_estimated, 0)'), 'gen_estimated'], "gen_updated_at"],
+        attributes: [
+          "gen_date",
+          "gen_real",
+          [literal("COALESCE(gen_estimated, 0)"), "gen_estimated"],
+          "gen_updated_at",
+        ],
         order: [["gen_updated_at", "DESC"]],
       });
 
@@ -205,7 +211,7 @@ class DevicesController {
           totalByDate[genDate].gen_real +=
             aggregatedResult[deviceUUID][genDate].gen_real;
           totalByDate[genDate].gen_estimated +=
-            aggregatedResult[deviceUUID][genDate].gen_estimated|| 100;
+            aggregatedResult[deviceUUID][genDate].gen_estimated || 100;
         });
       });
 
@@ -323,6 +329,41 @@ class DevicesController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-}
+  async liquidationReport(req, res) {
+    try {
+      const { dev_uuid } = req.body;
+      const email = process.env.EMAIL_FATURA;
+      const password = process.env.PASSWORD;
+      const result = await axios.post("https://", {
+        email: email,
+        password: password,
+      });
 
+      const secondResult = await axios.post(
+        "https:",
+        {
+          dev_uuid: dev_uuid,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${result.data.access_token}`,
+          },
+        }
+      );
+      //Informações recebidas do banco externo
+      
+
+
+
+
+
+
+
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+}
 export default new DevicesController();
