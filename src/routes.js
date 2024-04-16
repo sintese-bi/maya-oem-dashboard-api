@@ -229,7 +229,7 @@ routes.post(
   UsersController.UpdateUserInformation
 );
 
-routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
+// routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
 // routes.get(
 //   `${apiVersion}/automaticmassemail`,
 //   checkToken,
