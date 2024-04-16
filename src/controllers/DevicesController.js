@@ -332,6 +332,33 @@ class DevicesController {
   async liquidationReport(req, res) {
     try {
       const { dev_uuid } = req.body;
+      const email = process.env.EMAIL_FATURA;
+      const password = process.env.PASSWORD;
+      const result = await axios.post("https://", {
+        email: email,
+        password: password,
+      });
+
+      const secondResult = await axios.post(
+        "https:",
+        {
+          dev_uuid: dev_uuid,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${result.data.access_token}`,
+          },
+        }
+      );
+      //Informações recebidas do banco externo
+
+
+
+
+
+
+
+
     } catch (error) {
       return res
         .status(400)
