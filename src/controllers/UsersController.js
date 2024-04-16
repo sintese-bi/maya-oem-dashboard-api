@@ -2567,7 +2567,7 @@ class UsersController {
               dev_capacity: dev_capacity,
               dev_email: dev_email,
               dev_image: dev_image,
-              dev_address: ic_city + "-" + ic_states,
+             
               
             },
             { where: { dev_uuid: dev_uuid } }
