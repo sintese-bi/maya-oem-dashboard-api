@@ -14,6 +14,7 @@ import Invoice from "../models/Invoice";
 import Brand_Info from "../models/Brand_info";
 import Address from "../models/Address";
 import Invoice_received from "../models/Invoice_received"
+import Balance from "../models/Balance";
 import Proposal from "../models/Proposal";
 import Reports from "../models/Reports";
 //Este código configura uma conexão com o banco de dados usando o Sequelize, um ORM.
@@ -28,6 +29,7 @@ const modelsDbMayaEnergy = [
   TypePlans,
   ProfileLevel,
   Invoice,
+  Balance,
   Brand,
   Status,
   Users,
