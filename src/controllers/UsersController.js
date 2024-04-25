@@ -1755,6 +1755,7 @@ class UsersController {
         await Users.update(
           {
             use_massive_reports_status: "waiting",
+            use_massive_reports_status_updated_at: new Date(),
           },
           {
             where: {
