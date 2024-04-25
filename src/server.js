@@ -6,6 +6,7 @@ import express from "express";
 import cors from "cors";
 import routes from "./routes";
 import "moment/locale/pt-br";
+import "./massive-email/verifiy_massive_emails.js";
 require("./database");
 
 const PORT = 8080;

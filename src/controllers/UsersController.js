@@ -4,7 +4,7 @@ import fs from "fs";
 import { google } from "googleapis";
 import jwt from "jsonwebtoken";
 import moment from "moment-timezone";
-import { Sequelize, Op } from "sequelize";
+import { Sequelize, Op, where } from "sequelize";
 import Brand from "../models/Brand";
 import DeletedDevices from "../models/DeletedDevices";
 import IrradiationCoefficient from "../models/IrradiationCoefficient";
@@ -24,6 +24,7 @@ import Brand_Info from "../models/Brand_info";
 import { generateFile } from "../utils/generateMassiveReports";
 import multer from "multer";
 import XLSX from "xlsx";
+import { massiveEmail } from "../massive-email";
 require("dotenv").config();
 const googleKeyJson = fs.readFileSync("./googlekey.json", "utf8");
 //Configuração das credenciais do email de envio
@@ -1287,6 +1288,25 @@ class UsersController {
     }
   }
 
+  async massiveReportsStatus(req, res) {
+    const { use_uuid } = req.body;
+    try {
+      const user = await Users.findOne({
+        where: {
+          use_uuid: use_uuid,
+        },
+      });
+      console.log("heyyyy\n", user.use_massive_reports_status);
+      return res.status(200).json({
+        use_massive_reports_status: user.use_massive_reports_status,
+      });
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+
   //localhost:8080/v1/irrcoef/SERGIPE/Areia%20Branca?potSistema=30
   //Esta API assíncrona calcula e atualiza estimativas de geração de energia para um dispositivo específico, com base em dados de irradiação solar fornecidos. Ela recebe informações sobre o estado, cidade, UUID do dispositivo, potência do sistema e nome do contrato.
   //Em seguida, calcula a geração estimada para cada mês do ano, utilizando coeficientes de irradiação solar.
@@ -1722,284 +1742,41 @@ class UsersController {
   async massEmail(req, res) {
     try {
       const { use_uuid } = req.body;
-      const {
-        Readable,
-        Writable,
-        pipeline,
-        Transform,
-      } = require("node:stream");
-      const util = require("util");
 
-      const pipelineAsync = util.promisify(pipeline);
-      const currentDate = new Date();
-      const firstDayOfMonth = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        1
-      );
-      const lastDayOfMonth = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1,
-        0
-      );
+      const users_massive_reports_status = await Users.findAll({
+        attributes: ["use_massive_reports_status"],
+      });
+      const users_with_massive_reports_pending =
+        users_massive_reports_status.filter(
+          (data) => data.use_massive_reports_status == "executing"
+        );
 
-      const result = await Devices.findAll({
-        include: [
+      if (users_with_massive_reports_pending.length != 0) {
+        await Users.update(
           {
-            association: "brand_login",
-            attributes: [],
+            use_massive_reports_status: "waiting",
+          },
+          {
             where: {
               use_uuid: use_uuid,
             },
-          },
-        ],
-        attributes: ["dev_uuid"],
-        where: {
-          dev_email: {
-            [Op.not]: null,
-          },
-          [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
-        },
-      });
-
-      const dev_uuids = result.map((device) => device.dev_uuid);
-      if (dev_uuids.length === 0) {
-        return res
-          .status(404)
-          .json({ message: "Não foram encontrados dispositivos!" });
+          }
+        );
+        return res.status(200).json({
+          message: "Sua solicitação de envio relatório está em andamento",
+        });
       }
-      const quant = dev_uuids.length;
 
-      const readableStream = Readable({
-        async read() {
-          try {
-            const results = await Promise.all(
-              dev_uuids.map(async (devUuid) => {
-                //Verifica se já foi enviado no mês corrente
-                // const verify = Devices.findByPk(devUuid, {
-                //   attributes: ["dev_verify_email"],
-                // });
-                // if (verify.dev_verify_email == true) {
-                //   return;
-                // }
-                await Reports.create({
-                  port_check: true,
-                  dev_uuid: devUuid,
-                  use_uuid: use_uuid,
-                });
-                const dev_uuid = devUuid;
-                const result = await Generation.findAll({
-                  attributes: ["gen_real", "gen_estimated", "gen_date"],
-                  where: {
-                    dev_uuid: dev_uuid,
-                    gen_date: {
-                      [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-                    },
-                    gen_updated_at: {
-                      [Op.in]: Generation.sequelize.literal(`
-                        (SELECT MAX(gen_updated_at) 
-                        FROM generation 
-                        WHERE dev_uuid = :dev_uuid 
-                        AND gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
-                        GROUP BY gen_date)
-                      `),
-                    },
-                  },
-                  replacements: { dev_uuid, firstDayOfMonth, lastDayOfMonth },
-                });
-                //Realgeneration
-                const realGeneration = result.map((element) => {
-                  return { value: element.gen_real, date: element.gen_date };
-                });
-                //Estimatedgeneration
-                const estimatedGeneration = result.map((element) => {
-                  return element.gen_estimated;
-                });
-                const cap = await Devices.findOne({
-                  attributes: ["dev_capacity", "dev_name", "dev_email"],
-                  where: { dev_uuid: dev_uuid },
-                });
-                const sumreal = await result.reduce(
-                  (acc, atual) => acc + atual.gen_real,
-                  0
-                );
-                const sumrealNew = sumreal.toFixed(2);
-                const sumestimated = await result.reduce(
-                  (acc, atual) => acc + atual.gen_estimated,
-                  0
-                );
-                const sumestimatedNew = sumestimated.toFixed(2);
-                const percent = (sumestimated / sumreal) * 100;
-                let percentNew;
-                if (sumreal == 0) {
-                  percentNew = 0;
-                } else {
-                  const percent = (sumestimated / sumreal) * 100;
-                  percentNew = percent.toFixed(2);
-                }
-
-                let situation =
-                  percentNew > 80
-                    ? `Parábens, sua usina produziu o equivalente à ${percentNew} do total esperado.`
-                    : `Infelizmente, sua usina produziu apenas ${percentNew} em relação ao esperado.`;
-                const dev_element = {
-                  dev_uuid,
-                  capacity: cap.dev_capacity,
-                  name: cap.dev_name,
-                  email: cap.dev_email,
-                  sumrealNew,
-                  sumestimatedNew,
-                  percentNew,
-                  situation,
-                  realGeneration,
-                  estimatedGeneration,
-                };
-                return JSON.stringify(dev_element);
-              })
-            );
-
-            results.forEach((result) => this.push(result));
-
-            this.push(null);
-          } catch (error) {
-            this.emit("error", error);
-          }
-        },
-      });
-
-      const transformStream = Transform({
-        async transform(chunk, encode, cb) {
-          const realGeneration = [
-            { value: 242.77, date: "01-02-2024" },
-            { value: 54.12, date: "02-02-2024" },
-            { value: 101.88, date: "03-02-2024" },
-            { value: 163.32, date: "04-02-2024" },
-            { value: 312.65, date: "05-02-2024" },
-            { value: 176.53, date: "06-02-2024" },
-            { value: 51.31, date: "07-02-2024" },
-            { value: 116.78, date: "08-02-2024" },
-            { value: 324.93, date: "09-02-2024" },
-            { value: 153.89, date: "10-02-2024" },
-            { value: 108.01, date: "11-02-2024" },
-            { value: 327.34, date: "12-02-2024" },
-            { value: 253.67, date: "13-02-2024" },
-            { value: 234.68, date: "14-02-2024" },
-            { value: 250.42, date: "15-02-2024" },
-            { value: 275.57, date: "16-02-2024" },
-            { value: 238.41, date: "17-02-2024" },
-            { value: 63.05, date: "18-02-2024" },
-            { value: 170.43, date: "19-02-2024" },
-            { value: 219.22, date: "20-02-2024" },
-            { value: 79.94, date: "21-02-2024" },
-            { value: 307.22, date: "22-02-2024" },
-            { value: 233.38, date: "23-02-2024" },
-            { value: 256.52, date: "24-02-2024" },
-            { value: 174.33, date: "25-02-2024" },
-            { value: 82.34, date: "26-02-2024" },
-            { value: 198.84, date: "27-02-2024" },
-            { value: 51.68, date: "28-02-2024" },
-            { value: 179.76, date: "29-02-2024" },
-            { value: 294.69, date: "30-02-2024" },
-            { value: 71.21, date: "31-02-2024" },
-          ];
-
-          const estimatedGeneration = [
-            121.38, 27.06, 50.94, 81.66, 156.33, 88.26, 25.65, 58.39, 162.47,
-            76.95, 54.0, 163.67, 126.83, 117.34, 125.21, 137.78, 119.2, 31.53,
-            85.22, 109.61, 39.97, 153.61, 116.69, 128.26, 87.17, 41.17, 99.42,
-            25.84, 89.88, 147.34, 35.61,
-          ];
-
-          let report = await generateFile({
-            params: JSON.parse(chunk),
-            paramstest: {
-              realGeneration,
-              estimatedGeneration,
-            },
-          });
-          let userWithReport = JSON.parse(chunk);
-          userWithReport.report = report;
-          cb(null, JSON.stringify(userWithReport));
-        },
-      });
-
-      const writableStream = Writable({
-        async write(chunk, enconding, cb) {
-          const attachment = {
-            filename: "relatorio.pdf",
-            content: JSON.parse(chunk).report.base64,
-            encoding: "base64",
-          };
-
-          // const searchDeviceEmail = await Devices.findOne({
-          //   where: { dev_uuid: dev_uuid },
-          //   attributes: ["dev_email"],
-          // });
-
-          // const emailBody = `
-          //   Prezado usuário,
-
-          //   Anexamos um relatório em formato PDF com os dados de geração da usina. Este relatório inclui informações referentes à geração diária, semanal e mensal, apresentadas de forma clara e concisa.
-
-          //   Além disso, no documento, você encontrará um gráfico temporal que ilustra a variação na produção de energia ao longo do período analisado.
-
-          //   <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
-          // `;
-          const emailBody = `
-          Prezado usuário,<br><br>
-
-          Em anexo, relatório com a performance da sua usina no mês atual. Estamos à disposição para quaisquer dúvidas e sugestões.<br><br>
-      
-          <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
-          https://mayax.com.br/
-      `;
-
-          const mailOptions = {
-            from: "noreplymayawatch@gmail.com",
-            to: ["felipegadelha2004@gmail.com"],
-            subject: "Relatório de dados de Geração",
-            text: "",
-            html: emailBody,
-            attachments: attachment,
-          };
-
-          try {
-            await transporter.sendMail(mailOptions);
-
-            console.log({
-              success: true,
-              message: `Email enviado com sucesso para dev_uuid: ${
-                JSON.parse(chunk).dev_uuid
-              }`,
-            });
-
-            // //Adicionar atualização tabela report
-            // await Devices.update({
-            //   dev_verify_email: true,
-            // });
-          } catch (error) {
-            console.log({
-              success: false,
-              message: `Erro ao enviar o email para dev_uuid: ${
-                JSON.parse(chunk).dev_uuid
-              } - ${error}`,
-            });
-          }
-          cb();
-        },
-      });
-
-      pipelineAsync(readableStream, transformStream, writableStream);
-
+      await massiveEmail(use_uuid);
       res.status(200).json({
-        message: "Envio de relatórios em andamento",
-        resultado: result,
-        teste: dev_uuids,
+        message: "Envio de relatório massivo em andamento",
       });
     } catch (error) {
+      console.log(error);
       res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
   }
+
   async automaticmassEmail(req, res) {
     try {
       const users = await Users.findAll({
@@ -2027,263 +1804,7 @@ class UsersController {
         if (element.use_date_report != currentDay) {
           return;
         }
-        const {
-          Readable,
-          Writable,
-          pipeline,
-          Transform,
-        } = require("node:stream");
-        const util = require("util");
-
-        const pipelineAsync = util.promisify(pipeline);
-
-        const firstDayOfMonth = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth(),
-          1
-        );
-        const lastDayOfMonth = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() + 1,
-          0
-        );
-
-        const result = await Devices.findAll({
-          include: [
-            {
-              association: "brand_login",
-              attributes: [],
-              where: {
-                use_uuid: element.use_uuid,
-              },
-            },
-          ],
-          attributes: ["dev_uuid"],
-          where: {
-            dev_email: {
-              [Op.not]: null,
-            },
-            [Op.or]: [
-              { dev_deleted: false },
-              { dev_deleted: { [Op.is]: null } },
-            ],
-          },
-        });
-        const dev_uuids = result.map((device) => device.dev_uuid);
-        const quant = dev_uuids.length;
-        console.log({ quantidade: quant });
-        const readableStream = Readable({
-          async read() {
-            try {
-              const results = await Promise.all(
-                dev_uuids.map(async (devUuid) => {
-                  await Reports.create({
-                    port_check: true,
-                    dev_uuid: devUuid,
-                    use_uuid: element.use_uuid,
-                  });
-                  const dev_uuid = devUuid;
-                  const result = await Generation.findAll({
-                    attributes: ["gen_real", "gen_estimated", "gen_date"],
-                    where: {
-                      dev_uuid: dev_uuid,
-                      gen_date: {
-                        [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-                      },
-                      gen_updated_at: {
-                        [Op.in]: Generation.sequelize.literal(`
-                          (SELECT MAX(gen_updated_at) 
-                          FROM generation 
-                          WHERE dev_uuid = :dev_uuid 
-                          AND gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
-                          GROUP BY gen_date)
-                        `),
-                      },
-                    },
-                    replacements: { dev_uuid, firstDayOfMonth, lastDayOfMonth },
-                  });
-                  //Realgeneration
-                  const realGeneration = result.map((element) => {
-                    return { value: element.gen_real, date: element.gen_date };
-                  });
-                  //Estimatedgeneration
-                  const estimatedGeneration = result.map((element) => {
-                    return element.gen_estimated;
-                  });
-                  const cap = await Devices.findOne({
-                    attributes: ["dev_capacity", "dev_name", "dev_email"],
-                    where: { dev_uuid: dev_uuid },
-                  });
-                  const sumreal = await result.reduce(
-                    (acc, atual) => acc + atual.gen_real,
-                    0
-                  );
-                  const sumrealNew = sumreal.toFixed(2);
-                  const sumestimated = await result.reduce(
-                    (acc, atual) => acc + atual.gen_estimated,
-                    0
-                  );
-                  const sumestimatedNew = sumestimated.toFixed(2);
-                  const percent = (sumestimated / sumreal) * 100;
-                  let percentNew;
-                  if (sumreal == 0) {
-                    percentNew = 0;
-                  } else {
-                    const percent = (sumestimated / sumreal) * 100;
-                    percentNew = percent.toFixed(2);
-                  }
-
-                  let situation =
-                    percentNew > 80
-                      ? `Parábens, sua usina produziu o equivalente à ${percentNew} do total esperado.`
-                      : `Infelizmente, sua usina produziu apenas ${percentNew} em relação ao esperado.`;
-                  const dev_element = {
-                    dev_uuid,
-                    capacity: cap.dev_capacity,
-                    name: cap.dev_name,
-                    email: cap.dev_email,
-                    sumrealNew,
-                    sumestimatedNew,
-                    percentNew,
-                    situation,
-                    realGeneration,
-                    estimatedGeneration,
-                  };
-                  return JSON.stringify(dev_element);
-                })
-              );
-
-              results.forEach((result) => this.push(result));
-
-              this.push(null);
-            } catch (error) {
-              this.emit("error", error);
-            }
-          },
-        });
-
-        const transformStream = Transform({
-          async transform(chunk, encode, cb) {
-            const realGeneration = [
-              { value: 242.77, date: "01-02-2024" },
-              { value: 54.12, date: "02-02-2024" },
-              { value: 101.88, date: "03-02-2024" },
-              { value: 163.32, date: "04-02-2024" },
-              { value: 312.65, date: "05-02-2024" },
-              { value: 176.53, date: "06-02-2024" },
-              { value: 51.31, date: "07-02-2024" },
-              { value: 116.78, date: "08-02-2024" },
-              { value: 324.93, date: "09-02-2024" },
-              { value: 153.89, date: "10-02-2024" },
-              { value: 108.01, date: "11-02-2024" },
-              { value: 327.34, date: "12-02-2024" },
-              { value: 253.67, date: "13-02-2024" },
-              { value: 234.68, date: "14-02-2024" },
-              { value: 250.42, date: "15-02-2024" },
-              { value: 275.57, date: "16-02-2024" },
-              { value: 238.41, date: "17-02-2024" },
-              { value: 63.05, date: "18-02-2024" },
-              { value: 170.43, date: "19-02-2024" },
-              { value: 219.22, date: "20-02-2024" },
-              { value: 79.94, date: "21-02-2024" },
-              { value: 307.22, date: "22-02-2024" },
-              { value: 233.38, date: "23-02-2024" },
-              { value: 256.52, date: "24-02-2024" },
-              { value: 174.33, date: "25-02-2024" },
-              { value: 82.34, date: "26-02-2024" },
-              { value: 198.84, date: "27-02-2024" },
-              { value: 51.68, date: "28-02-2024" },
-              { value: 179.76, date: "29-02-2024" },
-              { value: 294.69, date: "30-02-2024" },
-              { value: 71.21, date: "31-02-2024" },
-            ];
-
-            const estimatedGeneration = [
-              121.38, 27.06, 50.94, 81.66, 156.33, 88.26, 25.65, 58.39, 162.47,
-              76.95, 54.0, 163.67, 126.83, 117.34, 125.21, 137.78, 119.2, 31.53,
-              85.22, 109.61, 39.97, 153.61, 116.69, 128.26, 87.17, 41.17, 99.42,
-              25.84, 89.88, 147.34, 35.61,
-            ];
-
-            let report = await generateFile({
-              params: JSON.parse(chunk),
-              paramstest: {
-                realGeneration,
-                estimatedGeneration,
-              },
-            });
-            let userWithReport = JSON.parse(chunk);
-            userWithReport.report = report;
-            cb(null, JSON.stringify(userWithReport));
-          },
-        });
-
-        const writableStream = Writable({
-          async write(chunk, enconding, cb) {
-            const attachment = {
-              filename: "relatorio.pdf",
-              content: JSON.parse(chunk).report.base64,
-              encoding: "base64",
-            };
-
-            // const searchDeviceEmail = await Devices.findOne({
-            //   where: { dev_uuid: dev_uuid },
-            //   attributes: ["dev_email"],
-            // });
-
-            // const emailBody = `
-            //   Prezado usuário,
-
-            //   Anexamos um relatório em formato PDF com os dados de geração da usina. Este relatório inclui informações referentes à geração diária, semanal e mensal, apresentadas de forma clara e concisa.
-
-            //   Além disso, no documento, você encontrará um gráfico temporal que ilustra a variação na produção de energia ao longo do período analisado.
-
-            //   <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
-            // `;
-            const emailBody = `
-            Prezado usuário,<br><br>
-  
-            Em anexo, relatório com a performance da sua usina no mês atual. Estamos à disposição para quaisquer dúvidas e sugestões.<br><br>
-        
-            <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
-            https://mayax.com.br/
-        `;
-
-            const mailOptions = {
-              from: "noreplymayawatch@gmail.com",
-              // ,
-              to: [cap.dev_email, "bisintese@gmail.com", "eloymun00@gmail.com"], //cap.dev_email
-              subject: "Relatório de dados de Geração",
-              text: "",
-              html: emailBody,
-              attachments: attachment,
-            };
-
-            try {
-              await transporter.sendMail(mailOptions);
-              // await Users.update(
-              //   { use_set_report: true },
-              //   { where: { use_uuid: element.use_uuid } }
-              // );
-              console.log({
-                success: true,
-                message: `Email enviado com sucesso para dev_uuid: ${
-                  JSON.parse(chunk).dev_uuid
-                }`,
-              });
-            } catch (error) {
-              console.log({
-                success: false,
-                message: `Erro ao enviar o email para dev_uuid: ${
-                  JSON.parse(chunk).dev_uuid
-                } - ${error}`,
-              });
-            }
-            cb();
-          },
-        });
-
-        pipelineAsync(readableStream, transformStream, writableStream);
+        await massiveEmail(element.use_uuid);
       });
 
       res.status(200).json({ message: "Envio de relatórios em andamento" });
@@ -2413,6 +1934,7 @@ class UsersController {
           return res
             .status(500)
             .json({ message: "Não foi possível gerar o CSV!" });
+          ("");
         });
     } catch (error) {
       return res.status(500).json({ message: "Não foi possível geral o CSV!" });

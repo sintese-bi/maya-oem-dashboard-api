@@ -287,6 +287,11 @@ routes.get(
   checkToken,
   UsersController.dashboard
 );
+routes.post(
+  `${apiVersion}/massiveReportsStatus`,
+  checkToken,
+  UsersController.massiveReportsStatus
+);
 // routes.get(
 //   `${apiVersion}/dashboardall/:uuid`,
 //   checkToken,
