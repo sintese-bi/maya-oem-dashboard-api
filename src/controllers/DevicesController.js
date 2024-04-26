@@ -351,14 +351,6 @@ class DevicesController {
         }
       );
       //Informações recebidas do banco externo
-      
-
-
-
-
-
-
-
     } catch (error) {
       return res
         .status(400)

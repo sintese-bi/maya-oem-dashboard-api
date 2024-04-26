@@ -27,7 +27,16 @@ class Devices extends Model {
         dev_brand: {
           type: DataTypes.STRING,
         },
+        dev_install: {
+          type: DataTypes.STRING,
+        },
         dev_address: {
+          type: DataTypes.STRING,
+        },
+        dev_temp: {
+          type: DataTypes.STRING,
+        },
+        dev_weather: {
           type: DataTypes.STRING,
         },
         dev_deleted: {
