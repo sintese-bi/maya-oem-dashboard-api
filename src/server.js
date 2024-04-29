@@ -5,6 +5,7 @@ require("dotenv/config");
 import express from "express";
 import cors from "cors";
 import routes from "./routes";
+import "./massive-email/verifiy_massive_emails.js"
 import "moment/locale/pt-br";
 require("./database");
 
