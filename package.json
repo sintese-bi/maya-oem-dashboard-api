@@ -5,7 +5,7 @@
   "author": "Anderson Alves Coelho",
   "license": "MIT",
   "scripts": {
-    "dev": "SET NODE_ENV=development & nodemon src/server.js",
+    "dev": "SET NODE_ENV=development & nodemon  src/server.js",
     "build": "sucrase ./src -d ./dist --transforms imports,jsx,flow",
     "start": "pm2-runtime ./dist/server.js"
   },
@@ -20,7 +20,8 @@
     "google-auth-library": "^8.7.0",
     "googleapis": "^112.0.0",
     "jsonwebtoken": "^9.0.0",
-    "moment-timezone": "^0.5.45",
+    "moment": "^2.29.4",
+    "moment-timezone": "^0.5.43",
     "multer": "^1.4.5-lts.1",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.4",

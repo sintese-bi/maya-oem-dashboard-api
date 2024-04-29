@@ -14,10 +14,10 @@ import Invoice from "../models/Invoice";
 import Brand_Info from "../models/Brand_info";
 import Address from "../models/Address";
 import Invoice_received from "../models/Invoice_received";
-
 import Proposal from "../models/Proposal";
+import DeletedDevices from "../models/DeletedDevices";
 import Reports from "../models/Reports";
-//Este código configura uma conexão com o banco de dados usando o Sequelize, um ORM.
+
 const modelsDbMayaEnergy = [
   Temperature,
   Brand_Info,
@@ -35,6 +35,7 @@ const modelsDbMayaEnergy = [
   Devices,
   Generation,
   IrradiationCoefficient,
+  DeletedDevices,
 ];
 
 class Database {
