@@ -10,8 +10,8 @@ import "./massive-email/verifiy_massive_emails.js";
 require("./database");
 
 const PORT = 8080;
-const HOST = "localhost";
-//const HOST = "0.0.0.0";
+// const HOST = "localhost";
+const HOST = "0.0.0.0";
 // const HOST = "104.131.163.240";
 
 const app = express();
