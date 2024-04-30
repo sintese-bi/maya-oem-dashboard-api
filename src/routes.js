@@ -231,7 +231,7 @@ routes.post(
 );
 // routes.post(
 //   `${apiVersion}/liquidationreport`,
- 
+
 //   DevicesController.liquidationReport
 // );
 
@@ -251,7 +251,11 @@ routes.post(
   checkToken,
   UsersController.deviceInformation
 );
-
+routes.post(
+  `${apiVersion}/managernames`,
+  checkToken,
+  DevicesController.managerNames
+);
 routes.post(
   `${apiVersion}/updateemaildevice`,
   checkToken,

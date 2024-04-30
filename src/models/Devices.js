@@ -12,6 +12,9 @@ class Devices extends Model {
         dev_name: {
           type: DataTypes.STRING,
         },
+        dev_name_manager: {
+          type: DataTypes.STRING,
+        },
         dev_lat: {
           type: DataTypes.FLOAT,
         },

@@ -357,5 +357,20 @@ class DevicesController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  async managerNames(req, res) {
+    try {
+      const { dev_uuid } = req.body;
+      const result = await Users.findOne({
+        attributes: ["dev_name_manager"],
+
+        where: { dev_uuid: dev_uuid },
+      });
+      return res.status(200).json({ message: result });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
 }
 export default new DevicesController();
