@@ -368,10 +368,13 @@ class DevicesController {
         //   { where: { dev_uuid: dev_uuid } }
         // );
         const result = await Users.findOne({
-          attributes: ["dev_name_manager","dev_install"],
+          attributes: ["dev_name_manager", "dev_install"],
 
           where: { dev_uuid: dev_uuid },
         });
+        if (!result.dev_name_manager || !result.dev_install) {
+          return res.status(500).json({ message: "Não há usinas associadas!" });
+        }
         return res.status(200).json({ message: result });
       } else {
         return res
