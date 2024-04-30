@@ -361,14 +361,14 @@ class DevicesController {
     try {
       const clientToken = req.headers.authorization;
       const expectedToken = process.env.TOKEN;
-      const { dev_uuid, instalacao } = req.body;
+      const { dev_uuid } = req.body;
       if (clientToken == `Bearer ${expectedToken}`) {
-        await Devices.update(
-          { dev_install: instalacao },
-          { where: { dev_uuid: dev_uuid } }
-        );
+        // await Devices.update(
+        //   { dev_install: instalacao },
+        //   { where: { dev_uuid: dev_uuid } }
+        // );
         const result = await Users.findOne({
-          attributes: ["dev_name_manager"],
+          attributes: ["dev_name_manager","dev_install"],
 
           where: { dev_uuid: dev_uuid },
         });
