@@ -253,7 +253,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/managernames`,
-  checkToken,
+  
   DevicesController.managerNames
 );
 routes.post(

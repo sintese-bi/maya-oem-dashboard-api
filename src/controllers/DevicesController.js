@@ -359,13 +359,21 @@ class DevicesController {
   }
   async managerNames(req, res) {
     try {
+      const clientToken = req.headers.authorization;
+      const expectedToken = process.env.TOKEN;
       const { dev_uuid } = req.body;
-      const result = await Users.findOne({
-        attributes: ["dev_name_manager"],
+      if (clientToken == `Bearer ${expectedToken}`) {
+        const result = await Users.findOne({
+          attributes: ["dev_name_manager"],
 
-        where: { dev_uuid: dev_uuid },
-      });
-      return res.status(200).json({ message: result });
+          where: { dev_uuid: dev_uuid },
+        });
+        return res.status(200).json({ message: result });
+      } else {
+        return res
+          .status(401)
+          .json({ message: "Falha na autenticação: Token inválido." });
+      }
     } catch (error) {
       return res
         .status(500)
