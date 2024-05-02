@@ -59,7 +59,7 @@ routes.get(
   IrradiationCoefficientController.index
 );
 routes.post(`${apiVersion}/pandadoc`, PandaDocController.handler);
-routes.post(`${apiVersion}/uselogo`, checkToken,UsersController.useLogo);
+routes.post(`${apiVersion}/uselogo`, checkToken, UsersController.useLogo);
 routes.get(`${apiVersion}/report/:blUuid`, UsersController.report);
 routes.get(`${apiVersion}/reportclient/:devUuid`, UsersController.reportClient);
 // ----------------------------------------------------------------------------
@@ -75,13 +75,14 @@ routes.get(
   UsersController.invoiceReturn
 );
 routes.put(
-  `${apiVersion}/updatelogo`,checkToken,
-  upload.single('image'),
+  `${apiVersion}/updatelogo`,
+  checkToken,
+  upload.single("image"),
   UsersController.updateLogo
 );
 routes.get(
   `${apiVersion}/genmonitor`,
-  
+
   UsersController.genMonitor
 );
 routes.post(
@@ -158,11 +159,11 @@ routes.get(
 
 routes.post(`${apiVersion}/sendingemail`, UsersController.sendEmail);
 routes.post(`${apiVersion}/passrecover`, UsersController.passwordRecover);
-routes.post(`${apiVersion}/devicelogin`, checkToken, UsersController.newDevice);
+routes.post(`${apiVersion}/deviceLogin`, checkToken, UsersController.newDevice);
 routes.post(
-  `${apiVersion}/updatebrands`,
+  `${apiVersion}/deleteDevice`,
   checkToken,
-  UsersController.updateBrands
+  UsersController.deleteDevice
 );
 routes.get(
   `${apiVersion}/alerts/:devUuid`,
@@ -225,16 +226,24 @@ routes.get(
 );
 routes.post(
   `${apiVersion}/updateuser`,
- 
+
   UsersController.UpdateUserInformation
 );
 // routes.post(
 //   `${apiVersion}/liquidationreport`,
+
+
+//   DevicesController.liquidationReport
+// );
+
+// routes.post(`${apiVersion}/massemail`, UsersController.massEmail);
+
  
 //   DevicesController.liquidationReport
 // );
 
 // routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
+
 // routes.get(
 //   `${apiVersion}/automaticmassemail`,
 //   checkToken,
@@ -250,7 +259,11 @@ routes.post(
   checkToken,
   UsersController.deviceInformation
 );
-
+routes.post(
+  `${apiVersion}/managernames`,
+  
+  DevicesController.managerNames
+);
 routes.post(
   `${apiVersion}/updateemaildevice`,
   checkToken,
@@ -266,7 +279,6 @@ routes.post(
 //   checkToken,
 //   UsersController.massemailScheduler
 // );
-
 
 // routes.put(
 //   `${apiVersion}/restartcolumn`,
@@ -291,6 +303,11 @@ routes.get(
   `${apiVersion}/dashboard/:uuid/:par`,
   checkToken,
   UsersController.dashboard
+);
+routes.post(
+  `${apiVersion}/massiveReportsStatus`,
+  checkToken,
+  UsersController.massiveReportsStatus
 );
 // routes.get(
 //   `${apiVersion}/dashboardall/:uuid`,

@@ -54,6 +54,10 @@ class Users extends Model {
           type: DataTypes.STRING,
         },
         use_set_report: { type: DataTypes.BOOLEAN },
+        use_massive_reports_status: { type: DataTypes.STRING },
+        use_massive_reports_status_updated_at: {
+          type: DataTypes.DATE,
+        },
       },
       {
         sequelize,
