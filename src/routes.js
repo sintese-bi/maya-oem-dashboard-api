@@ -231,11 +231,11 @@ routes.post(
 );
 // routes.post(
 //   `${apiVersion}/liquidationreport`,
- 
+
 //   DevicesController.liquidationReport
 // );
 
-routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
+// routes.post(`${apiVersion}/massemail`, UsersController.massEmail);
 // routes.get(
 //   `${apiVersion}/automaticmassemail`,
 //   checkToken,
@@ -251,7 +251,11 @@ routes.post(
   checkToken,
   UsersController.deviceInformation
 );
-
+routes.post(
+  `${apiVersion}/managernames`,
+  
+  DevicesController.managerNames
+);
 routes.post(
   `${apiVersion}/updateemaildevice`,
   checkToken,

@@ -1969,6 +1969,7 @@ class UsersController {
             dev_email,
             ic_city,
             ic_states,
+            // dev_install,
             dev_image,
           } = devarray;
 
@@ -2024,6 +2025,7 @@ class UsersController {
               dev_capacity: capacity,
               dev_email: dev_email,
               dev_image: dev_image,
+              // dev_install:dev_install,
               dev_address: ic_city + "-" + ic_states,
               dev_lat: irr
                 ? irr.ic_lat !== undefined
@@ -3047,7 +3049,7 @@ const usersController = new UsersController();
 // usersController.agendarreinicioDispositivos();
 
 //Envio relatorio de dispositivos acima e abaixo do estimado
-usersController.agendarmonitorGeração();
+    usersController.agendarmonitorGeração();
 
 //Cron para  envio de alerta quando a geração real estiver x% abaixo da geração estimada
 usersController.agendarAlertasGeracao();

@@ -357,5 +357,33 @@ class DevicesController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  async managerNames(req, res) {
+    try {
+      const clientToken = req.headers.authorization;
+      const expectedToken = process.env.TOKEN;
+      const { dev_uuid } = req.body;
+      if (clientToken == `Bearer ${expectedToken}`) {
+        // await Devices.update(
+        //   { dev_install: instalacao },
+        //   { where: { dev_uuid: dev_uuid } }
+        // );
+        const result = await Devices.findOne({
+          attributes: ["dev_name_manager", "dev_install"],
+
+          where: { dev_uuid: dev_uuid },
+        });
+
+        return res.status(200).json(result);
+      } else {
+        return res
+          .status(401)
+          .json({ message: "Falha na autenticação: Token inválido." });
+      }
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
 }
 export default new DevicesController();
