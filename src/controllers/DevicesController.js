@@ -372,7 +372,9 @@ class DevicesController {
 
           where: { dev_uuid: dev_uuid },
         });
-
+        if (!result.dev_name_manager || !result.dev_install) {
+          return res.status(404).send(); 
+        }
         return res.status(200).json(result);
       } else {
         return res
