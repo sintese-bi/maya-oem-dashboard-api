@@ -232,10 +232,18 @@ routes.post(
 // routes.post(
 //   `${apiVersion}/liquidationreport`,
 
+
 //   DevicesController.liquidationReport
 // );
 
 // routes.post(`${apiVersion}/massemail`, UsersController.massEmail);
+
+ 
+//   DevicesController.liquidationReport
+// );
+
+// routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
+
 // routes.get(
 //   `${apiVersion}/automaticmassemail`,
 //   checkToken,
