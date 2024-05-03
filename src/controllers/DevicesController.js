@@ -359,23 +359,51 @@ class DevicesController {
   }
   async managerNames(req, res) {
     try {
+      const current_day_string = moment().format("DD");
+      const current_day = parseInt(moment().format("DD"));
       const clientToken = req.headers.authorization;
       const expectedToken = process.env.TOKEN;
-      const { dev_uuid } = req.body;
+      const { dev_uuid, periodo } = req.body;
+      const periodo_com_dia = `${periodo}-${current_day_string}`;
+     
       if (clientToken == `Bearer ${expectedToken}`) {
         // await Devices.update(
         //   { dev_install: instalacao },
         //   { where: { dev_uuid: dev_uuid } }
         // );
         const result = await Devices.findOne({
-          attributes: ["dev_name","dev_name_manager", "dev_install"],
+          attributes: ["dev_name", "dev_name_manager", "dev_install"],
 
           where: { dev_uuid: dev_uuid },
         });
-        if (!result.dev_name_manager || !result.dev_install) {
-          return res.status(404).send(); 
+        if (
+          !result ||
+          result.dev_name_manager === null ||
+          result.dev_install === null
+        ) {
+          return res.status(404).send();
         }
-        return res.status(200).json(result);
+
+        const gen = await Generation.findOne({
+          include: [
+            {
+              association: "devices",
+              where: {
+                dev_uuid: dev_uuid,
+              },
+            },
+          ],
+          where: {
+            gen_date: periodo_com_dia,
+          },
+          attributes: ["gen_estimated"],
+        });
+        const responseData = {
+          result: result,
+          gen_estimated: gen.gen_estimated,
+          gen_estimated_total: gen.gen_estimated * current_day,
+        };
+        return res.status(200).json(responseData);
       } else {
         return res
           .status(401)
