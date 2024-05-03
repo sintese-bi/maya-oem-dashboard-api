@@ -2,14 +2,14 @@ version: '3.8'
 
 services:
   dev:
-    container_name: maya-energy-dashboard-api
+    container_name: maya-energy-email-api
     build:
       context: ./
       dockerfile: Dockerfile
     volumes:
       - ./:/app
     ports:
-      - '8888:8080'
+      - '8889:8080'
 
 
   prod:
