@@ -368,7 +368,7 @@ class DevicesController {
         //   { where: { dev_uuid: dev_uuid } }
         // );
         const result = await Devices.findOne({
-          attributes: ["dev_name_manager", "dev_install"],
+          attributes: ["dev_name","dev_name_manager", "dev_install"],
 
           where: { dev_uuid: dev_uuid },
         });
