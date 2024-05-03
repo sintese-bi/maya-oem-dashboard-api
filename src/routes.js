@@ -32,10 +32,10 @@ const routes = express.Router();
 // );
 routes.post(`${apiVersion}/genrealday`, DevicesControlle.sumGeneration);
 routes.post(`${apiVersion}/login`, UsersController.login);
-routes.post(
-  `${apiVersion}/stripe-webhook`,
-  StripeController.handleStripeWebhook
-);
+// routes.post(
+//   `${apiVersion}/stripe-webhook`,
+//   StripeController.handleStripeWebhook
+// );
 routes.get(`${apiVersion}/generationReport`, UsersController.generationReport);
 routes.get(`${apiVersion}/investment`, InvestmentController.index);
 routes.get(`${apiVersion}/kanban`, UsersController.kanban);
@@ -229,8 +229,21 @@ routes.post(
 
   UsersController.UpdateUserInformation
 );
+// routes.post(
+//   `${apiVersion}/liquidationreport`,
 
-routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
+
+//   DevicesController.liquidationReport
+// );
+
+// routes.post(`${apiVersion}/massemail`, UsersController.massEmail);
+
+ 
+//   DevicesController.liquidationReport
+// );
+
+// routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
+
 // routes.get(
 //   `${apiVersion}/automaticmassemail`,
 //   checkToken,
@@ -246,7 +259,11 @@ routes.post(
   checkToken,
   UsersController.deviceInformation
 );
-
+routes.post(
+  `${apiVersion}/managernames`,
+  
+  DevicesController.managerNames
+);
 routes.post(
   `${apiVersion}/updateemaildevice`,
   checkToken,

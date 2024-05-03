@@ -2007,10 +2007,11 @@ class UsersController {
         arrayplants.map(async (devarray) => {
           const {
             dev_uuid,
-            dev_capacity,
+            capacity,
             dev_email,
             ic_city,
             ic_states,
+            dev_install,
             dev_image,
           } = devarray;
 
@@ -2027,7 +2028,7 @@ class UsersController {
 
             if (!irr) {
               const ic_year = 5.04;
-              const gen_new = dev_capacity * ic_year * 0.81;
+              const gen_new = capacity * ic_year * 0.81;
               await Generation.update(
                 { gen_estimated: gen_new },
                 {
@@ -2044,7 +2045,7 @@ class UsersController {
               );
             } else {
               const ic_year = irr.dataValues.ic_yearly;
-              const gen_new = dev_capacity * ic_year * 0.81;
+              const gen_new = capacity * ic_year * 0.81;
               await Generation.update(
                 { gen_estimated: gen_new },
                 {
@@ -2063,9 +2064,10 @@ class UsersController {
 
           await Devices.update(
             {
-              dev_capacity: dev_capacity,
+              dev_capacity: Number(capacity),
               dev_email: dev_email,
               dev_image: dev_image,
+              dev_install: dev_install,
               dev_address: ic_city + "-" + ic_states,
               dev_lat: irr
                 ? irr.ic_lat !== undefined

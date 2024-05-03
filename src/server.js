@@ -6,15 +6,14 @@ import express from "express";
 import http from "http";
 import cors from "cors";
 import routes from "./routes";
+import "./massive-email/verifiy_massive_emails.js";
 import "moment/locale/pt-br";
 import "./massive-email/verifiy_massive_emails.js";
 import { WebSocketService } from "./service/websocket.js";
 require("./database");
 
 const PORT = 8080;
-const HOST = "localhost";
-//const HOST = "0.0.0.0";
-// const HOST = "104.131.163.240";
+const HOST = "0.0.0.0";
 
 const app = express();
 const server = http.createServer(app);
@@ -31,13 +30,11 @@ app.use((req, res, next) => {
   }
 });
 
-const corsOptions = {
-  origin: "http://localhost:3000",
-};
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(routes);
 
 app.listen(PORT, HOST);
+
 app.get("/", function (req, res, next) {
   res.send("Olá!");
 });

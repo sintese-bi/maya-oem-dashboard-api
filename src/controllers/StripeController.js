@@ -4,12 +4,12 @@ import bcrypt from "bcrypt";
 import Users from "../models/Users";
 import { raw } from "express";
 const stripe = new Stripe(
-  "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",
+  "",
   {
     apiVersion: "2020-08-27",
   }
 );
-const endpointSecret = "whsec_Nt3O4p1v04xHSXUYGPClNzoq6H4xfB1m";
+
 //Configuração das credenciais do email de envio
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
   secure: true, //alterar
   auth: {
     user: "noreplymayawatch@gmail.com",
-    pass: "xbox ejjd wokp ystv",
+    pass: "",
   },
   tls: {
     rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento

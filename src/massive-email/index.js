@@ -263,11 +263,9 @@ export async function massiveEmail(use_uuid) {
           https://mayax.com.br/
       `;
 
-      console.log(JSON.parse(chunk).dev_uuid);
-
       const mailOptions = {
         from: "noreplymayawatch@gmail.com",
-        to: ["felipegadelha2004@gmail.com"],
+        to: JSON.parse(chunk).dev_email,
         subject: "Relatório de dados de Geração",
         text: "",
         html: emailBody,
