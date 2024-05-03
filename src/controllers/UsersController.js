@@ -1290,15 +1290,34 @@ class UsersController {
 
   async massiveReportsStatus(req, res) {
     const { use_uuid } = req.body;
+
     try {
       const user = await Users.findOne({
         where: {
           use_uuid: use_uuid,
         },
       });
-      console.log("heyyyy\n", user.use_massive_reports_status);
+      const result = await Devices.findAll({
+        include: [
+          {
+            association: "brand_login",
+            attributes: [],
+            where: {
+              use_uuid: use_uuid,
+            },
+          },
+        ],
+        attributes: ["dev_uuid"],
+        where: {
+          dev_email: {
+            [Op.not]: null,
+          },
+          [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
+        },
+      });
       return res.status(200).json({
         use_massive_reports_status: user.use_massive_reports_status,
+        amount_of_reports: result.length,
       });
     } catch (error) {
       return res
@@ -1742,6 +1761,29 @@ class UsersController {
   async massEmail(req, res) {
     try {
       const { use_uuid } = req.body;
+
+      const user = await Users.findOne({
+        attributes: ["use_massive_reports_status"],
+        where: {
+          use_uuid: use_uuid,
+        },
+      });
+
+      if (user.use_massive_reports_status == "executing") {
+        await Users.update(
+          {
+            use_massive_reports_status: "completed",
+          },
+          {
+            where: {
+              use_uuid: use_uuid,
+            },
+          }
+        );
+        return res.status(200).json({
+          message: "Envio cancelado",
+        });
+      }
 
       const users_massive_reports_status = await Users.findAll({
         attributes: ["use_massive_reports_status"],
