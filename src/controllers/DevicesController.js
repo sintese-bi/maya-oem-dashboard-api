@@ -368,12 +368,12 @@ class DevicesController {
         //   { where: { dev_uuid: dev_uuid } }
         // );
         const result = await Devices.findOne({
-          attributes: ["dev_name","dev_name_manager", "dev_install"],
+          attributes: ["dev_name", "dev_name_manager", "dev_install"],
 
           where: { dev_uuid: dev_uuid },
         });
         if (!result.dev_name_manager || !result.dev_install) {
-          return res.status(404).send(); 
+          return res.status(404).send();
         }
         return res.status(200).json(result);
       } else {

@@ -1969,10 +1969,10 @@ class UsersController {
             dev_email,
             ic_city,
             ic_states,
-            // dev_install,
+            dev_install,
             dev_image,
           } = devarray;
-
+          
           if (ic_city != undefined && ic_states != undefined) {
             var irr = await IrradiationCoefficient.findOne({
               where: { ic_city, ic_states },
@@ -2025,7 +2025,7 @@ class UsersController {
               dev_capacity: capacity,
               dev_email: dev_email,
               dev_image: dev_image,
-              // dev_install:dev_install,
+              dev_install:dev_install,
               dev_address: ic_city + "-" + ic_states,
               dev_lat: irr
                 ? irr.ic_lat !== undefined
