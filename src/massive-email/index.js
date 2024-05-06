@@ -265,7 +265,7 @@ export async function massiveEmail(use_uuid) {
 
       const mailOptions = {
         from: "noreplymayawatch@gmail.com",
-        to: JSON.parse(chunk).dev_email,
+        to: ["felipegadelha2004@gmail.com"],
         subject: "Relatório de dados de Geração",
         text: "",
         html: emailBody,
