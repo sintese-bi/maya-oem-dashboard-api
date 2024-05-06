@@ -3,16 +3,23 @@
 //Há também um middleware específico para tratar requisições na rota '/v1/stripe-webhook' como dados brutos no formato JSON.
 require("dotenv/config");
 import express from "express";
+import http from "http";
 import cors from "cors";
 import routes from "./routes";
-import "./massive-email/verifiy_massive_emails.js"
+import "./massive-email/verifiy_massive_emails.js";
 import "moment/locale/pt-br";
+import "./massive-email/verifiy_massive_emails.js";
+import { WebSocketService } from "./service/websocket.js";
 require("./database");
 
 const PORT = 8080;
 const HOST = "0.0.0.0";
 
 const app = express();
+const server = http.createServer(app);
+const webScoketService = new WebSocketService(server);
+webScoketService.exec(server);
+server.listen(8081);
 
 // Middleware para tratar como Buffer Bruto apenas em uma rota específica
 app.use((req, res, next) => {

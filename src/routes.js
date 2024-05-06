@@ -139,7 +139,7 @@ routes.post(
   checkToken,
   GenerationController.generalreportEmail
 );
-routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
+routes.get(`${apiVersion}/users`,  UsersController.users);
 routes.get(
   `${apiVersion}/userBrands/:uuid`,
   checkToken,

@@ -6,6 +6,8 @@ import { Sequelize, Op } from "sequelize";
 import nodemailer from "nodemailer";
 import Reports from "../models/Reports";
 import Users from "../models/Users";
+import { WebSocketService } from "../service/websocket";
+import { server } from "../server";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -24,6 +26,9 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function massiveEmail(use_uuid) {
+  let sentEmailsAmount = 0;
+
+  const webSocketService = new WebSocketService();
   await Users.update(
     {
       use_massive_reports_status: "executing",
@@ -257,7 +262,7 @@ export async function massiveEmail(use_uuid) {
           <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
           https://mayax.com.br/
       `;
-     
+
       const mailOptions = {
         from: "noreplymayawatch@gmail.com",
         to: JSON.parse(chunk).dev_email,
@@ -267,28 +272,42 @@ export async function massiveEmail(use_uuid) {
         attachments: attachment,
       };
 
-      try {
-        await transporter.sendMail(mailOptions);
+      const user = await Users.findOne({
+        attributes: ["use_massive_reports_status"],
+        where: {
+          use_uuid: use_uuid,
+        },
+      });
 
-        console.log({
-          success: true,
-          message: `Email enviado com sucesso para dev_uuid: ${
-            JSON.parse(chunk).dev_uuid
-          }`,
-        });
-
-        // //Adicionar atualização tabela report
-        // await Devices.update({
-        //   dev_verify_email: true,
-        // });
-      } catch (error) {
-        console.log({
-          success: false,
-          message: `Erro ao enviar o email para dev_uuid: ${
-            JSON.parse(chunk).dev_uuid
-          } - ${error}`,
-        });
+      if (user.use_massive_reports_status == "completed") {
+        return;
       }
+
+      sentEmailsAmount = sentEmailsAmount + 100 / result.length;
+      console.log(sentEmailsAmount + 100 / result.length);
+      webSocketService.handleSendingMessage(sentEmailsAmount);
+      //try {
+      //  await transporter.sendMail(mailOptions);
+      //
+      //  console.log({
+      //    success: true,
+      //    message: `Email enviado com sucesso para dev_uuid: ${
+      //      JSON.parse(chunk).dev_uuid
+      //    }`,
+      //  });
+      //
+      //  // //Adicionar atualização tabela report
+      //  // await Devices.update({
+      //  //   dev_verify_email: true,
+      //  // });
+      //} catch (error) {
+      //  console.log({
+      //    success: false,
+      //    message: `Erro ao enviar o email para dev_uuid: ${
+      //      JSON.parse(chunk).dev_uuid
+      //    } - ${error}`,
+      //  });
+      //}
       cb();
     },
   });
