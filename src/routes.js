@@ -139,7 +139,7 @@ routes.post(
   checkToken,
   GenerationController.generalreportEmail
 );
-routes.get(`${apiVersion}/users`,  UsersController.users);
+routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
 routes.get(
   `${apiVersion}/userBrands/:uuid`,
   checkToken,
@@ -232,13 +232,11 @@ routes.post(
 // routes.post(
 //   `${apiVersion}/liquidationreport`,
 
-
 //   DevicesController.liquidationReport
 // );
 
 // routes.post(`${apiVersion}/massemail`, UsersController.massEmail);
 
- 
 //   DevicesController.liquidationReport
 // );
 
@@ -261,7 +259,7 @@ routes.post(
 );
 routes.post(
   `${apiVersion}/managernames`,
-  
+
   DevicesController.managerNames
 );
 routes.post(
