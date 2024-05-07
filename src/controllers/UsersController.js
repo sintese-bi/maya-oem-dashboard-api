@@ -321,7 +321,20 @@ class UsersController {
           },
         ],
       });
-      return res.status(200).json(result);
+      const uniqueResult = result.map((user) => {
+        const uniqueBrandNames = new Set();
+        const uniqueBrandLogins = user.brand_login.filter((brand) => {
+          if (!uniqueBrandNames.has(brand.bl_name)) {
+            uniqueBrandNames.add(brand.bl_name);
+            return true;
+          }
+          return false;
+        });
+
+        return { ...user.toJSON(), brand_login: uniqueBrandLogins };
+      });
+
+      return res.status(200).json(uniqueResult);
     } catch (error) {
       return res
         .status(400)
@@ -704,11 +717,7 @@ class UsersController {
           `;
           mailOptions = {
             from: '"noreplymayawatch@gmail.com',
-            to: [
-              "contato@mayax.com.br",
-              "eloymun00@gmail.com",
-              element.use_alert_email,
-            ],
+            to: ["contato@mayax.com.br", element.use_alert_email],
             subject: "Alertas de geração abaixo do valor estipulado",
             text: "",
             html: emailBody,
@@ -1290,15 +1299,34 @@ class UsersController {
 
   async massiveReportsStatus(req, res) {
     const { use_uuid } = req.body;
+
     try {
       const user = await Users.findOne({
         where: {
           use_uuid: use_uuid,
         },
       });
-      console.log("heyyyy\n", user.use_massive_reports_status);
+      const result = await Devices.findAll({
+        include: [
+          {
+            association: "brand_login",
+            attributes: [],
+            where: {
+              use_uuid: use_uuid,
+            },
+          },
+        ],
+        attributes: ["dev_uuid"],
+        where: {
+          dev_email: {
+            [Op.not]: null,
+          },
+          [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
+        },
+      });
       return res.status(200).json({
         use_massive_reports_status: user.use_massive_reports_status,
+        amount_of_reports: result.length,
       });
     } catch (error) {
       return res
@@ -1743,6 +1771,29 @@ class UsersController {
     try {
       const { use_uuid } = req.body;
 
+      const user = await Users.findOne({
+        attributes: ["use_massive_reports_status"],
+        where: {
+          use_uuid: use_uuid,
+        },
+      });
+
+      if (user.use_massive_reports_status == "executing") {
+        await Users.update(
+          {
+            use_massive_reports_status: "completed",
+          },
+          {
+            where: {
+              use_uuid: use_uuid,
+            },
+          }
+        );
+        return res.status(200).json({
+          message: "Envio cancelado",
+        });
+      }
+
       const users_massive_reports_status = await Users.findAll({
         attributes: ["use_massive_reports_status"],
       });
@@ -1972,7 +2023,7 @@ class UsersController {
             dev_install,
             dev_image,
           } = devarray;
-          
+
           if (ic_city != undefined && ic_states != undefined) {
             var irr = await IrradiationCoefficient.findOne({
               where: { ic_city, ic_states },
@@ -2022,10 +2073,10 @@ class UsersController {
 
           await Devices.update(
             {
-              dev_capacity: capacity,
+              dev_capacity: Number(capacity),
               dev_email: dev_email,
               dev_image: dev_image,
-              dev_install:dev_install,
+              dev_install: dev_install,
               dev_address: ic_city + "-" + ic_states,
               dev_lat: irr
                 ? irr.ic_lat !== undefined
@@ -2922,7 +2973,7 @@ class UsersController {
 
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
-        to: ["contato@mayax.com.br", "eloymun00@gmail.com"],
+        to: ["contato@mayax.com.br"],
         subject: "Alertas de geração acima e abaixo do valor estipulado",
         text: "",
         html: emailBody,
@@ -3049,7 +3100,7 @@ const usersController = new UsersController();
 // usersController.agendarreinicioDispositivos();
 
 //Envio relatorio de dispositivos acima e abaixo do estimado
-    usersController.agendarmonitorGeração();
+usersController.agendarmonitorGeração();
 
 //Cron para  envio de alerta quando a geração real estiver x% abaixo da geração estimada
 usersController.agendarAlertasGeracao();
