@@ -28,7 +28,7 @@ const transporter = nodemailer.createTransport({
 export async function massiveEmail(use_uuid) {
   let sentEmailsAmount = 0;
 
-  const webSocketService = new WebSocketService();
+  //const webSocketService = new WebSocketService();
   await Users.update(
     {
       use_massive_reports_status: "executing",
@@ -293,9 +293,9 @@ export async function massiveEmail(use_uuid) {
           }`,
         });
 
-        sentEmailsAmount = sentEmailsAmount + 100 / result.length;
-        console.log(sentEmailsAmount + 100 / result.length);
-        webSocketService.handleSendingMessage(sentEmailsAmount);
+        //sentEmailsAmount = sentEmailsAmount + 100 / result.length;
+        //console.log(sentEmailsAmount + 100 / result.length);
+        //webSocketService.handleSendingMessage(sentEmailsAmount);
 
         //Adicionar atualização tabela report
         //await Devices.update({
