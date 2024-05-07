@@ -283,32 +283,32 @@ export async function massiveEmail(use_uuid) {
         return;
       }
 
-      try {
-        await transporter.sendMail(mailOptions);
+      sentEmailsAmount = sentEmailsAmount + 100 / result.length;
+      console.log(sentEmailsAmount + 100 / result.length);
+      webSocketService.handleSendingMessage(sentEmailsAmount);
 
-        console.log({
-          success: true,
-          message: `Email enviado com sucesso para dev_uuid: ${
-            JSON.parse(chunk).dev_uuid
-          }`,
-        });
-
-        sentEmailsAmount = sentEmailsAmount + 100 / result.length;
-        console.log(sentEmailsAmount + 100 / result.length);
-        webSocketService.handleSendingMessage(sentEmailsAmount);
-
-        //Adicionar atualização tabela report
-        //await Devices.update({
-        //  dev_verify_email: true,
-        //});
-      } catch (error) {
-        console.log({
-          success: false,
-          message: `Erro ao enviar o email para dev_uuid: ${
-            JSON.parse(chunk).dev_uuid
-          } - ${error}`,
-        });
-      }
+      //try {
+      //  await transporter.sendMail(mailOptions);
+      //
+      //  console.log({
+      //    success: true,
+      //    message: `Email enviado com sucesso para dev_uuid: ${
+      //      JSON.parse(chunk).dev_uuid
+      //    }`,
+      //  });
+      //
+      //  //Adicionar atualização tabela report
+      //  //await Devices.update({
+      //  //  dev_verify_email: true,
+      //  //});
+      //} catch (error) {
+      //  console.log({
+      //    success: false,
+      //    message: `Erro ao enviar o email para dev_uuid: ${
+      //      JSON.parse(chunk).dev_uuid
+      //    } - ${error}`,
+      //  });
+      //}
       cb();
     },
   });
