@@ -359,6 +359,8 @@ class DevicesController {
   }
   async managerNames(req, res) {
     try {
+      //Data atual
+      const current = moment().format("YYYY-MM-DD");
       let periodo_com_dia;
       let current_day;
       //Dia corrente
@@ -438,11 +440,38 @@ class DevicesController {
           },
           group: [Sequelize.literal("day")],
         });
+        const dayGeneration = await Generation.findAll({
+          attributes: [
+            [Sequelize.literal("DATE_TRUNC('hour', gen_created_at)"), "hour"],
+            [Sequelize.fn("MAX", Sequelize.col("gen_date")), "latest_gen_date"],
+            [Sequelize.fn("MAX", Sequelize.col("gen_real")), "latest_gen_real"],
+            [
+              Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+              "latest_gen_estimated",
+            ],
+          ],
+          include: [
+            {
+              association: "devices",
+              attributes: [],
+              where: {
+                dev_uuid: dev_uuid,
+              },
+            },
+          ],
+          where: {
+            gen_created_at: {
+              [Op.between]: [moment().startOf("day"), moment().endOf("day")],
+            },
+          },
+          group: [Sequelize.literal("DATE_TRUNC('hour', gen_created_at)")],
+        });
         const responseData = {
           result: result,
           gen_estimated: gen.gen_estimated,
           gen_estimated_total: gen.gen_estimated * current_day,
           geração_mes: monthGeneration,
+          geração_dia: dayGeneration,
         };
         return res.status(200).json(responseData);
       } else {

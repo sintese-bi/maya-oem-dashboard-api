@@ -17,10 +17,10 @@ const HOST = "0.0.0.0";
 const PORT2 = 8081;
 
 const app = express();
-const server = http.createServer(app);
-const webScoketService = new WebSocketService(server);
-webScoketService.exec(server);
-server.listen(PORT2, HOST);
+// const server = http.createServer(app);
+// const webScoketService = new WebSocketService(server);
+// webScoketService.exec(server);
+// server.listen(PORT2, HOST);
 
 // Middleware para tratar como Buffer Bruto apenas em uma rota específica
 app.use((req, res, next) => {
