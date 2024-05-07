@@ -14,13 +14,12 @@ require("./database");
 
 const PORT = 8080;
 const HOST = "0.0.0.0";
-const PORT2 = 8081;
 
 const app = express();
 const server = http.createServer(app);
 const webScoketService = new WebSocketService(server);
 webScoketService.exec(server);
-server.listen(PORT2, HOST);
+//server.listen(PORT2, HOST);
 
 // Middleware para tratar como Buffer Bruto apenas em uma rota específica
 app.use((req, res, next) => {
@@ -34,8 +33,8 @@ app.use((req, res, next) => {
 app.use(cors());
 app.use(routes);
 
-app.listen(PORT, HOST);
-
 app.get("/", function (req, res, next) {
   res.send("Olá!");
 });
+
+server.listen(PORT, HOST);
