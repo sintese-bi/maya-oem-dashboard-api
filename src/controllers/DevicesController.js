@@ -2,7 +2,7 @@ import moment from "moment-timezone";
 import Devices from "../models/Devices";
 import axios from "axios";
 import Generation from "../models/Generation";
-import { Op, literal } from "sequelize";
+import { Op, literal, Sequelize } from "sequelize";
 import Users from "../models/Users";
 class DevicesController {
   //Esta função index processa dados de dispositivos, recuperando informações de gerações associadas a eles.
@@ -359,18 +359,32 @@ class DevicesController {
   }
   async managerNames(req, res) {
     try {
+      let periodo_com_dia;
+      let current_day;
+      //Dia corrente
       const current_day_string = moment().format("DD");
-      const current_day = parseInt(moment().format("DD"));
+      //MêS corrente
+      const current_month_string = moment().format("MM");
       const clientToken = req.headers.authorization;
       const expectedToken = process.env.TOKEN;
       const { dev_uuid, periodo } = req.body;
-      const periodo_com_dia = `${periodo}-${current_day_string}`;
-     
+      //Ultimo dia do mes
+      const lastDayOfMonth = moment(periodo, "YYYY-MM")
+        .endOf("month")
+        .format("DD");
+      //Mês que o usuário escolheu
+      const periodo_month_current = periodo.split("-")[1];
+      //Data corrente
+      const primeiro_dia_mes = `${periodo}-01`;
+      if (periodo_month_current == current_month_string) {
+        periodo_com_dia = `${periodo}-${current_day_string}`;
+        current_day = parseInt(current_day_string);
+      } else {
+        periodo_com_dia = `${periodo}-${lastDayOfMonth}`;
+        current_day = parseInt(lastDayOfMonth);
+      }
+
       if (clientToken == `Bearer ${expectedToken}`) {
-        // await Devices.update(
-        //   { dev_install: instalacao },
-        //   { where: { dev_uuid: dev_uuid } }
-        // );
         const result = await Devices.findOne({
           attributes: ["dev_name", "dev_name_manager", "dev_install"],
 
@@ -383,7 +397,7 @@ class DevicesController {
         ) {
           return res.status(404).send();
         }
-
+        //Valores de geração estimada do mês escolhido
         const gen = await Generation.findOne({
           include: [
             {
@@ -398,10 +412,37 @@ class DevicesController {
           },
           attributes: ["gen_estimated"],
         });
+        const monthGeneration = await Generation.findAll({
+          attributes: [
+            [Sequelize.literal("DATE(gen_date)"), "day"],
+            [Sequelize.fn("MAX", Sequelize.col("gen_date")), "latest_gen_date"],
+            [Sequelize.fn("MAX", Sequelize.col("gen_real")), "latest_gen_real"],
+            [
+              Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+              "latest_gen_estimated",
+            ],
+          ],
+          include: [
+            {
+              association: "devices",
+              attributes: [],
+              where: {
+                dev_uuid: dev_uuid,
+              },
+            },
+          ],
+          where: {
+            gen_date: {
+              [Op.between]: [primeiro_dia_mes, periodo_com_dia],
+            },
+          },
+          group: [Sequelize.literal("day")],
+        });
         const responseData = {
           result: result,
           gen_estimated: gen.gen_estimated,
           gen_estimated_total: gen.gen_estimated * current_day,
+          geração_mes: monthGeneration,
         };
         return res.status(200).json(responseData);
       } else {
@@ -415,10 +456,5 @@ class DevicesController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-
-
-
-
-  
 }
 export default new DevicesController();

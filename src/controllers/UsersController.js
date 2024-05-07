@@ -308,40 +308,39 @@ class UsersController {
   //Em caso de sucesso, a API retorna os dados em formato JSON com um status 200. Se ocorrer algum erro durante o processo, ela retorna uma mensagem de erro no formato JSON com um status 400.
   async users(req, res) {
     try {
-        const result = await Users.findAll({
-            attributes: ["use_name", "use_email", "use_uuid", "use_deleted"],
-            include: [
-                {
-                    association: "brand_login",
-                    attributes: ["bl_uuid", "bl_name"],
-                },
-                {
-                    association: "profile_level",
-                    attributes: ["pl_cod", "pl_name"],
-                },
-            ],
-        });
-        const uniqueResult = result.map(user => {
-            
-            const uniqueBrandNames = new Set();
-            const uniqueBrandLogins = user.brand_login.filter(brand => {
-                if (!uniqueBrandNames.has(brand.bl_name)) {
-                    uniqueBrandNames.add(brand.bl_name);
-                    return true;
-                }
-                return false;
-            });
-
-            return { ...user.toJSON(), brand_login: uniqueBrandLogins };
+      const result = await Users.findAll({
+        attributes: ["use_name", "use_email", "use_uuid", "use_deleted"],
+        include: [
+          {
+            association: "brand_login",
+            attributes: ["bl_uuid", "bl_name"],
+          },
+          {
+            association: "profile_level",
+            attributes: ["pl_cod", "pl_name"],
+          },
+        ],
+      });
+      const uniqueResult = result.map((user) => {
+        const uniqueBrandNames = new Set();
+        const uniqueBrandLogins = user.brand_login.filter((brand) => {
+          if (!uniqueBrandNames.has(brand.bl_name)) {
+            uniqueBrandNames.add(brand.bl_name);
+            return true;
+          }
+          return false;
         });
 
-        return res.status(200).json(uniqueResult);
+        return { ...user.toJSON(), brand_login: uniqueBrandLogins };
+      });
+
+      return res.status(200).json(uniqueResult);
     } catch (error) {
-        return res
-            .status(400)
-            .json({ message: `Erro ao retornar os dados. ${error}` });
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
     }
-}
+  }
   //Esta API assíncrona retorna detalhes específicos sobre as marcas associadas a um usuário, incluindo os nomes e UUIDs das marcas, bem como informações sobre os dispositivos vinculados a cada marca.
   //Também inclui os dados de geração, temperatura e alertas dos dispositivos.
   async userBrands(req, res) {
@@ -718,11 +717,7 @@ class UsersController {
           `;
           mailOptions = {
             from: '"noreplymayawatch@gmail.com',
-            to: [
-              "contato@mayax.com.br",
-              "eloymun00@gmail.com",
-              element.use_alert_email,
-            ],
+            to: ["contato@mayax.com.br", element.use_alert_email],
             subject: "Alertas de geração abaixo do valor estipulado",
             text: "",
             html: emailBody,
@@ -2978,7 +2973,7 @@ class UsersController {
 
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
-        to: ["contato@mayax.com.br", "eloymun00@gmail.com"],
+        to: ["contato@mayax.com.br"],
         subject: "Alertas de geração acima e abaixo do valor estipulado",
         text: "",
         html: emailBody,
