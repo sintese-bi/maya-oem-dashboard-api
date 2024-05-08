@@ -125,6 +125,7 @@ class UsersController {
         use_telephone:telefone,
         use_password: passwordHash,
         use_deleted: false,
+        use_massive_reports_status:"completed"
       });
       // let bl_url;
       // for (const inversor of inversores) {
