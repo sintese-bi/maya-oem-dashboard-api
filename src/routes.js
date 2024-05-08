@@ -235,7 +235,7 @@ routes.post(
 //   DevicesController.liquidationReport
 // );
 
-// routes.post(`${apiVersion}/massemail`, UsersController.massEmail);
+routes.post(`${apiVersion}/massemail`, UsersController.massEmail);
 
 //   DevicesController.liquidationReport
 // );
