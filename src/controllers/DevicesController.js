@@ -5,6 +5,22 @@ import Generation from "../models/Generation";
 import { PDFDocument } from "pdf-lib";
 import { Op, literal, Sequelize } from "sequelize";
 import Users from "../models/Users";
+import nodemailer from "nodemailer";
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  pool: true,
+
+  secure: true,
+  auth: {
+    user: "noreplymayawatch@gmail.com",
+    pass: "xbox ejjd wokp ystv",
+  },
+  tls: {
+    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
+  },
+});
 class DevicesController {
   //Esta função index processa dados de dispositivos, recuperando informações de gerações associadas a eles.
   //Ela inclui a ordenação por data e trata casos onde a geração atual não está disponível, utilizando dados da geração anterior.
@@ -538,9 +554,44 @@ class DevicesController {
         return res.status(400).json({ error: "Nenhum arquivo PDF enviado" });
       }
       const pdfBuffer = req.file.buffer;
-      console.log(pdfBuffer);
+
       const { dev_uuid } = req.body;
-      const result = await Devices.findByPk(dev_uuid, {});
+      const result = await Devices.findByPk(dev_uuid, {
+        attributes: ["dev_email"],
+      });
+      const pdfDoc = await PDFDocument.load(pdfBuffer);
+      const pdfAttachment = {
+        filename: "relatorio_fatura.pdf",
+        content: Buffer.from(await pdfDoc.save()),
+        encoding: "base64",
+      };
+      const emailBody = `
+      <p>Olá!</p>      
+      <p>Segue o PDF com os dados de sua fatura e geração!</p>
+      <p>Agradecemos pela confiança em nossos serviços.</p>
+      <p>Atenciosamente,<br>Equipe MAYA WATCH</p>`;
+
+      const mailOptions = {
+        from: "noreplymayawatch@gmail.com",
+        to: [result.dev_email],
+        subject: "Relatório de Fatura e Geração Maya Watch",
+        text: "",
+        html: emailBody,
+        attachments: [pdfAttachment],
+      };
+
+      try {
+        await transporter.sendMail(mailOptions);
+        return res.status(200).json({
+          success: true,
+          message: `O email foi enviado com sucesso! `,
+        });
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: `Erro ao enviar o email!`,
+        });
+      }
     } catch (error) {
       return res
         .status(500)
