@@ -441,7 +441,7 @@ class DevicesController {
           },
           group: [Sequelize.literal("day")],
         });
-        console.log(monthGeneration)
+
         const yearOnly = periodo.split("-")[0];
 
         const yearGeneration = await Generation.findAll({
@@ -470,7 +470,22 @@ class DevicesController {
           },
           group: [Sequelize.literal("day")],
         });
-        console.log(yearGeneration)
+
+        const monthlySums = {};
+        yearGeneration.forEach((result) => {
+          const month = result.dataValues.day.split("-")[1];
+
+          if (!monthlySums[month]) {
+            monthlySums[month] = {
+              gen_real: 0,
+              gen_estimated: 0,
+            };
+          }
+
+          monthlySums[month].gen_real += result.dataValues.latest_gen_real;
+          monthlySums[month].gen_estimated +=
+            result.dataValues.latest_gen_estimated;
+        });
         // const dayGeneration = await Generation.findAll({
         //   attributes: [
         //     [Sequelize.literal("DATE_TRUNC('hour', gen_created_at)"), "hour"],
@@ -503,7 +518,7 @@ class DevicesController {
           gen_estimated_total: gen.gen_estimated * current_day,
           geração_mes: monthGeneration,
           // geração_dia: dayGeneration,
-          geração_ano:yearGeneration
+          geração_ano: monthlySums,
         };
         return res.status(200).json(responseData);
       } else {
