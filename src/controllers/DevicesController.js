@@ -2,6 +2,7 @@ import moment from "moment-timezone";
 import Devices from "../models/Devices";
 import axios from "axios";
 import Generation from "../models/Generation";
+import { PDFDocument } from "pdf-lib";
 import { Op, literal, Sequelize } from "sequelize";
 import Users from "../models/Users";
 class DevicesController {
@@ -479,6 +480,29 @@ class DevicesController {
           .status(401)
           .json({ message: "Falha na autenticação: Token inválido." });
       }
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  async emailBalance(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo PDF enviado" });
+      }
+      const pdfBuffer = req.file.buffer;
+      console.log(pdfBuffer);
+      const { dev_uuid } = req.body;
+      const result = await Devices.findByPk(dev_uuid, {
+
+
+
+
+
+
+        
+      });
     } catch (error) {
       return res
         .status(500)

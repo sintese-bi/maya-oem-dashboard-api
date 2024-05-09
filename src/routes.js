@@ -130,6 +130,11 @@ routes.post(
   UsersController.updatePlants
 );
 routes.post(
+  `/emailbalance`,
+  upload.single("pdf"),
+  DevicesControlle.emailBalance
+);
+routes.post(
   `${apiVersion}/updateemail`,
   checkToken,
   GenerationController.updateEmail
