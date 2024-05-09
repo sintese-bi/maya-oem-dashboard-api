@@ -441,9 +441,12 @@ class DevicesController {
           },
           group: [Sequelize.literal("day")],
         });
-        const dayGeneration = await Generation.findAll({
+        console.log(monthGeneration)
+        const yearOnly = periodo.split("-")[0];
+
+        const yearGeneration = await Generation.findAll({
           attributes: [
-            [Sequelize.literal("DATE_TRUNC('hour', gen_created_at)"), "hour"],
+            [Sequelize.literal("DATE(gen_date)"), "day"],
             [Sequelize.fn("MAX", Sequelize.col("gen_date")), "latest_gen_date"],
             [Sequelize.fn("MAX", Sequelize.col("gen_real")), "latest_gen_real"],
             [
@@ -461,18 +464,46 @@ class DevicesController {
             },
           ],
           where: {
-            gen_created_at: {
-              [Op.between]: [moment().startOf("day"), moment().endOf("day")],
+            gen_date: {
+              [Op.between]: [`${yearOnly}-01-01`, `${yearOnly}-12-31`],
             },
           },
-          group: [Sequelize.literal("DATE_TRUNC('hour', gen_created_at)")],
+          group: [Sequelize.literal("day")],
         });
+        console.log(yearGeneration)
+        // const dayGeneration = await Generation.findAll({
+        //   attributes: [
+        //     [Sequelize.literal("DATE_TRUNC('hour', gen_created_at)"), "hour"],
+        //     [Sequelize.fn("MAX", Sequelize.col("gen_date")), "latest_gen_date"],
+        //     [Sequelize.fn("MAX", Sequelize.col("gen_real")), "latest_gen_real"],
+        //     [
+        //       Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+        //       "latest_gen_estimated",
+        //     ],
+        //   ],
+        //   include: [
+        //     {
+        //       association: "devices",
+        //       attributes: [],
+        //       where: {
+        //         dev_uuid: dev_uuid,
+        //       },
+        //     },
+        //   ],
+        //   where: {
+        //     gen_created_at: {
+        //       [Op.between]: [moment().startOf("day"), moment().endOf("day")],
+        //     },
+        //   },
+        //   group: [Sequelize.literal("DATE_TRUNC('hour', gen_created_at)")],
+        // });
         const responseData = {
           result: result,
           gen_estimated: gen.gen_estimated,
           gen_estimated_total: gen.gen_estimated * current_day,
           geração_mes: monthGeneration,
-          geração_dia: dayGeneration,
+          // geração_dia: dayGeneration,
+          geração_ano:yearGeneration
         };
         return res.status(200).json(responseData);
       } else {
@@ -494,15 +525,7 @@ class DevicesController {
       const pdfBuffer = req.file.buffer;
       console.log(pdfBuffer);
       const { dev_uuid } = req.body;
-      const result = await Devices.findByPk(dev_uuid, {
-
-
-
-
-
-
-        
-      });
+      const result = await Devices.findByPk(dev_uuid, {});
     } catch (error) {
       return res
         .status(500)
