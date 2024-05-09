@@ -2,6 +2,7 @@ import moment from "moment-timezone";
 import Devices from "../models/Devices";
 import axios from "axios";
 import Generation from "../models/Generation";
+import { PDFDocument } from "pdf-lib";
 import { Op, literal, Sequelize } from "sequelize";
 import Users from "../models/Users";
 class DevicesController {
@@ -440,9 +441,12 @@ class DevicesController {
           },
           group: [Sequelize.literal("day")],
         });
-        const dayGeneration = await Generation.findAll({
+
+        const yearOnly = periodo.split("-")[0];
+
+        const yearGeneration = await Generation.findAll({
           attributes: [
-            [Sequelize.literal("DATE_TRUNC('hour', gen_created_at)"), "hour"],
+            [Sequelize.literal("DATE(gen_date)"), "day"],
             [Sequelize.fn("MAX", Sequelize.col("gen_date")), "latest_gen_date"],
             [Sequelize.fn("MAX", Sequelize.col("gen_real")), "latest_gen_real"],
             [
@@ -460,18 +464,61 @@ class DevicesController {
             },
           ],
           where: {
-            gen_created_at: {
-              [Op.between]: [moment().startOf("day"), moment().endOf("day")],
+            gen_date: {
+              [Op.between]: [`${yearOnly}-01-01`, `${yearOnly}-12-31`],
             },
           },
-          group: [Sequelize.literal("DATE_TRUNC('hour', gen_created_at)")],
+          group: [Sequelize.literal("day")],
         });
+
+        const monthlySums = {};
+        yearGeneration.forEach((result) => {
+          const month = result.dataValues.day.split("-")[1];
+
+          if (!monthlySums[month]) {
+            monthlySums[month] = {
+              gen_real: 0,
+              gen_estimated: 0,
+            };
+          }
+
+          monthlySums[month].gen_real += result.dataValues.latest_gen_real;
+          monthlySums[month].gen_estimated +=
+            result.dataValues.latest_gen_estimated;
+        });
+        // const dayGeneration = await Generation.findAll({
+        //   attributes: [
+        //     [Sequelize.literal("DATE_TRUNC('hour', gen_created_at)"), "hour"],
+        //     [Sequelize.fn("MAX", Sequelize.col("gen_date")), "latest_gen_date"],
+        //     [Sequelize.fn("MAX", Sequelize.col("gen_real")), "latest_gen_real"],
+        //     [
+        //       Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+        //       "latest_gen_estimated",
+        //     ],
+        //   ],
+        //   include: [
+        //     {
+        //       association: "devices",
+        //       attributes: [],
+        //       where: {
+        //         dev_uuid: dev_uuid,
+        //       },
+        //     },
+        //   ],
+        //   where: {
+        //     gen_created_at: {
+        //       [Op.between]: [moment().startOf("day"), moment().endOf("day")],
+        //     },
+        //   },
+        //   group: [Sequelize.literal("DATE_TRUNC('hour', gen_created_at)")],
+        // });
         const responseData = {
           result: result,
           gen_estimated: gen.gen_estimated,
           gen_estimated_total: gen.gen_estimated * current_day,
           geração_mes: monthGeneration,
-          geração_dia: dayGeneration,
+          // geração_dia: dayGeneration,
+          geração_ano: monthlySums,
         };
         return res.status(200).json(responseData);
       } else {
@@ -479,6 +526,21 @@ class DevicesController {
           .status(401)
           .json({ message: "Falha na autenticação: Token inválido." });
       }
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  async emailBalance(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo PDF enviado" });
+      }
+      const pdfBuffer = req.file.buffer;
+      console.log(pdfBuffer);
+      const { dev_uuid } = req.body;
+      const result = await Devices.findByPk(dev_uuid, {});
     } catch (error) {
       return res
         .status(500)

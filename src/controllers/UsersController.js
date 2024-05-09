@@ -73,6 +73,8 @@ class UsersController {
         nome_completo,
         email,
         telefone
+        // password,
+        // confirm_password,
         // quantidade_inversores,
         // inversores,
       } = req.body;
