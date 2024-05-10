@@ -72,7 +72,7 @@ class UsersController {
       const {
         nome_completo,
         email,
-        telefone
+        telefone,
         // password,
         // confirm_password,
         // quantidade_inversores,
@@ -102,12 +102,12 @@ class UsersController {
       //     .status(400)
       //     .json({ message: "A senha e a confirmação precisam ser iguais." });
       // }
-      const password= "123456"
+      const password = "123456";
       const saltRounds = 10;
       const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Criação do novo usuário na tabela Users
-      
+
       // let brandUuids = []; // Array para armazenar os bl_uuids
       // for (const inversor of inversores) {
       //   if (!inversor.login || !inversor.senha) {
@@ -124,10 +124,10 @@ class UsersController {
         pl_uuid: "049686ee-5d83-4edf-9972-8e432deccf1f",
         // use_module_numbers: quantidade_inversores,
         use_email: email,
-        use_telephone:telefone,
+        use_telephone: telefone,
         use_password: passwordHash,
         use_deleted: false,
-        use_massive_reports_status:"completed"
+        use_massive_reports_status: "completed",
       });
       // let bl_url;
       // for (const inversor of inversores) {

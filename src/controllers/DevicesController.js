@@ -377,7 +377,6 @@ class DevicesController {
   async managerNames(req, res) {
     try {
       //Data atual
-      moment.utc()
       const current = moment().format("YYYY-MM-DD");
       let periodo_com_dia;
       let current_day;
