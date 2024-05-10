@@ -12,7 +12,7 @@ import "./massive-email/verifiy_massive_emails.js";
 import { WebSocketService } from "./service/websocket.js";
 require("./database");
 
-const PORT = 8081;
+const PORT = 8082;
 const HOST = "0.0.0.0";
 
 const app = express();

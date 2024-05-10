@@ -1820,6 +1820,62 @@ class UsersController {
     }
   }
 
+  async testSSE(req, res) {
+    try {
+      const { use_uuid } = req.params;
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.write("data: Connected\n\n");
+
+      const user = await Users.findOne({
+        attributes: ["use_massive_reports_status"],
+        where: {
+          use_uuid: use_uuid,
+        },
+      });
+
+      if (user.use_massive_reports_status == "executing") {
+        await Users.update(
+          {
+            use_massive_reports_status: "completed",
+          },
+          {
+            where: {
+              use_uuid: use_uuid,
+            },
+          }
+        );
+      }
+
+      const users_massive_reports_status = await Users.findAll({
+        attributes: ["use_massive_reports_status"],
+      });
+      const users_with_massive_reports_pending =
+        users_massive_reports_status.filter(
+          (data) => data.use_massive_reports_status == "executing"
+        );
+
+      if (users_with_massive_reports_pending.length != 0) {
+        await Users.update(
+          {
+            use_massive_reports_status: "waiting",
+            use_massive_reports_status_updated_at: new Date(),
+          },
+          {
+            where: {
+              use_uuid: use_uuid,
+            },
+          }
+        );
+      }
+      await massiveEmail(use_uuid, res, req);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Erro ao retornar os dados!" });
+    }
+  }
+
   async automaticmassEmail(req, res) {
     try {
       const users = await Users.findAll({

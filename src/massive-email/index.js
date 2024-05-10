@@ -25,7 +25,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export async function massiveEmail(use_uuid) {
+export async function massiveEmail(use_uuid, res, req) {
   let sentEmailsAmount = 0;
 
   const webSocketService = new WebSocketService();
@@ -285,7 +285,8 @@ export async function massiveEmail(use_uuid) {
 
       sentEmailsAmount = sentEmailsAmount + 100 / result.length;
       console.log(sentEmailsAmount + 100 / result.length);
-      webSocketService.handleSendingMessage(sentEmailsAmount);
+
+      res.write(`data: ${sentEmailsAmount}\n\n`);
 
       //try {
       //  await transporter.sendMail(mailOptions);
@@ -315,6 +316,7 @@ export async function massiveEmail(use_uuid) {
 
   pipelineAsync(readableStream, transformStream, writableStream).then(
     async () => {
+      res.end();
       await Users.update(
         {
           use_massive_reports_status: "completed",
