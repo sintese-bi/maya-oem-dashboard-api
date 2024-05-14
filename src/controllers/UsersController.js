@@ -1826,7 +1826,7 @@ class UsersController {
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
-      res.write("data: Connected\n\n");
+      res.write("data: connected\n\n");
 
       const user = await Users.findOne({
         attributes: ["use_massive_reports_status"],
@@ -1846,6 +1846,7 @@ class UsersController {
             },
           }
         );
+        return res.write(`data: completed\n\n`);
       }
 
       const users_massive_reports_status = await Users.findAll({
@@ -1868,6 +1869,7 @@ class UsersController {
             },
           }
         );
+        return res.write(`data: waiting\n\n`);
       }
       await massiveEmail(use_uuid, res, req);
     } catch (error) {

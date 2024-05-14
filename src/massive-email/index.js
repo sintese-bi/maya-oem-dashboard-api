@@ -2,6 +2,7 @@ import Devices from "../models/Devices";
 import Generation from "../models/Generation";
 import { generateFile } from "../utils/generateMassiveReports";
 import { Sequelize, Op } from "sequelize";
+import { setTimeout } from "node:timers/promises";
 
 import nodemailer from "nodemailer";
 import Reports from "../models/Reports";
@@ -283,33 +284,31 @@ export async function massiveEmail(use_uuid, res, req) {
         return;
       }
 
-      sentEmailsAmount = sentEmailsAmount + 100 / result.length;
-      console.log(sentEmailsAmount + 100 / result.length);
+      try {
+        //await transporter.sendMail(mailOptions);
+        await setTimeout(2000);
+        sentEmailsAmount = sentEmailsAmount + 100 / result.length;
+        res.write(`data: ${sentEmailsAmount}\n\n`);
 
-      res.write(`data: ${sentEmailsAmount}\n\n`);
+        //console.log({
+        //  success: true,
+        //  message: `Email enviado com sucesso para dev_uuid: ${
+        //    JSON.parse(chunk).dev_uuid
+        //  }`,
+        //});
 
-      //try {
-      //  await transporter.sendMail(mailOptions);
-      //
-      //  console.log({
-      //    success: true,
-      //    message: `Email enviado com sucesso para dev_uuid: ${
-      //      JSON.parse(chunk).dev_uuid
-      //    }`,
-      //  });
-      //
-      //  //Adicionar atualização tabela report
-      //  //await Devices.update({
-      //  //  dev_verify_email: true,
-      //  //});
-      //} catch (error) {
-      //  console.log({
-      //    success: false,
-      //    message: `Erro ao enviar o email para dev_uuid: ${
-      //      JSON.parse(chunk).dev_uuid
-      //    } - ${error}`,
-      //  });
-      //}
+        //Adicionar atualização tabela report
+        //await Devices.update({
+        //  dev_verify_email: true,
+        //});
+      } catch (error) {
+        console.log({
+          success: false,
+          message: `Erro ao enviar o email para dev_uuid: ${
+            JSON.parse(chunk).dev_uuid
+          } - ${error}`,
+        });
+      }
       cb();
     },
   });
