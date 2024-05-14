@@ -1529,6 +1529,57 @@ class UsersController {
         .json({ message: `Erro ao criar o Login/device: ${error.message}` });
     }
   }
+  async updateBrands(req, res) {
+    try {
+      const { use_uuid, bl_name, bl_login, bl_password, bl_url } = req.body;
+
+      const result = await Brand.findOne({
+        where: { use_uuid: use_uuid, bl_name: bl_name, bl_login: bl_login },
+      });
+
+      if (result) {
+        if (bl_url == "") {
+          const update0 = await Brand.update(
+            {
+              bl_password: bl_password,
+            },
+            {
+              where: {
+                use_uuid: use_uuid,
+                bl_name: bl_name,
+                bl_login: bl_login,
+              },
+            }
+          );
+        } else {
+          const update1 = await Brand.update(
+            {
+              bl_password: bl_password,
+              bl_url: bl_url,
+            },
+            {
+              where: {
+                use_uuid: use_uuid,
+                bl_name: bl_name,
+                bl_login: bl_login,
+              },
+            }
+          );
+        }
+      } else {
+        return res.status(400).json({
+          message: "Esse login não existe em nosso banco de dados!",
+        });
+      }
+      return res.status(201).json({ message: "Senha atualizada com sucesso!" });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ message: `Erro ao atualizar a senha: ${error.message}` });
+    }
+  }
+
   async deleteDevice(req, res) {
     try {
       const { devUuid } = req.body;
