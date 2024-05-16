@@ -29,7 +29,7 @@ const transporter = nodemailer.createTransport({
 export async function massiveEmail(use_uuid, res, req) {
   let sentEmailsAmount = 0;
 
-  const webSocketService = new WebSocketService();
+  //const webSocketService = new WebSocketService();
   await Users.update(
     {
       use_massive_reports_status: "executing",

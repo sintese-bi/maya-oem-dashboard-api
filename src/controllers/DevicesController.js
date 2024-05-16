@@ -2,8 +2,25 @@ import moment from "moment-timezone";
 import Devices from "../models/Devices";
 import axios from "axios";
 import Generation from "../models/Generation";
-import { Op, literal } from "sequelize";
+import { PDFDocument } from "pdf-lib";
+import { Op, literal, Sequelize } from "sequelize";
 import Users from "../models/Users";
+import nodemailer from "nodemailer";
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  pool: true,
+
+  secure: true,
+  auth: {
+    user: "noreplymayawatch@gmail.com",
+    pass: "xbox ejjd wokp ystv",
+  },
+  tls: {
+    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
+  },
+});
 class DevicesController {
   //Esta função index processa dados de dispositivos, recuperando informações de gerações associadas a eles.
   //Ela inclui a ordenação por data e trata casos onde a geração atual não está disponível, utilizando dados da geração anterior.
@@ -359,18 +376,34 @@ class DevicesController {
   }
   async managerNames(req, res) {
     try {
+      //Data atual
+      const current = moment().format("YYYY-MM-DD");
+      let periodo_com_dia;
+      let current_day;
+      //Dia corrente
       const current_day_string = moment().format("DD");
-      const current_day = parseInt(moment().format("DD"));
+      //MêS corrente
+      const current_month_string = moment().format("MM");
       const clientToken = req.headers.authorization;
       const expectedToken = process.env.TOKEN;
       const { dev_uuid, periodo } = req.body;
-      const periodo_com_dia = `${periodo}-${current_day_string}`;
-     
+      //Ultimo dia do mes
+      const lastDayOfMonth = moment(periodo, "YYYY-MM")
+        .endOf("month")
+        .format("DD");
+      //Mês que o usuário escolheu
+      const periodo_month_current = periodo.split("-")[1];
+      //Data corrente
+      const primeiro_dia_mes = `${periodo}-01`;
+      if (periodo_month_current == current_month_string) {
+        periodo_com_dia = `${periodo}-${current_day_string}`;
+        current_day = parseInt(current_day_string);
+      } else {
+        periodo_com_dia = `${periodo}-${lastDayOfMonth}`;
+        current_day = parseInt(lastDayOfMonth);
+      }
+
       if (clientToken == `Bearer ${expectedToken}`) {
-        // await Devices.update(
-        //   { dev_install: instalacao },
-        //   { where: { dev_uuid: dev_uuid } }
-        // );
         const result = await Devices.findOne({
           attributes: ["dev_name", "dev_name_manager", "dev_install"],
 
@@ -383,7 +416,7 @@ class DevicesController {
         ) {
           return res.status(404).send();
         }
-
+        //Valores de geração estimada do mês escolhido
         const gen = await Generation.findOne({
           include: [
             {
@@ -398,16 +431,166 @@ class DevicesController {
           },
           attributes: ["gen_estimated"],
         });
+        const monthGeneration = await Generation.findAll({
+          attributes: [
+            [Sequelize.literal("DATE(gen_date)"), "day"],
+            [Sequelize.fn("MAX", Sequelize.col("gen_date")), "latest_gen_date"],
+            [Sequelize.fn("MAX", Sequelize.col("gen_real")), "latest_gen_real"],
+            [
+              Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+              "latest_gen_estimated",
+            ],
+          ],
+          include: [
+            {
+              association: "devices",
+              attributes: [],
+              where: {
+                dev_uuid: dev_uuid,
+              },
+            },
+          ],
+          where: {
+            gen_date: {
+              [Op.between]: [primeiro_dia_mes, periodo_com_dia],
+            },
+          },
+          group: [Sequelize.literal("day")],
+        });
+
+        const yearOnly = periodo.split("-")[0];
+
+        const yearGeneration = await Generation.findAll({
+          attributes: [
+            [Sequelize.literal("DATE(gen_date)"), "day"],
+            [Sequelize.fn("MAX", Sequelize.col("gen_date")), "latest_gen_date"],
+            [Sequelize.fn("MAX", Sequelize.col("gen_real")), "latest_gen_real"],
+            [
+              Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+              "latest_gen_estimated",
+            ],
+          ],
+          include: [
+            {
+              association: "devices",
+              attributes: [],
+              where: {
+                dev_uuid: dev_uuid,
+              },
+            },
+          ],
+          where: {
+            gen_date: {
+              [Op.between]: [`${yearOnly}-01-01`, `${yearOnly}-12-31`],
+            },
+          },
+          group: [Sequelize.literal("day")],
+        });
+
+        const monthlySums = {};
+        yearGeneration.forEach((result) => {
+          const month = result.dataValues.day.split("-")[1];
+
+          if (!monthlySums[month]) {
+            monthlySums[month] = {
+              gen_real: 0,
+              gen_estimated: 0,
+            };
+          }
+
+          monthlySums[month].gen_real += result.dataValues.latest_gen_real;
+          monthlySums[month].gen_estimated +=
+            result.dataValues.latest_gen_estimated;
+        });
+        // const dayGeneration = await Generation.findAll({
+        //   attributes: [
+        //     [Sequelize.literal("DATE_TRUNC('hour', gen_created_at)"), "hour"],
+        //     [Sequelize.fn("MAX", Sequelize.col("gen_date")), "latest_gen_date"],
+        //     [Sequelize.fn("MAX", Sequelize.col("gen_real")), "latest_gen_real"],
+        //     [
+        //       Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+        //       "latest_gen_estimated",
+        //     ],
+        //   ],
+        //   include: [
+        //     {
+        //       association: "devices",
+        //       attributes: [],
+        //       where: {
+        //         dev_uuid: dev_uuid,
+        //       },
+        //     },
+        //   ],
+        //   where: {
+        //     gen_created_at: {
+        //       [Op.between]: [moment().startOf("day"), moment().endOf("day")],
+        //     },
+        //   },
+        //   group: [Sequelize.literal("DATE_TRUNC('hour', gen_created_at)")],
+        // });
         const responseData = {
           result: result,
           gen_estimated: gen.gen_estimated,
           gen_estimated_total: gen.gen_estimated * current_day,
+          geração_mes: monthGeneration,
+          // geração_dia: dayGeneration,
+          geração_ano: monthlySums,
         };
         return res.status(200).json(responseData);
       } else {
         return res
           .status(401)
           .json({ message: "Falha na autenticação: Token inválido." });
+      }
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  async emailBalance(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo PDF enviado" });
+      }
+      const pdfBuffer = req.file.buffer;
+
+      const { dev_uuid } = req.body;
+      const result = await Devices.findByPk(dev_uuid, {
+        attributes: ["dev_email"],
+      });
+      const pdfDoc = await PDFDocument.load(pdfBuffer);
+      const pdfAttachment = {
+        filename: "relatorio_fatura.pdf",
+        content: Buffer.from(await pdfDoc.save()),
+        encoding: "base64",
+      };
+      const emailBody = `
+      <p>Olá!</p>      
+      <p>Segue o PDF com os dados de sua fatura e geração!</p>
+      <p>Agradecemos pela confiança em nossos serviços.</p>
+      <p>Atenciosamente,<br>Equipe MAYA WATCH</p>`;
+
+      const mailOptions = {
+        from: "noreplymayawatch@gmail.com",
+        to: [result.dev_email],
+        subject: "Relatório de Fatura e Geração Maya Watch",
+        text: "",
+        html: emailBody,
+        attachments: [pdfAttachment],
+      };
+
+      try {
+        await transporter.sendMail(mailOptions);
+        return res.status(200).json({
+          success: true,
+          message: `O email foi enviado com sucesso! `,
+        });
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: `Erro ao enviar o email!`,
+        });
       }
     } catch (error) {
       return res

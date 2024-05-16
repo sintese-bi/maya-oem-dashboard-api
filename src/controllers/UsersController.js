@@ -72,10 +72,11 @@ class UsersController {
       const {
         nome_completo,
         email,
-        password,
-        confirmPassword,
-        quantidade_inversores,
-        inversores,
+        telefone,
+        // password,
+        // confirm_password,
+        // quantidade_inversores,
+        // inversores,
       } = req.body;
 
       console.log(email, nome_completo);
@@ -91,104 +92,106 @@ class UsersController {
       if (existingEmail) {
         return res.status(400).json({ message: "O email já está em uso." });
       }
-      if (password.length < 4) {
-        return res
-          .status(400)
-          .json({ message: "A senha precisa ter 4 ou mais caracteres!" });
-      }
-      if (password !== confirmPassword) {
-        return res
-          .status(400)
-          .json({ message: "A senha e a confirmação precisam ser iguais." });
-      }
-
+      // if (password.length < 4) {
+      //   return res
+      //     .status(400)
+      //     .json({ message: "A senha precisa ter 4 ou mais caracteres!" });
+      // }
+      // if (password !== confirmPassword) {
+      //   return res
+      //     .status(400)
+      //     .json({ message: "A senha e a confirmação precisam ser iguais." });
+      // }
+      const password = "123456";
       const saltRounds = 10;
       const passwordHash = await bcrypt.hash(password, saltRounds);
 
       // Criação do novo usuário na tabela Users
 
-      let brandUuids = []; // Array para armazenar os bl_uuids
-      for (const inversor of inversores) {
-        if (!inversor.login || !inversor.senha) {
-          return res.status(400).json({
-            message:
-              "O login e a senha são obrigatórios para todos os inversores.",
-          });
-        }
-      }
+      // let brandUuids = []; // Array para armazenar os bl_uuids
+      // for (const inversor of inversores) {
+      //   if (!inversor.login || !inversor.senha) {
+      //     return res.status(400).json({
+      //       message:
+      //         "O login e a senha são obrigatórios para todos os inversores.",
+      //     });
+      //   }
+      // }
       // Criação do novo usuário na tabela Users
       const newUser = await Users.create({
         use_name: nome_completo,
         use_type_member: true,
         pl_uuid: "049686ee-5d83-4edf-9972-8e432deccf1f",
-        use_module_numbers: quantidade_inversores,
+        // use_module_numbers: quantidade_inversores,
         use_email: email,
+        use_telephone: telefone,
         use_password: passwordHash,
         use_deleted: false,
+        use_massive_reports_status: "completed",
       });
-      let bl_url;
-      for (const inversor of inversores) {
-        switch (inversor.marca) {
-          case "aurora":
-            bl_url =
-              "https://www.auroravision.net/ums/v1/loginPage?redirectUrl=https:%2F%2Fwww.auroravision.net%2Fdash%2Fhome.jsf&cause=MISSING_TOKEN";
-            break;
-          case "apsystems":
-            bl_url = "https://apsystemsema.com/ema/index.action";
-            break;
-          case "canadian":
-            bl_url = "https://monitoring.csisolar.com/login";
-            break;
-          case "fronius":
-            bl_url = "https://www.solarweb.com/PvSystems/Widgets";
-            break;
-          case "fusion":
-            bl_url =
-              "https://la5.fusionsolar.huawei.com/unisso/login.action?service=%2Funisess%2Fv1%2Fauth%3Fservice%3D%252F";
-            break;
-          case "goodwe":
-            bl_url = "https://www.semsportal.com/PowerStation/powerstatus";
-            break;
-          case "growatt":
-            bl_url = "https://server.growatt.com/index";
-            break;
-          case "solarman":
-            bl_url = "https://pro.solarmanpv.com/business/maintain/plant";
-            break;
-          case "solarz":
-            bl_url = "https://app.solarz.com.br/login";
-            break;
-          case "renovigi":
-            bl_url =
-              "https://www.renovigi.solar/cus/renovigi/index_po.html?1690209459489";
-            break;
-          case "weg":
-            bl_url = "https://iot.weg.net/#/portal/main";
-            break;
-          case "isolar-cloud":
-            bl_url = "https://www.isolarcloud.com.hk/?lang=pt_BR";
-            break;
-          case "hoymiles":
-            bl_url =
-              "https://global.hoymiles.com/platform/login?form=logout&notice=1";
-            break;
-        }
-        const loginSemAspas = inversor.login.replace(/^"(.*)"$/, "$1");
-        console.log({ message: bl_url });
-        const newBrand = await Brand.create({
-          use_uuid: newUser.use_uuid,
-          bl_name: inversor.marca.toLowerCase(),
-          bl_login: loginSemAspas,
-          bl_password: inversor.senha,
-          bl_url: bl_url,
-          bl_check: "x",
-        });
-        //console.log('bl_name:', inversor.brand);
-        brandUuids.push({
-          bl_uuid: newBrand.bl_uuid,
-          marca: inversor.marca,
-        }); // Armazena cada bl_uuid e marca no array
-      }
+      // let bl_url;
+      // for (const inversor of inversores) {
+      //   switch (inversor.marca) {
+      //     case "aurora":
+      //       bl_url =
+      //         "https://www.auroravision.net/ums/v1/loginPage?redirectUrl=https:%2F%2Fwww.auroravision.net%2Fdash%2Fhome.jsf&cause=MISSING_TOKEN";
+      //       break;
+      //     case "apsystems":
+      //       bl_url = "https://apsystemsema.com/ema/index.action";
+      //       break;
+      //     case "canadian":
+      //       bl_url = "https://monitoring.csisolar.com/login";
+      //       break;
+      //     case "fronius":
+      //       bl_url = "https://www.solarweb.com/PvSystems/Widgets";
+      //       break;
+      //     case "fusion":
+      //       bl_url =
+      //         "https://la5.fusionsolar.huawei.com/unisso/login.action?service=%2Funisess%2Fv1%2Fauth%3Fservice%3D%252F";
+      //       break;
+      //     case "goodwe":
+      //       bl_url = "https://www.semsportal.com/PowerStation/powerstatus";
+      //       break;
+      //     case "growatt":
+      //       bl_url = "https://server.growatt.com/index";
+      //       break;
+      //     case "solarman":
+      //       bl_url = "https://pro.solarmanpv.com/business/maintain/plant";
+      //       break;
+      //     case "solarz":
+      //       bl_url = "https://app.solarz.com.br/login";
+      //       break;
+      //     case "renovigi":
+      //       bl_url =
+      //         "https://www.renovigi.solar/cus/renovigi/index_po.html?1690209459489";
+      //       break;
+      //     case "weg":
+      //       bl_url = "https://iot.weg.net/#/portal/main";
+      //       break;
+      //     case "isolar-cloud":
+      //       bl_url = "https://www.isolarcloud.com.hk/?lang=pt_BR";
+      //       break;
+      //     case "hoymiles":
+      //       bl_url =
+      //         "https://global.hoymiles.com/platform/login?form=logout&notice=1";
+      //       break;
+      //   }
+      //   const loginSemAspas = inversor.login.replace(/^"(.*)"$/, "$1");
+      //   console.log({ message: bl_url });
+      //   const newBrand = await Brand.create({
+      //     use_uuid: newUser.use_uuid,
+      //     bl_name: inversor.marca.toLowerCase(),
+      //     bl_login: loginSemAspas,
+      //     bl_password: inversor.senha,
+      //     bl_url: bl_url,
+      //     bl_check: "x",
+      //   });
+      //   //console.log('bl_name:', inversor.brand);
+      //   brandUuids.push({
+      //     bl_uuid: newBrand.bl_uuid,
+      //     marca: inversor.marca,
+      //   }); // Armazena cada bl_uuid e marca no array
+      // }
 
       // // Agora, criar os registros na tabela "devices" com os bl_uuids e marcas armazenados
       // for (const item of brandUuids) {
@@ -321,7 +324,20 @@ class UsersController {
           },
         ],
       });
-      return res.status(200).json(result);
+      const uniqueResult = result.map((user) => {
+        const uniqueBrandNames = new Set();
+        const uniqueBrandLogins = user.brand_login.filter((brand) => {
+          if (!uniqueBrandNames.has(brand.bl_name)) {
+            uniqueBrandNames.add(brand.bl_name);
+            return true;
+          }
+          return false;
+        });
+
+        return { ...user.toJSON(), brand_login: uniqueBrandLogins };
+      });
+
+      return res.status(200).json(uniqueResult);
     } catch (error) {
       return res
         .status(400)
@@ -704,11 +720,7 @@ class UsersController {
           `;
           mailOptions = {
             from: '"noreplymayawatch@gmail.com',
-            to: [
-              "contato@mayax.com.br",
-              "eloymun00@gmail.com",
-              element.use_alert_email,
-            ],
+            to: ["contato@mayax.com.br", element.use_alert_email],
             subject: "Alertas de geração abaixo do valor estipulado",
             text: "",
             html: emailBody,
@@ -845,6 +857,7 @@ class UsersController {
                   "dev_long",
                   "dev_email",
                   "dev_image",
+                  "dev_install"
                 ],
                 include: [
                   {
@@ -3076,7 +3089,7 @@ class UsersController {
 
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
-        to: ["contato@mayax.com.br", "eloymun00@gmail.com"],
+        to: ["contato@mayax.com.br"],
         subject: "Alertas de geração acima e abaixo do valor estipulado",
         text: "",
         html: emailBody,
@@ -3203,13 +3216,13 @@ const usersController = new UsersController();
 // usersController.agendarreinicioDispositivos();
 
 //Envio relatorio de dispositivos acima e abaixo do estimado
-// usersController.agendarmonitorGeração();
+usersController.agendarmonitorGeração();
 
 //Cron para  envio de alerta quando a geração real estiver x% abaixo da geração estimada
-// usersController.agendarAlertasGeracao();
+usersController.agendarAlertasGeracao();
 
 // //Envio alertas da tabela alerts do banco
-// usersController.agendarVerificacaoDeAlertas();
+usersController.agendarVerificacaoDeAlertas();
 
 //Envio automatico do 'envio massivo de relatorios'
 // usersController.agendarenvioEmailRelatorio()

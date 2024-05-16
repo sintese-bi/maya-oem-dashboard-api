@@ -3,12 +3,9 @@ import nodemailer from "nodemailer";
 import bcrypt from "bcrypt";
 import Users from "../models/Users";
 import { raw } from "express";
-const stripe = new Stripe(
-  "",
-  {
-    apiVersion: "2020-08-27",
-  }
-);
+const stripe = new Stripe("", {
+  apiVersion: "2020-08-27",
+});
 
 //Configuração das credenciais do email de envio
 const transporter = nodemailer.createTransport({
