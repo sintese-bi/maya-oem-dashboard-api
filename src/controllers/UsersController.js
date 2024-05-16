@@ -1537,6 +1537,8 @@ class UsersController {
         where: { use_uuid: use_uuid, bl_name: bl_name, bl_login: bl_login },
       });
 
+      console.log(`\n \t${use_uuid}\t \t${bl_name}\t \t${bl_login}\t \n`);
+
       if (result) {
         if (bl_url == "") {
           const update0 = await Brand.update(
@@ -2109,15 +2111,16 @@ class UsersController {
       );
 
       const arrayplants = req.body.arrayplants.filter(
-        (data) => data.dev_uuid !== undefined
+        (data) => data.uuid !== undefined
       );
 
       await Promise.all(
         arrayplants.map(async (devarray) => {
+          console.log("\n", devarray, "\n");
           const {
-            dev_uuid,
+            uuid,
             capacity,
-            dev_email,
+            email,
             ic_city,
             ic_states,
             dev_install,
@@ -2132,7 +2135,7 @@ class UsersController {
 
             const result = await Devices.findOne({
               attributes: ["dev_name"],
-              where: { dev_uuid: dev_uuid },
+              where: { dev_uuid: uuid },
             });
 
             if (!irr) {
@@ -2142,7 +2145,7 @@ class UsersController {
                 { gen_estimated: gen_new },
                 {
                   where: {
-                    dev_uuid: dev_uuid,
+                    dev_uuid: uuid,
                     gen_date: {
                       [Op.between]: [firstDayOfMonth, lastDayOfMonth],
                     },
@@ -2159,7 +2162,7 @@ class UsersController {
                 { gen_estimated: gen_new },
                 {
                   where: {
-                    dev_uuid: dev_uuid,
+                    dev_uuid: uuid,
                     gen_date: {
                       [Op.between]: [firstDayOfMonth, lastDayOfMonth],
                     },
@@ -2174,7 +2177,7 @@ class UsersController {
           await Devices.update(
             {
               dev_capacity: Number(capacity),
-              dev_email: dev_email,
+              dev_email: email,
               dev_image: dev_image,
               dev_install: dev_install,
               dev_address: ic_city + "-" + ic_states,
@@ -2189,7 +2192,7 @@ class UsersController {
                   : null
                 : null,
             },
-            { where: { dev_uuid: dev_uuid } }
+            { where: { dev_uuid: uuid } }
           );
         })
       );
