@@ -857,6 +857,7 @@ class UsersController {
                   "dev_long",
                   "dev_email",
                   "dev_image",
+                  "dev_install"
                 ],
                 include: [
                   {
