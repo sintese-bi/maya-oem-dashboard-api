@@ -61,8 +61,8 @@ class GenerationController {
         },
         replacements: { devUuid, firstDay, lastDay },
       });
-      deviceData.forEach(element => {
-        console.log(element.gen_estimated)
+      deviceData.forEach((element) => {
+        console.log(element.gen_estimated);
         if (!element.gen_estimated) {
           element.gen_estimated = 100;
         }
