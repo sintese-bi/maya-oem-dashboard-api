@@ -2,6 +2,7 @@ import Devices from "../models/Devices";
 import Generation from "../models/Generation";
 import { generateFile } from "../utils/generateMassiveReports";
 import { Sequelize, Op } from "sequelize";
+import { setTimeout } from "node:timers/promises";
 
 import nodemailer from "nodemailer";
 import Reports from "../models/Reports";
@@ -25,7 +26,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export async function massiveEmail(use_uuid) {
+export async function massiveEmail(use_uuid, res, req) {
   let sentEmailsAmount = 0;
 
   //const webSocketService = new WebSocketService();
@@ -289,17 +290,16 @@ export async function massiveEmail(use_uuid) {
 
       try {
         await transporter.sendMail(mailOptions);
+        await setTimeout(2000);
+        sentEmailsAmount = sentEmailsAmount + 100 / result.length;
+        res.write(`data: ${sentEmailsAmount}\n\n`);
 
-        console.log({
-          success: true,
-          message: `Email enviado com sucesso para dev_uuid: ${
-            JSON.parse(chunk).dev_uuid
-          }`,
-        });
-
-        //sentEmailsAmount = sentEmailsAmount + 100 / result.length;
-        //console.log(sentEmailsAmount + 100 / result.length);
-        //webSocketService.handleSendingMessage(sentEmailsAmount);
+        //console.log({
+        //  success: true,
+        //  message: `Email enviado com sucesso para dev_uuid: ${
+        //    JSON.parse(chunk).dev_uuid
+        //  }`,
+        //});
 
         //Adicionar atualização tabela report
         //await Devices.update({
@@ -319,6 +319,7 @@ export async function massiveEmail(use_uuid) {
 
   pipelineAsync(readableStream, transformStream, writableStream).then(
     async () => {
+      res.end();
       await Users.update(
         {
           use_massive_reports_status: "completed",

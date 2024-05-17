@@ -167,6 +167,11 @@ routes.post(`${apiVersion}/sendingemail`, UsersController.sendEmail);
 routes.post(`${apiVersion}/passrecover`, UsersController.passwordRecover);
 routes.post(`${apiVersion}/deviceLogin`, checkToken, UsersController.newDevice);
 routes.post(
+  `${apiVersion}/updatebrands`,
+  checkToken,
+  UsersController.updateBrands
+);
+routes.post(
   `${apiVersion}/deleteDevice`,
   checkToken,
   UsersController.deleteDevice
@@ -247,6 +252,8 @@ routes.post(
 // );
 
 routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
+
+routes.get(`${apiVersion}/testeSSE/:use_uuid`, UsersController.testSSE);
 
 // routes.get(
 //   `${apiVersion}/automaticmassemail`,

@@ -1543,6 +1543,59 @@ class UsersController {
         .json({ message: `Erro ao criar o Login/device: ${error.message}` });
     }
   }
+  async updateBrands(req, res) {
+    try {
+      const { use_uuid, bl_name, bl_login, bl_password, bl_url } = req.body;
+
+      const result = await Brand.findOne({
+        where: { use_uuid: use_uuid, bl_name: bl_name, bl_login: bl_login },
+      });
+
+      console.log(`\n \t${use_uuid}\t \t${bl_name}\t \t${bl_login}\t \n`);
+
+      if (result) {
+        if (bl_url == "") {
+          const update0 = await Brand.update(
+            {
+              bl_password: bl_password,
+            },
+            {
+              where: {
+                use_uuid: use_uuid,
+                bl_name: bl_name,
+                bl_login: bl_login,
+              },
+            }
+          );
+        } else {
+          const update1 = await Brand.update(
+            {
+              bl_password: bl_password,
+              bl_url: bl_url,
+            },
+            {
+              where: {
+                use_uuid: use_uuid,
+                bl_name: bl_name,
+                bl_login: bl_login,
+              },
+            }
+          );
+        }
+      } else {
+        return res.status(400).json({
+          message: "Esse login não existe em nosso banco de dados!",
+        });
+      }
+      return res.status(201).json({ message: "Senha atualizada com sucesso!" });
+    } catch (error) {
+      console.error(error);
+      return res
+        .status(500)
+        .json({ message: `Erro ao atualizar a senha: ${error.message}` });
+    }
+  }
+
   async deleteDevice(req, res) {
     try {
       const { devUuid } = req.body;
@@ -1834,6 +1887,64 @@ class UsersController {
     }
   }
 
+  async testSSE(req, res) {
+    try {
+      const { use_uuid } = req.params;
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.write("data: connected\n\n");
+
+      const user = await Users.findOne({
+        attributes: ["use_massive_reports_status"],
+        where: {
+          use_uuid: use_uuid,
+        },
+      });
+
+      if (user.use_massive_reports_status == "executing") {
+        await Users.update(
+          {
+            use_massive_reports_status: "completed",
+          },
+          {
+            where: {
+              use_uuid: use_uuid,
+            },
+          }
+        );
+        return res.write(`data: completed\n\n`);
+      }
+
+      const users_massive_reports_status = await Users.findAll({
+        attributes: ["use_massive_reports_status"],
+      });
+      const users_with_massive_reports_pending =
+        users_massive_reports_status.filter(
+          (data) => data.use_massive_reports_status == "executing"
+        );
+
+      if (users_with_massive_reports_pending.length != 0) {
+        await Users.update(
+          {
+            use_massive_reports_status: "waiting",
+            use_massive_reports_status_updated_at: new Date(),
+          },
+          {
+            where: {
+              use_uuid: use_uuid,
+            },
+          }
+        );
+        return res.write(`data: waiting\n\n`);
+      }
+      await massiveEmail(use_uuid, res, req);
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Erro ao retornar os dados!" });
+    }
+  }
+
   async automaticmassEmail(req, res) {
     try {
       const users = await Users.findAll({
@@ -2014,15 +2125,16 @@ class UsersController {
       );
 
       const arrayplants = req.body.arrayplants.filter(
-        (data) => data.dev_uuid !== undefined
+        (data) => data.uuid !== undefined
       );
 
       await Promise.all(
         arrayplants.map(async (devarray) => {
+          console.log("\n", devarray, "\n");
           const {
-            dev_uuid,
+            uuid,
             capacity,
-            dev_email,
+            email,
             ic_city,
             ic_states,
             dev_install,
@@ -2037,7 +2149,7 @@ class UsersController {
 
             const result = await Devices.findOne({
               attributes: ["dev_name"],
-              where: { dev_uuid: dev_uuid },
+              where: { dev_uuid: uuid },
             });
 
             if (!irr) {
@@ -2047,7 +2159,7 @@ class UsersController {
                 { gen_estimated: gen_new },
                 {
                   where: {
-                    dev_uuid: dev_uuid,
+                    dev_uuid: uuid,
                     gen_date: {
                       [Op.between]: [firstDayOfMonth, lastDayOfMonth],
                     },
@@ -2064,7 +2176,7 @@ class UsersController {
                 { gen_estimated: gen_new },
                 {
                   where: {
-                    dev_uuid: dev_uuid,
+                    dev_uuid: uuid,
                     gen_date: {
                       [Op.between]: [firstDayOfMonth, lastDayOfMonth],
                     },
@@ -2079,7 +2191,7 @@ class UsersController {
           await Devices.update(
             {
               dev_capacity: Number(capacity),
-              dev_email: dev_email,
+              dev_email: email,
               dev_image: dev_image,
               dev_install: dev_install,
               dev_address: ic_city + "-" + ic_states,
@@ -2094,7 +2206,7 @@ class UsersController {
                   : null
                 : null,
             },
-            { where: { dev_uuid: dev_uuid } }
+            { where: { dev_uuid: uuid } }
           );
         })
       );
