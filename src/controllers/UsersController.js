@@ -745,7 +745,7 @@ class UsersController {
             from: '"noreplymayawatch@gmail.com',
             to: [
               "contato@mayax.com.br",
-              "eloymun00@gmail.com",
+              
               element.use_alert_email,
             ],
             subject: "Alertas de geração abaixo do valor estipulado",
