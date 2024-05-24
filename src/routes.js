@@ -220,11 +220,11 @@ routes.get(
   UsersController.emailAlertSend
 );
 //Rota Alertas  Geração Abaixo Whatsapp
-// routes.get(
-//   `${apiVersion}/emailalertsendwhatsapp`,
+routes.get(
+  `${apiVersion}/emailalertsendwhatsapp`,
 
-//   GenerationController.emailAlertSendWhatsApp
-// );
+  GenerationController.emailAlertSendWhatsApp
+);
 
 routes.get(
   `${apiVersion}/alertFrequency/:uuid`,
