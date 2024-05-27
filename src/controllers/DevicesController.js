@@ -405,17 +405,27 @@ class DevicesController {
 
       if (clientToken == `Bearer ${expectedToken}`) {
         const result = await Devices.findOne({
-          attributes: ["dev_name", "dev_name_manager", "dev_install"],
+          attributes: ["dev_name"],
 
           where: { dev_uuid: dev_uuid },
         });
         if (
-          !result ||
-          result.dev_name_manager === null ||
-          result.dev_install === null
+          !result 
         ) {
           return res.status(404).send();
         }
+        // const result = await Devices.findOne({
+        //   attributes: ["dev_name", "dev_name_manager", "dev_install"],
+
+        //   where: { dev_uuid: dev_uuid },
+        // });
+        // if (
+        //   !result ||
+        //   result.dev_name_manager === null ||
+        //   result.dev_install === null
+        // ) {
+        //   return res.status(404).send();
+        // }
         //Valores de geração estimada do mês escolhido
         const gen = await Generation.findOne({
           include: [
