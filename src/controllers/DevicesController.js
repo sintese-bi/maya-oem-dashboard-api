@@ -614,8 +614,6 @@ class DevicesController {
       const current = moment().format("YYYY-MM-DD");
       const currentMonthYear = moment().format("YYYY-MM");
       const currentYear = moment().format("YYYY");
-
-      let current_day;
       //Dia corrente
       const current_day_string = moment().format("DD");
       let current_day_int = parseInt(current_day_string);
@@ -625,15 +623,20 @@ class DevicesController {
       const expectedToken = process.env.TOKEN;
       //Ultimo dia do mes
       const lastDayOfMonth = moment().endOf("month").format("YYYY-MM-DD");
-      //Mês que o usuário escolheu
+      const lastday = parseInt(lastDayOfMonth);
       //Data corrente
       const primeiro_dia_mes = `${currentMonthYear}-01`;
 
       if (clientToken == `Bearer ${expectedToken}`) {
         const result = await Devices.findAll({
-          attributes: ["dev_name", "dev_uuid"],
+          attributes: ["dev_name", "dev_uuid", "dev_wpp_number"],
 
-          where: { dev_deleted: false, dev_brand: "growatt" },
+          where: {
+            dev_deleted: false,
+            dev_wpp_number: {
+              [Op.ne]: null,
+            },
+          },
         });
         if (!result) {
           return res.status(404).send();
@@ -652,10 +655,22 @@ class DevicesController {
                 },
               ],
               where: {
-                gen_date: `${currentMonthYear}-01`,
+                gen_date: {
+                  [Op.between]: [
+                    `${currentMonthYear}-01`,
+                    `${currentMonthYear}-${current_day_string}`,
+                  ],
+                },
               },
               attributes: ["gen_estimated"],
             });
+            let generation_est;
+            if (gen) {
+              generation_est = gen.gen_estimated;
+            } else {
+              generation_est = 100;
+            }
+
             const monthGeneration = await Generation.findAll({
               attributes: [
                 [Sequelize.literal("DATE(gen_date)"), "day"],
@@ -736,23 +751,47 @@ class DevicesController {
                 };
               }
 
-              monthlySums[month].gen_real += result.dataValues.latest_gen_real;
-              monthlySums[month].gen_estimated +=
-                result.dataValues.latest_gen_estimated;
+              monthlySums[month].gen_real += Math.round(
+                result.dataValues.latest_gen_real
+              );
+              monthlySums[month].gen_estimated += Math.round(
+                result.dataValues.latest_gen_estimated
+              );
+            });
+            //Cálculo Co2 e árvores salvas
+            let tree_co2;
+            if (monthlySums[current_month_string]) {
+              tree_co2 = monthlySums[current_month_string].gen_real;
+            } else {
+              tree_co2 = 0;
+            }
+            const mapping = monthGeneration.map((element) => {
+              return element.dataValues.latest_gen_real;
             });
 
+            const realgenSum = mapping.reduce(
+              (accumulator, currentValue) => accumulator + currentValue,
+              0
+            );
             return {
-              result: element.dev_name,
-              gen_estimated: gen.gen_estimated,
-              gen_estimated_total: gen.gen_estimated * current_day_int,
-              geração_mes: monthGeneration,
-              // geração_dia: dayGeneration,
-              geração_ano: monthlySums,
+              device_name: element.dev_name, //Nome do device
+              period: currentMonthYear, //Período
+              wpp_number: element.dev_wpp_number, //Número WhatsApp
+              treesSaved: Math.round(tree_co2 * 0.000504 * 100) / 100, //Árvores salvas
+              CO2: Math.round(tree_co2 * 0.419 * 100) / 100, //Co2
+              gen_estimated_total:
+                Math.round(generation_est * lastday * 100) / 100, //Soma gen_estimada do mês
+              gen_real_total: Math.round(realgenSum * 100) / 100, //Soma gen_real do mês
+              generation_month: monthGeneration, //Gráfico geração mês
+              generation_year: monthlySums, //Gráfico geração anual
             };
           })
         );
+        const delay = 5000;
 
-        return res.status(200).json(generationAll);
+        setTimeout(function () {
+          return res.status(200).json({ message: generationAll });
+        }, delay);
       } else {
         return res
           .status(401)
