@@ -778,7 +778,7 @@ class DevicesController {
               period: currentMonthYear, //Período
               wpp_number: element.dev_wpp_number, //Número WhatsApp
               treesSaved: Math.round(tree_co2 * 0.000504 * 100) / 100, //Árvores salvas
-              CO2: Math.round(tree_co2 * 0.419 * 100) / 100, //Co2
+              c02: Math.round(tree_co2 * 0.419 * 100) / 100, //Co2
               gen_estimated_total:
                 Math.round(generation_est * lastday * 100) / 100, //Soma gen_estimada do mês
               gen_real_total: Math.round(realgenSum * 100) / 100, //Soma gen_real do mês
