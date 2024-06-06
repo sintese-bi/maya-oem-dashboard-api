@@ -281,6 +281,12 @@ routes.post(
 
   DevicesController.managerNames
 );
+
+routes.get(
+  `${apiVersion}/managernamesall`,
+
+  DevicesController.managerNamesAll
+);
 routes.post(
   `${apiVersion}/updateemaildevice`,
   checkToken,

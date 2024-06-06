@@ -39,6 +39,9 @@ class Devices extends Model {
         dev_temp: {
           type: DataTypes.STRING,
         },
+        dev_wpp_number: {
+          type: DataTypes.STRING,
+        },
         dev_weather: {
           type: DataTypes.STRING,
         },
