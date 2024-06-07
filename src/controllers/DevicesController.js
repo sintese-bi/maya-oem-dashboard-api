@@ -900,123 +900,123 @@ class DevicesController {
           }
           return res.status(200).json({ message: gen });
 
-          // const monthGeneration = await Generation.findAll({
-          //   attributes: [
-          //     [Sequelize.literal("DATE(gen_date)"), "day"],
-          //     [
-          //       Sequelize.fn("MAX", Sequelize.col("gen_date")),
-          //       "latest_gen_date",
-          //     ],
-          //     [
-          //       Sequelize.fn("MAX", Sequelize.col("gen_real")),
-          //       "latest_gen_real",
-          //     ],
-          //     [
-          //       Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
-          //       "latest_gen_estimated",
-          //     ],
-          //   ],
-          //   include: [
-          //     {
-          //       association: "devices",
-          //       attributes: [],
-          //       where: {
-          //         dev_uuid: element.dev_uuid,
-          //       },
-          //     },
-          //   ],
-          //   where: {
-          //     gen_date: {
-          //       [Op.between]: [primeiro_dia_mes, lastDayOfMonth],
-          //     },
-          //   },
-          //   group: [Sequelize.literal("day")],
-          // });
+          const monthGeneration = await Generation.findAll({
+            attributes: [
+              [Sequelize.literal("DATE(gen_date)"), "day"],
+              [
+                Sequelize.fn("MAX", Sequelize.col("gen_date")),
+                "latest_gen_date",
+              ],
+              [
+                Sequelize.fn("MAX", Sequelize.col("gen_real")),
+                "latest_gen_real",
+              ],
+              [
+                Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+                "latest_gen_estimated",
+              ],
+            ],
+            include: [
+              {
+                association: "devices",
+                attributes: [],
+                where: {
+                  dev_uuid: element.dev_uuid,
+                },
+              },
+            ],
+            where: {
+              gen_date: {
+                [Op.between]: [primeiro_dia_mes, lastDayOfMonth],
+              },
+            },
+            group: [Sequelize.literal("day")],
+          });
 
-          // const yearGeneration = await Generation.findAll({
-          //   attributes: [
-          //     [Sequelize.literal("DATE(gen_date)"), "day"],
-          //     [
-          //       Sequelize.fn("MAX", Sequelize.col("gen_date")),
-          //       "latest_gen_date",
-          //     ],
-          //     [
-          //       Sequelize.fn("MAX", Sequelize.col("gen_real")),
-          //       "latest_gen_real",
-          //     ],
-          //     [
-          //       Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
-          //       "latest_gen_estimated",
-          //     ],
-          //   ],
-          //   include: [
-          //     {
-          //       association: "devices",
-          //       attributes: [],
-          //       where: {
-          //         dev_uuid: element.dev_uuid,
-          //       },
-          //     },
-          //   ],
-          //   where: {
-          //     gen_date: {
-          //       [Op.between]: [`${currentYear}-01-01`, `${currentYear}-12-31`],
-          //     },
-          //   },
-          //   group: [Sequelize.literal("day")],
-          // });
+          const yearGeneration = await Generation.findAll({
+            attributes: [
+              [Sequelize.literal("DATE(gen_date)"), "day"],
+              [
+                Sequelize.fn("MAX", Sequelize.col("gen_date")),
+                "latest_gen_date",
+              ],
+              [
+                Sequelize.fn("MAX", Sequelize.col("gen_real")),
+                "latest_gen_real",
+              ],
+              [
+                Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+                "latest_gen_estimated",
+              ],
+            ],
+            include: [
+              {
+                association: "devices",
+                attributes: [],
+                where: {
+                  dev_uuid: element.dev_uuid,
+                },
+              },
+            ],
+            where: {
+              gen_date: {
+                [Op.between]: [`${currentYear}-01-01`, `${currentYear}-12-31`],
+              },
+            },
+            group: [Sequelize.literal("day")],
+          });
 
-          // const monthlySums = {};
-          // yearGeneration.forEach((result) => {
-          //   const month = result.dataValues.day.split("-")[1];
+          const monthlySums = {};
+          yearGeneration.forEach((result) => {
+            const month = result.dataValues.day.split("-")[1];
 
-          //   if (!monthlySums[month]) {
-          //     monthlySums[month] = {
-          //       gen_real: 0,
-          //       gen_estimated: 0,
-          //     };
-          //   }
+            if (!monthlySums[month]) {
+              monthlySums[month] = {
+                gen_real: 0,
+                gen_estimated: 0,
+              };
+            }
 
-          //   monthlySums[month].gen_real += Math.round(
-          //     result.dataValues.latest_gen_real
-          //   );
-          //   monthlySums[month].gen_estimated += Math.round(
-          //     result.dataValues.latest_gen_estimated
-          //   );
-          // });
-          // //Cálculo Co2 e árvores salvas
-          // let tree_co2;
-          // if (monthlySums[current_month_string]) {
-          //   tree_co2 = monthlySums[current_month_string].gen_real;
-          // } else {
-          //   tree_co2 = 0;
-          // }
-          // const mapping = monthGeneration.map((element) => {
-          //   return element.dataValues.latest_gen_real;
-          // });
+            monthlySums[month].gen_real += Math.round(
+              result.dataValues.latest_gen_real
+            );
+            monthlySums[month].gen_estimated += Math.round(
+              result.dataValues.latest_gen_estimated
+            );
+          });
+          //Cálculo Co2 e árvores salvas
+          let tree_co2;
+          if (monthlySums[current_month_string]) {
+            tree_co2 = monthlySums[current_month_string].gen_real;
+          } else {
+            tree_co2 = 0;
+          }
+          const mapping = monthGeneration.map((element) => {
+            return element.dataValues.latest_gen_real;
+          });
 
-          // const realgenSum = mapping.reduce(
-          //   (accumulator, currentValue) => accumulator + currentValue,
-          //   0
-          // );
-          // return {
-          //   device_name: element.dev_name, //Nome do device
-          //   period: currentMonthYear, //Período
-          //   wpp_number: element.dev_wpp_number, //Número WhatsApp
-          //   treesSaved: Math.round(tree_co2 * 0.000504 * 100) / 100, //Árvores salvas
-          //   c02: Math.round(tree_co2 * 0.419 * 100) / 100, //Co2
-          //   gen_estimated_total:
-          //     Math.round(generation_est * lastday * 100) / 100, //Soma gen_estimada do mês
-          //   gen_real_total: Math.round(realgenSum * 100) / 100, //Soma gen_real do mês
-          //   generation_month: monthGeneration, //Gráfico geração mês
-          //   generation_year: monthlySums, //Gráfico geração anual
-          // };
+          const realgenSum = mapping.reduce(
+            (accumulator, currentValue) => accumulator + currentValue,
+            0
+          );
+          return {
+            device_name: element.dev_name, //Nome do device
+            period: currentMonthYear, //Período
+            wpp_number: element.dev_wpp_number, //Número WhatsApp
+            treesSaved: Math.round(tree_co2 * 0.000504 * 100) / 100, //Árvores salvas
+            c02: Math.round(tree_co2 * 0.419 * 100) / 100, //Co2
+            gen_estimated_total:
+              Math.round(generation_est * lastday * 100) / 100, //Soma gen_estimada do mês
+            gen_real_total: Math.round(realgenSum * 100) / 100, //Soma gen_real do mês
+            generation_month: monthGeneration, //Gráfico geração mês
+            generation_year: monthlySums, //Gráfico geração anual
+          };
 
-          // const delay = 5000;
+          const delay = 5000;
 
-          // setTimeout(function () {
-          //   return res.status(200).json({ message: generationAll });
-          // }, delay);
+          setTimeout(function () {
+            return res.status(200).json({ message: generationAll });
+          }, delay);
         } else {
           return res
             .status(401)
