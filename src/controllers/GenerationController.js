@@ -547,6 +547,7 @@ class GenerationController {
             "use_percentage",
             "use_alert_email",
             "use_date",
+            "use_name",
             "use_wpp_number",
             "use_uuid",
           ],
@@ -697,7 +698,11 @@ class GenerationController {
 
             let object;
             if (num == 0) {
-              object = { telefone: element.use_wpp_number, relatorio: 0 };
+              object = {
+                telefone: element.use_wpp_number,
+                relatorio: 0,
+                user_name: element.use_name,
+              };
             } else {
               const workbook = XLSX.utils.book_new();
               const worksheet = XLSX.utils.json_to_sheet(sumPercentage);
@@ -706,7 +711,11 @@ class GenerationController {
                 bookType: "xlsx",
                 type: "buffer",
               });
-              object = { telefone: element.use_wpp_number, relatorio: buffer };
+              object = {
+                telefone: element.use_wpp_number,
+                relatorio: buffer,
+                user_name: element.use_name,
+              };
             }
 
             return object;
