@@ -743,11 +743,7 @@ class UsersController {
 
           mailOptions = {
             from: '"noreplymayawatch@gmail.com',
-            to: [
-              "contato@mayax.com.br",
-              
-              element.use_alert_email,
-            ],
+            to: ["contato@mayax.com.br", element.use_alert_email],
             subject: "Alertas de geração abaixo do valor estipulado",
             text: "",
             html: emailBody,
@@ -857,7 +853,7 @@ class UsersController {
                   "dev_long",
                   "dev_email",
                   "dev_image",
-                  "dev_install"
+                  "dev_install",
                 ],
                 include: [
                   {
@@ -987,7 +983,7 @@ class UsersController {
               dev_email: device.dev_email,
               dev_deleted: device.dev_deleted,
               dev_long: device.dev_long,
-              dev_install:device.dev_install,
+              dev_install: device.dev_install,
               status: {
                 sta_name: device.status ? device.status.sta_name : null,
                 sta_code: device.status ? device.status.sta_code : null,
@@ -2130,7 +2126,6 @@ class UsersController {
 
       await Promise.all(
         arrayplants.map(async (devarray) => {
-          console.log("\n", devarray, "\n");
           const {
             uuid,
             capacity,
@@ -2139,6 +2134,7 @@ class UsersController {
             ic_states,
             dev_install,
             dev_image,
+            dev_manual_gen_est,
           } = devarray;
 
           if (ic_city != undefined && ic_states != undefined) {
@@ -2153,8 +2149,10 @@ class UsersController {
             });
 
             if (!irr) {
-              const ic_year = 5.04;
-              const gen_new = capacity * ic_year * 0.81;
+              // const ic_year = 5.04;
+              // const gen_new = capacity * ic_year * 0.81;
+              const gen_new = dev_manual_gen_est;
+
               await Generation.update(
                 { gen_estimated: gen_new },
                 {
@@ -2194,6 +2192,7 @@ class UsersController {
               dev_email: email,
               dev_image: dev_image,
               dev_install: dev_install,
+              dev_manual_gen_est: dev_manual_gen_est,
               dev_address: ic_city + "-" + ic_states,
               dev_lat: irr
                 ? irr.ic_lat !== undefined
