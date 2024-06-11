@@ -857,7 +857,7 @@ class UsersController {
                   "dev_long",
                   "dev_email",
                   "dev_image",
-                  "dev_install"
+                  "dev_install",
                 ],
                 include: [
                   {
@@ -987,7 +987,7 @@ class UsersController {
               dev_email: device.dev_email,
               dev_deleted: device.dev_deleted,
               dev_long: device.dev_long,
-              dev_install:device.dev_install,
+              dev_install: device.dev_install,
               status: {
                 sta_name: device.status ? device.status.sta_name : null,
                 sta_code: device.status ? device.status.sta_code : null,
@@ -2130,7 +2130,6 @@ class UsersController {
 
       await Promise.all(
         arrayplants.map(async (devarray) => {
-          console.log("\n", devarray, "\n");
           const {
             uuid,
             capacity,
@@ -2138,9 +2137,9 @@ class UsersController {
             ic_city,
             ic_states,
             dev_install,
+            gen_estimated,
             dev_image,
           } = devarray;
-
           if (ic_city != undefined && ic_states != undefined) {
             var irr = await IrradiationCoefficient.findOne({
               where: { ic_city, ic_states },
@@ -2156,7 +2155,9 @@ class UsersController {
               const ic_year = 5.04;
               const gen_new = capacity * ic_year * 0.81;
               await Generation.update(
-                { gen_estimated: gen_new },
+                {
+                  gen_estimated: 100,
+                },
                 {
                   where: {
                     dev_uuid: uuid,
@@ -2173,7 +2174,9 @@ class UsersController {
               const ic_year = irr.dataValues.ic_yearly;
               const gen_new = capacity * ic_year * 0.81;
               await Generation.update(
-                { gen_estimated: gen_new },
+                {
+                  gen_estimated: 100,
+                },
                 {
                   where: {
                     dev_uuid: uuid,
