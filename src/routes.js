@@ -219,6 +219,12 @@ routes.get(
   checkToken,
   UsersController.emailAlertSend
 );
+//Rota Alertas  Geração Abaixo Whatsapp
+routes.get(
+  `${apiVersion}/emailalertsendwhatsapp`,
+
+  GenerationController.emailAlertSendWhatsApp
+);
 
 routes.get(
   `${apiVersion}/alertFrequency/:uuid`,
@@ -275,6 +281,18 @@ routes.post(
 
   DevicesController.managerNames
 );
+// administratorReportWhatsApp
+routes.get(
+  `${apiVersion}/managernamesall`,
+
+  DevicesController.managerNamesAll
+);
+// routes.get(
+//   `${apiVersion}/admreportwpp`,
+
+//   DevicesController.administratorReportWhatsApp
+// );
+
 routes.post(
   `${apiVersion}/updateemaildevice`,
   checkToken,

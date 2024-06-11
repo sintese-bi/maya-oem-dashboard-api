@@ -743,11 +743,7 @@ class UsersController {
 
           mailOptions = {
             from: '"noreplymayawatch@gmail.com',
-            to: [
-              "contato@mayax.com.br",
-              "eloymun00@gmail.com",
-              element.use_alert_email,
-            ],
+            to: ["contato@mayax.com.br", element.use_alert_email],
             subject: "Alertas de geração abaixo do valor estipulado",
             text: "",
             html: emailBody,
@@ -2140,37 +2136,31 @@ class UsersController {
             gen_estimated,
             dev_image,
           } = devarray;
-          if (ic_city != undefined && ic_states != undefined) {
+          if (gen_estimated) {
+            const gen_new = Number(gen_estimated);
+
+            await Generation.update(
+              { gen_estimated: gen_new },
+              {
+                where: {
+                  dev_uuid: uuid,
+                  gen_date: {
+                    [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                  },
+                },
+              }
+            );
+          } else if (ic_city && ic_states && capacity) {
             var irr = await IrradiationCoefficient.findOne({
               where: { ic_city, ic_states },
               attributes: ["ic_yearly", "ic_lat", "ic_lon"],
             });
-
             const result = await Devices.findOne({
               attributes: ["dev_name"],
               where: { dev_uuid: uuid },
             });
 
-            if (!irr) {
-              const ic_year = 5.04;
-              const gen_new = capacity * ic_year * 0.81;
-              await Generation.update(
-                {
-                  gen_estimated: 100,
-                },
-                {
-                  where: {
-                    dev_uuid: uuid,
-                    gen_date: {
-                      [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-                    },
-                  },
-                }
-              );
-              console.log(
-                `Por favor, verifique se a cidade e/ou estado de "${result.dev_name}" foi inserida corretamente!`
-              );
-            } else {
+            if (irr) {
               const ic_year = irr.dataValues.ic_yearly;
               const gen_new = capacity * ic_year * 0.81;
               await Generation.update(
@@ -2186,17 +2176,42 @@ class UsersController {
                   },
                 }
               );
+            } else {
+              const ic_year = 5.04;
+              const gen_new = capacity * ic_year * 0.81;
+              await Generation.update(
+                { gen_estimated: gen_new },
+                {
+                  where: {
+                    dev_uuid: uuid,
+                    gen_date: {
+                      [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                    },
+                  },
+                }
+              );
             }
+          } else {
+            const gen_new = 101;
+            await Generation.update(
+              { gen_estimated: gen_new },
+              {
+                where: {
+                  dev_uuid: uuid,
+                  gen_date: {
+                    [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                  },
+                },
+              }
+            );
           }
-          // const binaryImage = Buffer.from(dev_image, "base64");
-          // console.log({ binario: binaryImage });
-
           await Devices.update(
             {
               dev_capacity: Number(capacity),
               dev_email: email,
               dev_image: dev_image,
               dev_install: dev_install,
+              dev_manual_gen_est: Number(gen_estimated),
               dev_address: ic_city + "-" + ic_states,
               dev_lat: irr
                 ? irr.ic_lat !== undefined

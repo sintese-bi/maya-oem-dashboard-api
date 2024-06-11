@@ -374,6 +374,7 @@ class DevicesController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  //API que retorna geração para um device e período específico
   async managerNames(req, res) {
     try {
       //Data atual
@@ -405,17 +406,25 @@ class DevicesController {
 
       if (clientToken == `Bearer ${expectedToken}`) {
         const result = await Devices.findOne({
-          attributes: ["dev_name", "dev_name_manager", "dev_install"],
+          attributes: ["dev_name"],
 
           where: { dev_uuid: dev_uuid },
         });
-        if (
-          !result ||
-          result.dev_name_manager === null ||
-          result.dev_install === null
-        ) {
+        if (!result) {
           return res.status(404).send();
         }
+        // const result = await Devices.findOne({
+        //   attributes: ["dev_name", "dev_name_manager", "dev_install"],
+
+        //   where: { dev_uuid: dev_uuid },
+        // });
+        // if (
+        //   !result ||
+        //   result.dev_name_manager === null ||
+        //   result.dev_install === null
+        // ) {
+        //   return res.status(404).send();
+        // }
         //Valores de geração estimada do mês escolhido
         const gen = await Generation.findOne({
           include: [
@@ -591,6 +600,432 @@ class DevicesController {
           success: false,
           message: `Erro ao enviar o email!`,
         });
+      }
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  //API que retorna os dados de geração de todos os devices do ano e mês corrente
+  async managerNamesAll(req, res) {
+    try {
+      //Data atual
+      const current = moment().format("YYYY-MM-DD");
+      const currentMonthYear = moment().format("YYYY-MM");
+      const currentYear = moment().format("YYYY");
+      //Dia corrente
+      const current_day_string = moment().format("DD");
+      let current_day_int = parseInt(current_day_string);
+      //MêS corrente
+      const current_month_string = moment().format("MM");
+      const clientToken = req.headers.authorization;
+      const expectedToken = process.env.TOKEN;
+      //Ultimo dia do mes
+      const lastDayOfMonth = moment().endOf("month").format("YYYY-MM-DD");
+      const lastday = parseInt(lastDayOfMonth);
+      //Data corrente
+      const primeiro_dia_mes = `${currentMonthYear}-01`;
+
+      if (clientToken == `Bearer ${expectedToken}`) {
+        const result = await Devices.findAll({
+          attributes: ["dev_name", "dev_uuid", "dev_wpp_number"],
+          //ADICIONAR CONDICAO DEV_WPP_NUMBER=NULL
+          where: {
+            dev_deleted: false,
+            dev_wpp_number: {
+              [Op.ne]: null,
+            },
+          },
+        });
+        if (!result) {
+          return res.status(404).send();
+        }
+
+        const generationAll = await Promise.all(
+          result.map(async (element) => {
+            //Valores de geração estimada do mês escolhido
+            const gen = await Generation.findOne({
+              include: [
+                {
+                  association: "devices",
+                  where: {
+                    dev_uuid: element.dev_uuid,
+                  },
+                },
+              ],
+              where: {
+                gen_date: {
+                  [Op.between]: [
+                    `${currentMonthYear}-01`,
+                    `${currentMonthYear}-${current_day_string}`,
+                  ],
+                },
+              },
+              attributes: ["gen_estimated"],
+            });
+            let generation_est;
+            if (gen) {
+              generation_est = gen.gen_estimated;
+            } else {
+              generation_est = 100;
+            }
+
+            const monthGeneration = await Generation.findAll({
+              attributes: [
+                [Sequelize.literal("DATE(gen_date)"), "day"],
+                [
+                  Sequelize.fn("MAX", Sequelize.col("gen_date")),
+                  "latest_gen_date",
+                ],
+                [
+                  Sequelize.fn("MAX", Sequelize.col("gen_real")),
+                  "latest_gen_real",
+                ],
+                [
+                  Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+                  "latest_gen_estimated",
+                ],
+              ],
+              include: [
+                {
+                  association: "devices",
+                  attributes: [],
+                  where: {
+                    dev_uuid: element.dev_uuid,
+                  },
+                },
+              ],
+              where: {
+                gen_date: {
+                  [Op.between]: [primeiro_dia_mes, lastDayOfMonth],
+                },
+              },
+              group: [Sequelize.literal("day")],
+            });
+
+            const yearGeneration = await Generation.findAll({
+              attributes: [
+                [Sequelize.literal("DATE(gen_date)"), "day"],
+                [
+                  Sequelize.fn("MAX", Sequelize.col("gen_date")),
+                  "latest_gen_date",
+                ],
+                [
+                  Sequelize.fn("MAX", Sequelize.col("gen_real")),
+                  "latest_gen_real",
+                ],
+                [
+                  Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+                  "latest_gen_estimated",
+                ],
+              ],
+              include: [
+                {
+                  association: "devices",
+                  attributes: [],
+                  where: {
+                    dev_uuid: element.dev_uuid,
+                  },
+                },
+              ],
+              where: {
+                gen_date: {
+                  [Op.between]: [
+                    `${currentYear}-01-01`,
+                    `${currentYear}-12-31`,
+                  ],
+                },
+              },
+              group: [Sequelize.literal("day")],
+            });
+
+            const monthlySums = {};
+            yearGeneration.forEach((result) => {
+              const month = result.dataValues.day.split("-")[1];
+
+              if (!monthlySums[month]) {
+                monthlySums[month] = {
+                  gen_real: 0,
+                  gen_estimated: 0,
+                };
+              }
+
+              monthlySums[month].gen_real += Math.round(
+                result.dataValues.latest_gen_real
+              );
+              monthlySums[month].gen_estimated += Math.round(
+                result.dataValues.latest_gen_estimated
+              );
+            });
+            //Cálculo Co2 e árvores salvas
+            let tree_co2;
+            if (monthlySums[current_month_string]) {
+              tree_co2 = monthlySums[current_month_string].gen_real;
+            } else {
+              tree_co2 = 0;
+            }
+            const mapping = monthGeneration.map((element) => {
+              return element.dataValues.latest_gen_real;
+            });
+
+            const realgenSum = mapping.reduce(
+              (accumulator, currentValue) => accumulator + currentValue,
+              0
+            );
+            return {
+              device_name: element.dev_name, //Nome do device
+              period: currentMonthYear, //Período
+              wpp_number: element.dev_wpp_number, //Número WhatsApp
+              treesSaved: Math.round(tree_co2 * 0.000504 * 100) / 100, //Árvores salvas
+              c02: Math.round(tree_co2 * 0.419 * 100) / 100, //Co2
+              gen_estimated_total:
+                Math.round(generation_est * lastday * 100) / 100, //Soma gen_estimada do mês
+              gen_real_total: Math.round(realgenSum * 100) / 100, //Soma gen_real do mês
+              generation_month: monthGeneration, //Gráfico geração mês
+              generation_year: monthlySums, //Gráfico geração anual
+            };
+          })
+        );
+        const delay = 5000;
+
+        setTimeout(function () {
+          return res.status(200).json({ message: generationAll });
+        }, delay);
+      } else {
+        return res
+          .status(401)
+          .json({ message: "Falha na autenticação: Token inválido." });
+      }
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  async emailBalance(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhum arquivo PDF enviado" });
+      }
+      const pdfBuffer = req.file.buffer;
+
+      const { dev_uuid } = req.body;
+      const result = await Devices.findByPk(dev_uuid, {
+        attributes: ["dev_email"],
+      });
+      const pdfDoc = await PDFDocument.load(pdfBuffer);
+      const pdfAttachment = {
+        filename: "relatorio_fatura.pdf",
+        content: Buffer.from(await pdfDoc.save()),
+        encoding: "base64",
+      };
+      const emailBody = `
+      <p>Olá!</p>      
+      <p>Segue o PDF com os dados de sua fatura e geração!</p>
+      <p>Agradecemos pela confiança em nossos serviços.</p>
+      <p>Atenciosamente,<br>Equipe MAYA WATCH</p>`;
+
+      const mailOptions = {
+        from: "noreplymayawatch@gmail.com",
+        to: [result.dev_email],
+        subject: "Relatório de Fatura e Geração Maya Watch",
+        text: "",
+        html: emailBody,
+        attachments: [pdfAttachment],
+      };
+
+      try {
+        await transporter.sendMail(mailOptions);
+        return res.status(200).json({
+          success: true,
+          message: `O email foi enviado com sucesso! `,
+        });
+      } catch (error) {
+        return res.status(500).json({
+          success: false,
+          message: `Erro ao enviar o email!`,
+        });
+      }
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  async administratorReportWhatsApp(req, res) {
+    try {
+      try {
+        //Data atual
+        const current = moment().format("YYYY-MM-DD");
+        const currentMonthYear = moment().format("YYYY-MM");
+        const currentYear = moment().format("YYYY");
+        //Dia corrente
+        const current_day_string = moment().format("DD");
+        let current_day_int = parseInt(current_day_string);
+        //MêS corrente
+        const current_month_string = moment().format("MM");
+        const clientToken = req.headers.authorization;
+        const expectedToken = process.env.TOKEN;
+        //Ultimo dia do mes
+        const lastDayOfMonth = moment().endOf("month").format("YYYY-MM-DD");
+        const lastday = parseInt(lastDayOfMonth);
+        //Data corrente
+        const primeiro_dia_mes = `${currentMonthYear}-01`;
+
+        if (clientToken == `Bearer ${expectedToken}`) {
+          //Valores de geração estimada do mês escolhido
+          const gen = await Generation.findAll({
+            include: [
+              {
+                association: "devices",
+                attributes: ["dev_name"],
+                where: {
+                  dev_deleted: false,
+                },
+              },
+            ],
+            where: {
+              gen_date: `${currentMonthYear}-01`,
+            },
+            attributes: ["gen_estimated"],
+          });
+
+         
+          let generation_est;
+          if (gen) {
+            generation_est = gen.gen_estimated;
+          } else {
+            generation_est = 100;
+          }
+          return res.status(200).json({ message: gen });
+
+          const monthGeneration = await Generation.findAll({
+            attributes: [
+              [Sequelize.literal("DATE(gen_date)"), "day"],
+              [
+                Sequelize.fn("MAX", Sequelize.col("gen_date")),
+                "latest_gen_date",
+              ],
+              [
+                Sequelize.fn("MAX", Sequelize.col("gen_real")),
+                "latest_gen_real",
+              ],
+              [
+                Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+                "latest_gen_estimated",
+              ],
+            ],
+            include: [
+              {
+                association: "devices",
+                attributes: [],
+                where: {
+                  dev_uuid: element.dev_uuid,
+                },
+              },
+            ],
+            where: {
+              gen_date: {
+                [Op.between]: [primeiro_dia_mes, lastDayOfMonth],
+              },
+            },
+            group: [Sequelize.literal("day")],
+          });
+
+          const yearGeneration = await Generation.findAll({
+            attributes: [
+              [Sequelize.literal("DATE(gen_date)"), "day"],
+              [
+                Sequelize.fn("MAX", Sequelize.col("gen_date")),
+                "latest_gen_date",
+              ],
+              [
+                Sequelize.fn("MAX", Sequelize.col("gen_real")),
+                "latest_gen_real",
+              ],
+              [
+                Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+                "latest_gen_estimated",
+              ],
+            ],
+            include: [
+              {
+                association: "devices",
+                attributes: [],
+                where: {
+                  dev_uuid: element.dev_uuid,
+                },
+              },
+            ],
+            where: {
+              gen_date: {
+                [Op.between]: [`${currentYear}-01-01`, `${currentYear}-12-31`],
+              },
+            },
+            group: [Sequelize.literal("day")],
+          });
+
+          const monthlySums = {};
+          yearGeneration.forEach((result) => {
+            const month = result.dataValues.day.split("-")[1];
+
+            if (!monthlySums[month]) {
+              monthlySums[month] = {
+                gen_real: 0,
+                gen_estimated: 0,
+              };
+            }
+
+            monthlySums[month].gen_real += Math.round(
+              result.dataValues.latest_gen_real
+            );
+            monthlySums[month].gen_estimated += Math.round(
+              result.dataValues.latest_gen_estimated
+            );
+          });
+          //Cálculo Co2 e árvores salvas
+          let tree_co2;
+          if (monthlySums[current_month_string]) {
+            tree_co2 = monthlySums[current_month_string].gen_real;
+          } else {
+            tree_co2 = 0;
+          }
+          const mapping = monthGeneration.map((element) => {
+            return element.dataValues.latest_gen_real;
+          });
+
+          const realgenSum = mapping.reduce(
+            (accumulator, currentValue) => accumulator + currentValue,
+            0
+          );
+          return {
+            device_name: element.dev_name, //Nome do device
+            period: currentMonthYear, //Período
+            wpp_number: element.dev_wpp_number, //Número WhatsApp
+            treesSaved: Math.round(tree_co2 * 0.000504 * 100) / 100, //Árvores salvas
+            c02: Math.round(tree_co2 * 0.419 * 100) / 100, //Co2
+            gen_estimated_total:
+              Math.round(generation_est * lastday * 100) / 100, //Soma gen_estimada do mês
+            gen_real_total: Math.round(realgenSum * 100) / 100, //Soma gen_real do mês
+            generation_month: monthGeneration, //Gráfico geração mês
+            generation_year: monthlySums, //Gráfico geração anual
+          };
+
+          const delay = 5000;
+
+          setTimeout(function () {
+            return res.status(200).json({ message: generationAll });
+          }, delay);
+        } else {
+          return res
+            .status(401)
+            .json({ message: "Falha na autenticação: Token inválido." });
+        }
+      } catch (error) {
+        return res
+          .status(500)
+          .json({ message: `Erro ao retornar os dados. ${error}` });
       }
     } catch (error) {
       return res
