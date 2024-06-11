@@ -854,6 +854,7 @@ class UsersController {
                   "dev_email",
                   "dev_image",
                   "dev_install",
+                  "dev_manual_gen_est"
                 ],
                 include: [
                   {
