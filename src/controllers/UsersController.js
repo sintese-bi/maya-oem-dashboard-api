@@ -985,6 +985,7 @@ class UsersController {
               dev_deleted: device.dev_deleted,
               dev_long: device.dev_long,
               dev_install: device.dev_install,
+              gen_estimated:device.dev_manual_gen_est,
               status: {
                 sta_name: device.status ? device.status.sta_name : null,
                 sta_code: device.status ? device.status.sta_code : null,
