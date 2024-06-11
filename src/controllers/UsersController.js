@@ -985,6 +985,7 @@ class UsersController {
               dev_deleted: device.dev_deleted,
               dev_long: device.dev_long,
               dev_install: device.dev_install,
+              gen_estimated:device.dev_manual_gen_est,
               status: {
                 sta_name: device.status ? device.status.sta_name : null,
                 sta_code: device.status ? device.status.sta_code : null,
@@ -3238,13 +3239,13 @@ const usersController = new UsersController();
 // usersController.agendarreinicioDispositivos();
 
 //Envio relatorio de dispositivos acima e abaixo do estimado
-usersController.agendarmonitorGeração();
+// usersController.agendarmonitorGeração();
 
 //Cron para  envio de alerta quando a geração real estiver x% abaixo da geração estimada
-usersController.agendarAlertasGeracao();
+// usersController.agendarAlertasGeracao();
 
 // //Envio alertas da tabela alerts do banco
-usersController.agendarVerificacaoDeAlertas();
+// usersController.agendarVerificacaoDeAlertas();
 
 //Envio automatico do 'envio massivo de relatorios'
 // usersController.agendarenvioEmailRelatorio()
