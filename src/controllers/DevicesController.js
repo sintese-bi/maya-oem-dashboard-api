@@ -629,10 +629,10 @@ class DevicesController {
 
       if (clientToken == `Bearer ${expectedToken}`) {
         const result = await Devices.findAll({
-          attributes: ["dev_name", "dev_uuid", "dev_wpp_number"],
-          //ADICIONAR CONDICAO DEV_WPP_NUMBER=NULL
+          attributes: ["dev_name", "dev_uuid", "dev_wpp_number","dev_capacity"],
+          //ADICIONAR CONDICAO DEV_DELETED=NULL
           where: {
-            dev_deleted: false,
+            dev_deleted: { [Op.or]: [null, false] },
             dev_wpp_number: {
               [Op.ne]: null,
             },
@@ -776,6 +776,7 @@ class DevicesController {
             return {
               device_name: element.dev_name, //Nome do device
               period: currentMonthYear, //Período
+              capacity:element.dev_capacity, //Potência Usina
               wpp_number: element.dev_wpp_number, //Número WhatsApp
               treesSaved: Math.round(tree_co2 * 0.000504 * 100) / 100, //Árvores salvas
               c02: Math.round(tree_co2 * 0.419 * 100) / 100, //Co2
@@ -891,7 +892,6 @@ class DevicesController {
             attributes: ["gen_estimated"],
           });
 
-         
           let generation_est;
           if (gen) {
             generation_est = gen.gen_estimated;
