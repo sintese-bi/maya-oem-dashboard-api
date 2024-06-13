@@ -897,6 +897,7 @@ class DevicesController {
                 "latest_gen_estimated",
               ],
               [Sequelize.col("devices.dev_name"), "dev_name"],
+              [Sequelize.col("devices.bl_uuid"), "bl_uuid"],
             ],
             include: [
               {
@@ -905,6 +906,15 @@ class DevicesController {
                 where: {
                   dev_deleted: { [Op.or]: [null, false] },
                 },
+                // include: [
+                //   {
+                //     association: "brand_login",
+                //     attributes: [],
+                //     where: {
+                //       use_uuid: "a7ed2d10-4340-43df-824d-63ca16979114",
+                //     },
+                //   },
+                // ],
               },
             ],
             where: {
@@ -915,6 +925,7 @@ class DevicesController {
             group: [
               Sequelize.literal("day"),
               Sequelize.col("devices.dev_name"),
+              Sequelize.col("devices.bl_uuid"),
             ],
           });
 
@@ -977,6 +988,15 @@ class DevicesController {
                 where: {
                   dev_deleted: { [Op.or]: [null, false] },
                 },
+                // include: [
+                //   {
+                //     association: "brand_login",
+                //     attributes: [],
+                //     where: {
+                //       use_uuid: "a7ed2d10-4340-43df-824d-63ca16979114",
+                //     },
+                //   },
+                // ],
               },
             ],
             where: {
@@ -989,6 +1009,7 @@ class DevicesController {
               Sequelize.col("devices.dev_name"),
             ],
           });
+
           let sumYear = {};
 
           yearGeneration.forEach((element) => {
@@ -1041,10 +1062,18 @@ class DevicesController {
             },
             { gen_real: 0, gen_estimated: 0 }
           );
+          const devices = await Devices.findAll({
+            where: {
+              dev_deleted: { [Op.or]: [null,false] },
+            },
+          });
+          const quant_dev = devices.length;
           const retorno = {
             period: currentMonthYear, //Período
 
             current_date: current, //Data corrente
+
+            devices_quant: quant_dev,
 
             sum_generation_real_month: (
               Math.round(monthValue.latest_gen_real * 100) / 100
@@ -1062,9 +1091,13 @@ class DevicesController {
               Math.round(yearValue.gen_estimated * 100) / 100
             ).toLocaleString(), // Soma da geração estimada do ano corrente
 
-            treesSaved: (Math.round(yearValue.gen_real  * 0.000504 * 100) / 100).toLocaleString(), //Árvores salvas ano
+            treesSaved: (
+              Math.round(yearValue.gen_real * 0.000504 * 100) / 100
+            ).toLocaleString(), //Árvores salvas ano
 
-            c02: (Math.round(yearValue.gen_real  * 0.419 * 100) / 100).toLocaleString(), //Co2 ano
+            c02: (
+              Math.round(yearValue.gen_real * 0.419 * 100) / 100
+            ).toLocaleString(), //Co2 ano
 
             generation_month: sumMonthtotal, //Gráfico geração mês
 
