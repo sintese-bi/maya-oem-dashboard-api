@@ -629,7 +629,12 @@ class DevicesController {
 
       if (clientToken == `Bearer ${expectedToken}`) {
         const result = await Devices.findAll({
-          attributes: ["dev_name", "dev_uuid", "dev_wpp_number","dev_capacity"],
+          attributes: [
+            "dev_name",
+            "dev_uuid",
+            "dev_wpp_number",
+            "dev_capacity",
+          ],
           //ADICIONAR CONDICAO DEV_DELETED=NULL
           where: {
             dev_deleted: { [Op.or]: [null, false] },
@@ -776,7 +781,7 @@ class DevicesController {
             return {
               device_name: element.dev_name, //Nome do device
               period: currentMonthYear, //Período
-              capacity:element.dev_capacity, //Potência Usina
+              capacity: element.dev_capacity, //Potência Usina
               wpp_number: element.dev_wpp_number, //Número WhatsApp
               treesSaved: Math.round(tree_co2 * 0.000504 * 100) / 100, //Árvores salvas
               c02: Math.round(tree_co2 * 0.419 * 100) / 100, //Co2
@@ -875,31 +880,7 @@ class DevicesController {
         const primeiro_dia_mes = `${currentMonthYear}-01`;
 
         if (clientToken == `Bearer ${expectedToken}`) {
-          //Valores de geração estimada do mês escolhido
-          const gen = await Generation.findAll({
-            include: [
-              {
-                association: "devices",
-                attributes: ["dev_name"],
-                where: {
-                  dev_deleted: false,
-                },
-              },
-            ],
-            where: {
-              gen_date: `${currentMonthYear}-01`,
-            },
-            attributes: ["gen_estimated"],
-          });
-
-          let generation_est;
-          if (gen) {
-            generation_est = gen.gen_estimated;
-          } else {
-            generation_est = 100;
-          }
-          return res.status(200).json({ message: gen });
-
+          //Fluxo que soma as gerações de cada dia do mês corrente
           const monthGeneration = await Generation.findAll({
             attributes: [
               [Sequelize.literal("DATE(gen_date)"), "day"],
@@ -915,13 +896,14 @@ class DevicesController {
                 Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
                 "latest_gen_estimated",
               ],
+              [Sequelize.col("devices.dev_name"), "dev_name"],
             ],
             include: [
               {
                 association: "devices",
                 attributes: [],
                 where: {
-                  dev_uuid: element.dev_uuid,
+                  dev_deleted: { [Op.or]: [null, false] },
                 },
               },
             ],
@@ -930,9 +912,47 @@ class DevicesController {
                 [Op.between]: [primeiro_dia_mes, lastDayOfMonth],
               },
             },
-            group: [Sequelize.literal("day")],
+            group: [
+              Sequelize.literal("day"),
+              Sequelize.col("devices.dev_name"),
+            ],
           });
 
+          let sumMonth = {};
+          monthGeneration.forEach((element) => {
+            if (!sumMonth[element.dataValues.day]) {
+              sumMonth[element.dataValues.day] = {
+                latest_gen_real: 0,
+                latest_gen_estimated: 0,
+                day: element.dataValues.day,
+              };
+            } else {
+              sumMonth[element.dataValues.day].latest_gen_real +=
+                element.dataValues.latest_gen_real;
+              sumMonth[element.dataValues.day].latest_gen_estimated +=
+                element.dataValues.latest_gen_estimated;
+            }
+          });
+          const roundToTwoDecimalPlaces = (num) => {
+            return Math.round(num * 100) / 100;
+          };
+
+          Object.keys(sumMonth).forEach((day) => {
+            sumMonth[day].latest_gen_real = roundToTwoDecimalPlaces(
+              sumMonth[day].latest_gen_real
+            );
+            sumMonth[day].latest_gen_estimated = roundToTwoDecimalPlaces(
+              sumMonth[day].latest_gen_estimated
+            );
+          });
+
+          const keys = Object.keys(sumMonth);
+          //Array com cada geração do mês corrente
+          const sumMonthtotal = keys.map((key) => {
+            return sumMonth[key];
+          });
+
+          //Fluxo que soma as gerações de cada mês do ano corrente
           const yearGeneration = await Generation.findAll({
             attributes: [
               [Sequelize.literal("DATE(gen_date)"), "day"],
@@ -948,13 +968,14 @@ class DevicesController {
                 Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
                 "latest_gen_estimated",
               ],
+              [Sequelize.col("devices.dev_name"), "dev_name"],
             ],
             include: [
               {
                 association: "devices",
                 attributes: [],
                 where: {
-                  dev_uuid: element.dev_uuid,
+                  dev_deleted: { [Op.or]: [null, false] },
                 },
               },
             ],
@@ -963,59 +984,97 @@ class DevicesController {
                 [Op.between]: [`${currentYear}-01-01`, `${currentYear}-12-31`],
               },
             },
-            group: [Sequelize.literal("day")],
+            group: [
+              Sequelize.literal("day"),
+              Sequelize.col("devices.dev_name"),
+            ],
           });
+          let sumYear = {};
 
-          const monthlySums = {};
-          yearGeneration.forEach((result) => {
-            const month = result.dataValues.day.split("-")[1];
-
-            if (!monthlySums[month]) {
-              monthlySums[month] = {
+          yearGeneration.forEach((element) => {
+            const month = element.dataValues.day.split("-")[1];
+            if (!sumYear[month]) {
+              sumYear[month] = {
                 gen_real: 0,
                 gen_estimated: 0,
+                month: month,
               };
+            } else {
+              if (!element.dataValues.latest_gen_real) {
+                element.dataValues.latest_gen_real = 0;
+              }
+
+              if (!element.dataValues.latest_gen_estimated) {
+                element.dataValues.latest_gen_estimated = 0;
+              }
+              sumYear[month].gen_real += element.dataValues.latest_gen_real;
+              sumYear[month].gen_estimated +=
+                element.dataValues.latest_gen_estimated;
             }
-
-            monthlySums[month].gen_real += Math.round(
-              result.dataValues.latest_gen_real
-            );
-            monthlySums[month].gen_estimated += Math.round(
-              result.dataValues.latest_gen_estimated
-            );
-          });
-          //Cálculo Co2 e árvores salvas
-          let tree_co2;
-          if (monthlySums[current_month_string]) {
-            tree_co2 = monthlySums[current_month_string].gen_real;
-          } else {
-            tree_co2 = 0;
-          }
-          const mapping = monthGeneration.map((element) => {
-            return element.dataValues.latest_gen_real;
           });
 
-          const realgenSum = mapping.reduce(
-            (accumulator, currentValue) => accumulator + currentValue,
-            0
+          const keysYear = Object.keys(sumYear);
+          //Array com cada geração do ano corrente
+          const sumYearTotal = keysYear.map((sum) => {
+            return sumYear[sum];
+          });
+          sumYearTotal.forEach((element) => {
+            element.gen_real = Math.round(element.gen_real * 100) / 100;
+            element.gen_estimated =
+              Math.round(element.gen_estimated * 100) / 100;
+          });
+
+          const monthValue = sumMonthtotal.reduce(
+            (accumulator, currentValue) => {
+              accumulator.latest_gen_real += currentValue.latest_gen_real || 0;
+              accumulator.latest_gen_estimated +=
+                currentValue.latest_gen_estimated || 0;
+              return accumulator;
+            },
+            { latest_gen_real: 0, latest_gen_estimated: 0 }
           );
-          return {
-            device_name: element.dev_name, //Nome do device
+          const yearValue = sumYearTotal.reduce(
+            (accumulator, currentValue) => {
+              accumulator.gen_real += currentValue.gen_real || 0;
+              accumulator.gen_estimated += currentValue.gen_estimated || 0;
+              return accumulator;
+            },
+            { gen_real: 0, gen_estimated: 0 }
+          );
+          const retorno = {
             period: currentMonthYear, //Período
-            wpp_number: element.dev_wpp_number, //Número WhatsApp
-            treesSaved: Math.round(tree_co2 * 0.000504 * 100) / 100, //Árvores salvas
-            c02: Math.round(tree_co2 * 0.419 * 100) / 100, //Co2
-            gen_estimated_total:
-              Math.round(generation_est * lastday * 100) / 100, //Soma gen_estimada do mês
-            gen_real_total: Math.round(realgenSum * 100) / 100, //Soma gen_real do mês
-            generation_month: monthGeneration, //Gráfico geração mês
-            generation_year: monthlySums, //Gráfico geração anual
+
+            current_date: current, //Data corrente
+
+            sum_generation_real_month: (
+              Math.round(monthValue.latest_gen_real * 100) / 100
+            ).toLocaleString(), // Soma da geração real do mês corrente
+
+            sum_generation_estimated_month: (
+              Math.round(monthValue.latest_gen_estimated * 100) / 100
+            ).toLocaleString(), // Soma da geração estimada do mês corrente
+
+            sum_generation_real_year: (
+              Math.round(yearValue.gen_real * 100) / 100
+            ).toLocaleString(), // Soma da geração real do ano corrente
+
+            sum_generation_estimated_year: (
+              Math.round(yearValue.gen_estimated * 100) / 100
+            ).toLocaleString(), // Soma da geração estimada do ano corrente
+
+            treesSaved: (Math.round(yearValue.gen_real  * 0.000504 * 100) / 100).toLocaleString(), //Árvores salvas ano
+
+            c02: (Math.round(yearValue.gen_real  * 0.419 * 100) / 100).toLocaleString(), //Co2 ano
+
+            generation_month: sumMonthtotal, //Gráfico geração mês
+
+            generation_year: sumYearTotal, //Gráfico geração anual
           };
 
-          const delay = 5000;
+          const delay = 3000;
 
           setTimeout(function () {
-            return res.status(200).json({ message: generationAll });
+            return res.status(200).json({ message: retorno });
           }, delay);
         } else {
           return res
