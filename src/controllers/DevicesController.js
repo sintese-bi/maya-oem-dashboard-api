@@ -898,23 +898,25 @@ class DevicesController {
               ],
               [Sequelize.col("devices.dev_name"), "dev_name"],
               [Sequelize.col("devices.bl_uuid"), "bl_uuid"],
+              [Sequelize.col("devices.dev_uuid"), "dev_uuid"],
+              [Sequelize.col("devices.dev_deleted"), "dev_deleted"],
             ],
             include: [
               {
                 association: "devices",
                 attributes: [],
                 where: {
-                  dev_deleted: { [Op.or]: [null, false] },
+                  dev_deleted: { [Op.or]: [false, null] },
                 },
-                // include: [
-                //   {
-                //     association: "brand_login",
-                //     attributes: [],
-                //     where: {
-                //       use_uuid: "a7ed2d10-4340-43df-824d-63ca16979114",
-                //     },
-                //   },
-                // ],
+                include: [
+                  {
+                    association: "brand_login",
+                    where: {
+                      use_uuid: "a7ed2d10-4340-43df-824d-63ca16979114",
+                    },
+                    attributes: [],
+                  },
+                ],
               },
             ],
             where: {
@@ -926,9 +928,20 @@ class DevicesController {
               Sequelize.literal("day"),
               Sequelize.col("devices.dev_name"),
               Sequelize.col("devices.bl_uuid"),
+              Sequelize.col("devices.dev_uuid"),
+              Sequelize.col("devices.dev_deleted"),
             ],
           });
 
+          // Contar dispositivos únicos
+          // const uniqueDevices = new Set();
+          // monthGeneration.forEach(gen => {
+          //   uniqueDevices.add(gen.dev_uuid);
+          // });
+
+          // const totalUniqueDevices = uniqueDevices.size;
+
+          // return res.status(200).json({message:totalUniqueDevices})
           let sumMonth = {};
           monthGeneration.forEach((element) => {
             if (!sumMonth[element.dataValues.day]) {
@@ -988,15 +1001,15 @@ class DevicesController {
                 where: {
                   dev_deleted: { [Op.or]: [null, false] },
                 },
-                // include: [
-                //   {
-                //     association: "brand_login",
-                //     attributes: [],
-                //     where: {
-                //       use_uuid: "a7ed2d10-4340-43df-824d-63ca16979114",
-                //     },
-                //   },
-                // ],
+                include: [
+                  {
+                    association: "brand_login",
+                    attributes: [],
+                    where: {
+                      use_uuid: "a7ed2d10-4340-43df-824d-63ca16979114",
+                    },
+                  },
+                ],
               },
             ],
             where: {
@@ -1064,16 +1077,41 @@ class DevicesController {
           );
           const devices = await Devices.findAll({
             where: {
-              dev_deleted: { [Op.or]: [null,false] },
+              dev_deleted: { [Op.or]: [false, null] },
             },
+            include: [
+              {
+                association: "brand_login",
+                where: {
+                  use_uuid: "a7ed2d10-4340-43df-824d-63ca16979114",
+                },
+                attributes: [],
+              },
+            ],
           });
+          const desempenho = (
+            (Math.round(monthValue.latest_gen_real * 100) /
+              100 /
+              (Math.round(monthValue.latest_gen_estimated * 100) / 100)) *
+            100
+          ).toLocaleString();
+
           const quant_dev = devices.length;
+          const user = await Users.findOne({
+            attributes: ["use_email", "use_name"],
+            where: { use_uuid: "a7ed2d10-4340-43df-824d-63ca16979114" },
+          });
+
           const retorno = {
+            user: user.use_name,//Usuário
+
             period: currentMonthYear, //Período
 
             current_date: current, //Data corrente
 
-            devices_quant: quant_dev,
+            devices_quant: quant_dev, //Quantidade de usinas do usuário
+
+            performance: desempenho, //Perfomance
 
             sum_generation_real_month: (
               Math.round(monthValue.latest_gen_real * 100) / 100
