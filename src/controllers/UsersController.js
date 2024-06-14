@@ -854,7 +854,7 @@ class UsersController {
                   "dev_email",
                   "dev_image",
                   "dev_install",
-                  "dev_manual_gen_est"
+                  "dev_manual_gen_est",
                 ],
                 include: [
                   {
@@ -985,7 +985,7 @@ class UsersController {
               dev_deleted: device.dev_deleted,
               dev_long: device.dev_long,
               dev_install: device.dev_install,
-              gen_estimated:device.dev_manual_gen_est,
+              gen_estimated: device.dev_manual_gen_est,
               status: {
                 sta_name: device.status ? device.status.sta_name : null,
                 sta_code: device.status ? device.status.sta_code : null,
@@ -1043,7 +1043,18 @@ class UsersController {
           }
         }
       }
+    //   const soma = devicesData.reduce((acc, current) => {
+    //     acc.weeklySum.gen_real += parseFloat(current.weeklySum.gen_real);
+    //     acc.weeklySum.gen_estimated += parseFloat(current.weeklySum.gen_estimated);
+    //     acc.monthlySum.gen_real += parseFloat(current.monthlySum.gen_real);
+    //     acc.monthlySum.gen_estimated += parseFloat(current.monthlySum.gen_estimated);
+    //     return acc;
+    // }, {
+    //     weeklySum: { gen_real: 0, gen_estimated: 0 },
+    //     monthlySum: { gen_real: 0, gen_estimated: 0 }
+    // });
 
+    // return res.status(200).json({ message: soma });
       return res.status(200).json({
         devicesData,
         brand,
@@ -2152,11 +2163,7 @@ class UsersController {
                 },
               }
             );
-          } else if (
-            ic_city  &&
-            ic_states &&
-            capacity
-          ) {
+          } else if (ic_city && ic_states && capacity) {
             var irr = await IrradiationCoefficient.findOne({
               where: { ic_city, ic_states },
               attributes: ["ic_yearly", "ic_lat", "ic_lon"],
@@ -2196,7 +2203,7 @@ class UsersController {
               );
             }
           } else {
-           const gen_new=101
+            const gen_new = 101;
             await Generation.update(
               { gen_estimated: gen_new },
               {

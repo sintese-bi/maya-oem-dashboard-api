@@ -287,11 +287,11 @@ routes.get(
 
   DevicesController.managerNamesAll
 );
-// routes.get(
-//   `${apiVersion}/admreportwpp`,
+routes.get(
+  `${apiVersion}/admreportwpp`,
 
-//   DevicesController.administratorReportWhatsApp
-// );
+  DevicesController.administratorReportWhatsApp
+);
 
 routes.post(
   `${apiVersion}/updateemaildevice`,
