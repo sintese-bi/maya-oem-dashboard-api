@@ -1003,7 +1003,7 @@ class UsersController {
                 bl_name: brand.bl_name,
                 bl_uuid: brand.bl_uuid,
               },
-              DAILY: dailySums,
+          
               gen_estimated_day: dailySums[today]
                 ? parseFloat(dailySums[today].gen_estimated).toFixed(2)
                 : 0,
