@@ -900,11 +900,13 @@ class DevicesController {
               [Sequelize.col("devices.bl_uuid"), "bl_uuid"],
               [Sequelize.col("devices.dev_uuid"), "dev_uuid"],
               [Sequelize.col("devices.dev_deleted"), "dev_deleted"],
+              [Sequelize.col("devices->brand_login.bl_name"), "bl_name"],
             ],
             include: [
               {
                 association: "devices",
                 attributes: [],
+
                 where: {
                   dev_deleted: { [Op.or]: [false, null] },
                 },
@@ -930,6 +932,7 @@ class DevicesController {
               Sequelize.col("devices.bl_uuid"),
               Sequelize.col("devices.dev_uuid"),
               Sequelize.col("devices.dev_deleted"),
+              Sequelize.col("devices->brand_login.bl_name"),
             ],
           });
 
@@ -940,8 +943,8 @@ class DevicesController {
           // });
 
           // const totalUniqueDevices = uniqueDevices.size;
+          // return res.status(200).json({ message: [monthGeneration,totalUniqueDevices] });
 
-          // return res.status(200).json({message:totalUniqueDevices})
           let sumMonth = {};
           monthGeneration.forEach((element) => {
             if (!sumMonth[element.dataValues.day]) {
@@ -1102,8 +1105,213 @@ class DevicesController {
             where: { use_uuid: "a7ed2d10-4340-43df-824d-63ca16979114" },
           });
 
+          const startOfMonth = moment.utc().startOf("month").toDate();
+          const endOfMonth = moment
+            .utc()
+            .endOf("month")
+            .subtract(3, "hours")
+            .toDate();
+          console.log(startOfMonth, endOfMonth);
+          const use = "a7ed2d10-4340-43df-824d-63ca16979114";
+          const brand = await Users.findByPk(use, {
+            include: [
+              {
+                association: "brand_login",
+                attributes: ["bl_name", "bl_uuid"],
+              },
+            ],
+          });
+
+          const result = await Users.findByPk(use, {
+            attributes: ["use_name"],
+            include: [
+              {
+                association: "brand_login",
+                attributes: ["bl_name", "bl_uuid"],
+                include: [
+                  {
+                    association: "devices",
+                    where: {
+                      [Op.or]: [
+                        { dev_deleted: false },
+                        { dev_deleted: { [Op.is]: null } },
+                      ],
+                    },
+                    attributes: [
+                      "dev_uuid",
+                      "dev_name",
+                      "dev_brand",
+                      "dev_deleted",
+                      "dev_capacity",
+                      "dev_address",
+                      "dev_lat",
+                      "dev_long",
+                      "dev_email",
+                      "dev_image",
+                      "dev_install",
+                      "dev_manual_gen_est",
+                    ],
+                    include: [
+                      {
+                        association: "generation",
+                        attributes: [
+                          "gen_real",
+                          "gen_estimated",
+                          "gen_date",
+                          "gen_updated_at",
+                        ],
+                        order: [
+                          ["gen_updated_at", "DESC"],
+                          ["gen_real", "DESC"],
+                        ],
+                        where: {
+                          gen_date: {
+                            [Op.between]: [startOfMonth, endOfMonth],
+                          },
+                        },
+                        separate: true,
+                        required: false,
+                      },
+                      {
+                        association: "alerts",
+                        attributes: ["al_alerts", "al_inv", "alert_created_at"],
+                        separate: true,
+                        where: {
+                          alert_created_at: {
+                            [Op.gte]: moment
+                              .utc()
+                              .subtract(4, "hours")
+                              .toDate(),
+                          },
+                        },
+                      },
+                      {
+                        association: "status",
+                        attributes: ["sta_code", "sta_name"],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+
+          const devicesData = [];
+
+          if (result) {
+            const brandLogin = result.brand_login;
+
+            for (const brand of brandLogin) {
+              const devices = brand.devices;
+
+              for (const device of devices) {
+                const generations = device.generation;
+                const alerts = device.alerts || [];
+                const dailySums = {};
+                const weeklySumsReal = {};
+                const weeklySumsEstimated = {};
+                const monthlySumsReal = {};
+                const monthlySumsEstimated = {};
+
+                if (generations) {
+                  for (const gen of generations) {
+                    const genDate = moment
+                      .utc(gen.gen_date)
+                      .format("YYYY-MM-DD");
+
+                    if (
+                      !dailySums[genDate] ||
+                      dailySums[genDate].gen_real <= gen.gen_real
+                    ) {
+                      dailySums[genDate] = {
+                        gen_real: gen.gen_real,
+                        gen_estimated: gen.gen_estimated || 100,
+                        gen_date: gen.gen_date,
+                        gen_updated_at: gen.gen_updated_at,
+                      };
+                    }
+                  }
+
+                  Object.values(dailySums).forEach((gen) => {
+                    const genDate = moment
+                      .utc(gen.gen_updated_at)
+                      .format("YYYY-MM-DD");
+                    const weekStartDate = moment
+                      .utc()
+                      .startOf("isoWeek")
+                      .format("YYYY-MM-DD");
+                    const weekEndDate = moment
+                      .utc()
+                      .endOf("isoWeek")
+                      .format("YYYY-MM-DD");
+
+                    if (
+                      moment
+                        .utc(gen.gen_updated_at)
+                        .isSameOrAfter(weekStartDate) &&
+                      moment.utc(gen.gen_updated_at).isBefore(weekEndDate)
+                    ) {
+                      if (!weeklySumsReal[weekStartDate]) {
+                        weeklySumsReal[weekStartDate] = 0;
+                      }
+                      if (!weeklySumsEstimated[weekStartDate]) {
+                        weeklySumsEstimated[weekStartDate] = 0;
+                      }
+
+                      weeklySumsReal[weekStartDate] += gen.gen_real;
+                      weeklySumsEstimated[weekStartDate] += gen.gen_estimated;
+                    }
+
+                    const monthStartDate = moment
+                      .utc(gen.gen_updated_at)
+                      .startOf("month")
+                      .format("YYYY-MM-DD");
+
+                    if (!monthlySumsReal[monthStartDate]) {
+                      monthlySumsReal[monthStartDate] = 0;
+                    }
+                    if (!monthlySumsEstimated[monthStartDate]) {
+                      monthlySumsEstimated[monthStartDate] = 0;
+                    }
+
+                    monthlySumsReal[monthStartDate] += gen.gen_real;
+                    monthlySumsEstimated[monthStartDate] += gen.gen_estimated;
+                  });
+                }
+
+                const deviceData = {
+                  monthlySum: {
+                    gen_real: Object.values(monthlySumsReal).reduce(
+                      (acc, value) => acc + value,
+                      0
+                    ),
+
+                    gen_estimated: Object.values(monthlySumsEstimated).reduce(
+                      (acc, value) => acc + value,
+                      0
+                    ),
+                  },
+                };
+
+                devicesData.push(deviceData);
+              }
+            }
+          }
+          const soma = devicesData.reduce(
+            (accumulator, current_value) => {
+              return {
+                gen_real:
+                  current_value.monthlySum.gen_real + accumulator.gen_real,
+                gen_estimated:
+                  current_value.monthlySum.gen_estimated +
+                  accumulator.gen_estimated,
+              };
+            },
+            { gen_real: 0, gen_estimated: 0 }
+          );
+
           const retorno = {
-            user: user.use_name,//Usuário
+            user: user.use_name, //Usuário
 
             period: currentMonthYear, //Período
 
@@ -1114,11 +1322,11 @@ class DevicesController {
             performance: desempenho, //Perfomance
 
             sum_generation_real_month: (
-              Math.round(monthValue.latest_gen_real * 100) / 100
+              Math.round(soma.gen_real * 100) / 100
             ).toLocaleString(), // Soma da geração real do mês corrente
 
             sum_generation_estimated_month: (
-              Math.round(monthValue.latest_gen_estimated * 100) / 100
+              Math.round(soma.gen_estimated * 100) / 100
             ).toLocaleString(), // Soma da geração estimada do mês corrente
 
             sum_generation_real_year: (

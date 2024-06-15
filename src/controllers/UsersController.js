@@ -894,6 +894,7 @@ class UsersController {
           },
         ],
       });
+
       // return res.status(200).json({message:result})
       const devicesData = [];
 
@@ -961,7 +962,7 @@ class UsersController {
                   .utc(gen.gen_updated_at)
                   .startOf("month")
                   .format("YYYY-MM-DD");
-               
+
                 if (!monthlySumsReal[monthStartDate]) {
                   monthlySumsReal[monthStartDate] = 0;
                 }
@@ -1003,7 +1004,7 @@ class UsersController {
                 bl_name: brand.bl_name,
                 bl_uuid: brand.bl_uuid,
               },
-          
+
               gen_estimated_day: dailySums[today]
                 ? parseFloat(dailySums[today].gen_estimated).toFixed(2)
                 : 0,
@@ -1028,12 +1029,15 @@ class UsersController {
                   .toFixed(2),
               },
               monthlySum: {
-                gen_real: Object.values(monthlySumsReal)
-                  .reduce((acc, value) => acc + value, 0)
-                  .toFixed(2),
-                gen_estimated: Object.values(monthlySumsEstimated)
-                  .reduce((acc, value) => acc + value, 0)
-                  .toFixed(2),
+                gen_real: Object.values(monthlySumsReal).reduce(
+                  (acc, value) => acc + value,
+                  0
+                ).toFixed(2),
+
+                gen_estimated: Object.values(monthlySumsEstimated).reduce(
+                  (acc, value) => acc + value,
+                  0
+                ).toFixed(2),
               },
             };
 
@@ -1041,29 +1045,10 @@ class UsersController {
           }
         }
       }
-      // const soma = devicesData.reduce(
-      //   (acc, current) => {
-      //     acc.weeklySum.gen_real += parseFloat(current.weeklySum.gen_real);
-      //     acc.weeklySum.gen_estimated += parseFloat(
-      //       current.weeklySum.gen_estimated
-      //     );
-      //     acc.monthlySum.gen_real += parseFloat(current.monthlySum.gen_real);
-      //     acc.monthlySum.gen_estimated += parseFloat(
-      //       current.monthlySum.gen_estimated
-      //     );
-      //     return acc;
-      //   },
-      //   {
-      //     weeklySum: { gen_real: 0, gen_estimated: 0 },
-      //     monthlySum: { gen_real: 0, gen_estimated: 0 },
-      //   }
-      // );
 
-      // return res.status(200).json({ message: soma });
       return res.status(200).json({
         devicesData,
         brand,
-        
       });
     } catch (error) {
       return res
