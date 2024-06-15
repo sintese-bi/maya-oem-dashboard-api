@@ -975,7 +975,7 @@ class DevicesController {
           const sumMonthtotal = keys.map((key) => {
             return sumMonth[key];
           });
-
+          // return res.status(200).json({message:monthGeneration})
           //Fluxo que soma as gerações de cada mês do ano corrente
           const yearGeneration = await Generation.findAll({
             attributes: [
@@ -1130,11 +1130,11 @@ class DevicesController {
             ).toLocaleString(), // Soma da geração estimada do ano corrente
 
             treesSaved: (
-              Math.round(yearValue.gen_real * 0.000504 * 100) / 100
+              Math.round(monthValue.latest_gen_real * 0.000504 * 100) / 100
             ).toLocaleString(), //Árvores salvas ano
 
             c02: (
-              Math.round(yearValue.gen_real * 0.419 * 100) / 100
+              Math.round(monthValue.latest_gen_real * 0.419 * 100) / 100
             ).toLocaleString(), //Co2 ano
 
             generation_month: sumMonthtotal, //Gráfico geração mês

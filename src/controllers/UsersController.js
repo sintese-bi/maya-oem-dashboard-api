@@ -803,11 +803,8 @@ class UsersController {
       const par = req.params.par;
       const today = moment.utc().subtract(3, "hours").format("YYYY-MM-DD");
 
-      const startOfMonth = moment
-        .utc()
-        .startOf("month")
-        .subtract(3, "hours")
-        .toDate();
+      const startOfMonth = moment.utc().startOf("month").toDate();
+      console.log(startOfMonth);
       const endOfMonth = moment
         .utc()
         .endOf("month")
@@ -865,7 +862,10 @@ class UsersController {
                       "gen_date",
                       "gen_updated_at",
                     ],
-                    order: [["gen_updated_at", "DESC"]],
+                    order: [
+                      ["gen_updated_at", "DESC"],
+                      ["gen_real", "DESC"],
+                    ],
                     where: {
                       gen_date: {
                         [Op.between]: [startOfMonth, endOfMonth],
@@ -894,7 +894,7 @@ class UsersController {
           },
         ],
       });
-
+      // return res.status(200).json({message:result})
       const devicesData = [];
 
       if (result) {
@@ -918,9 +918,7 @@ class UsersController {
 
                 if (
                   !dailySums[genDate] ||
-                  moment
-                    .utc(dailySums[genDate].gen_updated_at)
-                    .isSameOrBefore(moment.utc(gen.gen_updated_at))
+                  dailySums[genDate].gen_real <= gen.gen_real
                 ) {
                   dailySums[genDate] = {
                     gen_real: gen.gen_real,
@@ -963,7 +961,7 @@ class UsersController {
                   .utc(gen.gen_updated_at)
                   .startOf("month")
                   .format("YYYY-MM-DD");
-
+               
                 if (!monthlySumsReal[monthStartDate]) {
                   monthlySumsReal[monthStartDate] = 0;
                 }
@@ -1005,7 +1003,7 @@ class UsersController {
                 bl_name: brand.bl_name,
                 bl_uuid: brand.bl_uuid,
               },
-
+              DAILY: dailySums,
               gen_estimated_day: dailySums[today]
                 ? parseFloat(dailySums[today].gen_estimated).toFixed(2)
                 : 0,
@@ -1043,21 +1041,29 @@ class UsersController {
           }
         }
       }
-    //   const soma = devicesData.reduce((acc, current) => {
-    //     acc.weeklySum.gen_real += parseFloat(current.weeklySum.gen_real);
-    //     acc.weeklySum.gen_estimated += parseFloat(current.weeklySum.gen_estimated);
-    //     acc.monthlySum.gen_real += parseFloat(current.monthlySum.gen_real);
-    //     acc.monthlySum.gen_estimated += parseFloat(current.monthlySum.gen_estimated);
-    //     return acc;
-    // }, {
-    //     weeklySum: { gen_real: 0, gen_estimated: 0 },
-    //     monthlySum: { gen_real: 0, gen_estimated: 0 }
-    // });
+      // const soma = devicesData.reduce(
+      //   (acc, current) => {
+      //     acc.weeklySum.gen_real += parseFloat(current.weeklySum.gen_real);
+      //     acc.weeklySum.gen_estimated += parseFloat(
+      //       current.weeklySum.gen_estimated
+      //     );
+      //     acc.monthlySum.gen_real += parseFloat(current.monthlySum.gen_real);
+      //     acc.monthlySum.gen_estimated += parseFloat(
+      //       current.monthlySum.gen_estimated
+      //     );
+      //     return acc;
+      //   },
+      //   {
+      //     weeklySum: { gen_real: 0, gen_estimated: 0 },
+      //     monthlySum: { gen_real: 0, gen_estimated: 0 },
+      //   }
+      // );
 
-    // return res.status(200).json({ message: soma });
+      // return res.status(200).json({ message: soma });
       return res.status(200).json({
         devicesData,
         brand,
+        
       });
     } catch (error) {
       return res
