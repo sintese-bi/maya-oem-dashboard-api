@@ -1338,11 +1338,11 @@ class DevicesController {
             ).toLocaleString(), // Soma da geração estimada do ano corrente
 
             treesSaved: (
-              Math.round(monthValue.latest_gen_real * 0.000504 * 100) / 100
+              Math.round(soma.gen_real * 0.000504 * 100) / 100
             ).toLocaleString(), //Árvores salvas ano
 
             c02: (
-              Math.round(monthValue.latest_gen_real * 0.419 * 100) / 100
+              Math.round(soma.gen_real * 0.419 * 100) / 100
             ).toLocaleString(), //Co2 ano
 
             generation_month: sumMonthtotal, //Gráfico geração mês
