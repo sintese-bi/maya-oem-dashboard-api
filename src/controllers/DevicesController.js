@@ -878,7 +878,7 @@ class DevicesController {
         const lastday = parseInt(lastDayOfMonth);
         //Data corrente
         const primeiro_dia_mes = `${currentMonthYear}-01`;
-
+        const { use_uuid } = req.body;
         if (clientToken == `Bearer ${expectedToken}`) {
           //Fluxo que soma as gerações de cada dia do mês corrente
           const monthGeneration = await Generation.findAll({
@@ -914,7 +914,7 @@ class DevicesController {
                   {
                     association: "brand_login",
                     where: {
-                      use_uuid: "a7ed2d10-4340-43df-824d-63ca16979114",
+                      use_uuid: use_uuid,
                     },
                     attributes: [],
                   },
@@ -1009,7 +1009,7 @@ class DevicesController {
                     association: "brand_login",
                     attributes: [],
                     where: {
-                      use_uuid: "a7ed2d10-4340-43df-824d-63ca16979114",
+                      use_uuid: use_uuid,
                     },
                   },
                 ],

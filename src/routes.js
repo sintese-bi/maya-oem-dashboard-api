@@ -287,7 +287,7 @@ routes.get(
 
   DevicesController.managerNamesAll
 );
-routes.get(
+routes.post(
   `${apiVersion}/admreportwpp`,
 
   DevicesController.administratorReportWhatsApp
