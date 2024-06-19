@@ -852,6 +852,7 @@ class UsersController {
                   "dev_image",
                   "dev_install",
                   "dev_manual_gen_est",
+                  "dev_wpp_number"
                 ],
                 include: [
                   {
@@ -983,6 +984,7 @@ class UsersController {
               dev_email: device.dev_email,
               dev_deleted: device.dev_deleted,
               dev_long: device.dev_long,
+              dev_wpp_number:device.dev_wpp_number,
               dev_install: device.dev_install,
               gen_estimated: device.dev_manual_gen_est,
               status: {
@@ -2139,6 +2141,7 @@ class UsersController {
             dev_install,
             dev_image,
             gen_estimated,
+            whatsapp_number,
           } = devarray;
           if (gen_estimated) {
             const gen_new = Number(gen_estimated);
@@ -2215,6 +2218,7 @@ class UsersController {
               dev_install: dev_install,
               dev_manual_gen_est: Number(gen_estimated),
               dev_address: ic_city + "-" + ic_states,
+              dev_wpp_number:whatsapp_number,
               dev_lat: irr
                 ? irr.ic_lat !== undefined
                   ? irr.ic_lat
