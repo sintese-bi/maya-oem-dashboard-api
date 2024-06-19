@@ -1086,7 +1086,7 @@ class DevicesController {
               {
                 association: "brand_login",
                 where: {
-                  use_uuid: "a7ed2d10-4340-43df-824d-63ca16979114",
+                  use_uuid: use_uuid,
                 },
                 attributes: [],
               },
@@ -1102,7 +1102,7 @@ class DevicesController {
           const quant_dev = devices.length;
           const user = await Users.findOne({
             attributes: ["use_email", "use_name"],
-            where: { use_uuid: "a7ed2d10-4340-43df-824d-63ca16979114" },
+            where: { use_uuid: use_uuid },
           });
 
           const startOfMonth = moment.utc().startOf("month").toDate();
@@ -1112,7 +1112,7 @@ class DevicesController {
             .subtract(3, "hours")
             .toDate();
           console.log(startOfMonth, endOfMonth);
-          const use = "a7ed2d10-4340-43df-824d-63ca16979114";
+          const use = use_uuid;
           const brand = await Users.findByPk(use, {
             include: [
               {
