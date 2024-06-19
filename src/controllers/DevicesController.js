@@ -1028,28 +1028,33 @@ class DevicesController {
 
           let sumYear = {};
 
+         
+          for (let i = 1; i <= 12; i++) {
+            const month = i.toString().padStart(2, "0"); 
+            sumYear[month] = {
+              gen_real: 0,
+              gen_estimated: 0,
+              month: month,
+            };
+          }
+
+          
           yearGeneration.forEach((element) => {
             const month = element.dataValues.day.split("-")[1];
-            if (!sumYear[month]) {
-              sumYear[month] = {
-                gen_real: 0,
-                gen_estimated: 0,
-                month: month,
-              };
-            } else {
-              if (!element.dataValues.latest_gen_real) {
-                element.dataValues.latest_gen_real = 0;
-              }
 
-              if (!element.dataValues.latest_gen_estimated) {
-                element.dataValues.latest_gen_estimated = 0;
+           
+            if (sumYear[month]) {
+              
+              if (element.dataValues.latest_gen_real) {
+                sumYear[month].gen_real += element.dataValues.latest_gen_real;
               }
-              sumYear[month].gen_real += element.dataValues.latest_gen_real;
-              sumYear[month].gen_estimated +=
-                element.dataValues.latest_gen_estimated;
+              if (element.dataValues.latest_gen_estimated) {
+                sumYear[month].gen_estimated +=
+                  element.dataValues.latest_gen_estimated;
+              }
             }
           });
-
+        
           const keysYear = Object.keys(sumYear);
           //Array com cada geração do ano corrente
           const sumYearTotal = keysYear.map((sum) => {
@@ -1309,7 +1314,9 @@ class DevicesController {
             },
             { gen_real: 0, gen_estimated: 0 }
           );
-
+          sumYearTotal.sort((a, b) => {
+            return parseInt(a.month) - parseInt(b.month);
+        });
           const retorno = {
             user: user.use_name, //Usuário
 
