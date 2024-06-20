@@ -152,6 +152,12 @@ routes.get(
   UsersController.userBrands
 );
 routes.get(`${apiVersion}/user/:uuid`, UsersController.show);
+
+// routes.get(
+//   `${apiVersion}/inputgeneration`,
+//   GenerationController.generationRoutine
+// );
+
 routes.post(
   `${apiVersion}/register`,
 

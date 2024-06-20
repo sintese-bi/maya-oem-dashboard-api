@@ -6,7 +6,9 @@ import nodemailer from "nodemailer";
 import Brand from "../models/Brand";
 import XLSX from "xlsx";
 import Users from "../models/Users";
+import cron from "node-cron";
 import Temperature from "../models/Temperature";
+import IrradiationCoefficient from "../models/IrradiationCoefficient";
 const transporter = nodemailer.createTransport({
   service: "gmail",
   host: "smtp.gmail.com",
@@ -738,6 +740,111 @@ class GenerationController {
         .json({ message: `Erro ao retornar os dados: ${error.message}` });
     }
   }
-}
+  async generationRoutine(req, res) {
+    try {
+      const months = {
+        "01": "ic_january",
+        "02": "ic_february",
+        "03": "ic_march",
+        "04": "ic_april",
+        "05": "ic_may",
+        "06": " ic_june",
+        "07": "ic_july",
+        "08": "ic_august",
+        "09": "ic_september",
+        10: "ic_october",
+        11: "ic_november",
+        12: "ic_december",
+      };
+      const radiation = await IrradiationCoefficient.findAll({
+        attributes: {
+          exclude: [
+            "ic_uuid",
+            "ic_lat",
+            "ic_lon",
+            "ic_created_at",
+            "ic_updated_at",
+          ],
+        },
+      });
+      const date = moment().format("MM");
+      const dateYearmonth = moment().format("YYYY-MM");
+      const result = await Devices.findAll({
+        attributes: [
+          "dev_uuid",
+          "dev_manual_gen_est",
+          "dev_capacity",
+          "dev_address",
+        ],
+      });
 
+      const manualGen = result.map((element) => {
+        if (element.dev_manual_gen_est == 0 || !element.dev_manual_gen_est) {
+          if (
+            !element.dev_capacity ||
+            !element.dev_address ||
+            element.dev_address == "undefined-undefined"
+          ) {
+            element.dev_manual_gen_est = 100;
+          } else {
+            const currentMonth = months[date];
+            const city = element.dev_address.split("-")[0];
+            const state = element.dev_address.split("-")[1];
+
+            const object = radiation.find((element) => {
+              return element.ic_city == city && element.ic_states == state;
+            });
+            console.log(object);
+            if (object) {
+              console.log("achou");
+            } else {
+              console.log("naoachou");
+            }
+
+            element.dev_manual_gen_est =
+              element.capacity * object[currentMonth] * 0.81;
+          }
+        }
+
+        return {
+          ...element.dataValues,
+          dev_manual_gen_est: element.dev_manual_gen_est,
+        };
+      });
+
+      await Promise.all(
+        manualGen.map(async (element) => {
+          await Generation.create({
+            dev_uuid: element.dev_uuid,
+            gen_estimated: element.dev_manual_gen_est,
+            gen_date: dateYearmonth,
+          });
+        })
+      );
+
+      return res.status(200).json({ data: manualGen });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao atualizar os dados: ${error.message}` });
+    }
+  }
+  agendarInputGeracao() {
+    cron.schedule(
+      "0 0 1 * *",
+      async () => {
+        try {
+          await this().generationRoutine();
+        } catch (error) {
+          console.error("Erro durante a inserção das gerações:", error);
+        }
+      },
+      {
+        timezone: "America/Sao_Paulo",
+      }
+    );
+  }
+}
+const generationController = new GenerationController();
+generationController.agendarInputGeracao();
 export default new GenerationController();
