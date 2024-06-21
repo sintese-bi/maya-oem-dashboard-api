@@ -748,7 +748,7 @@ class GenerationController {
         "03": "ic_march",
         "04": "ic_april",
         "05": "ic_may",
-        "06": " ic_june",
+        "06": "ic_june",
         "07": "ic_july",
         "08": "ic_august",
         "09": "ic_september",
@@ -783,7 +783,9 @@ class GenerationController {
           if (
             !element.dev_capacity ||
             !element.dev_address ||
-            element.dev_address == "undefined-undefined"
+            element.dev_address == "undefined-undefined" ||
+            !element.dev_address.split("-")[0] ||
+            !element.dev_address.split("-")[1]
           ) {
             element.dev_manual_gen_est = 100;
           } else {
@@ -794,15 +796,12 @@ class GenerationController {
             const object = radiation.find((element) => {
               return element.ic_city == city && element.ic_states == state;
             });
-            console.log(object);
-            if (object) {
-              console.log("achou");
+            if (!object) {
+              element.dev_manual_gen_est = 100;
             } else {
-              console.log("naoachou");
+              element.dev_manual_gen_est =
+                element.dev_capacity * object[currentMonth] * 0.81;
             }
-
-            element.dev_manual_gen_est =
-              element.capacity * object[currentMonth] * 0.81;
           }
         }
 
@@ -816,8 +815,9 @@ class GenerationController {
         manualGen.map(async (element) => {
           await Generation.create({
             dev_uuid: element.dev_uuid,
-            gen_estimated: element.dev_manual_gen_est,
-            gen_date: dateYearmonth,
+            gen_estimated: Math.floor(element.dev_manual_gen_est * 100) / 100,
+            gen_date: `${dateYearmonth}-01`,
+            gen_real: 0,
           });
         })
       );
