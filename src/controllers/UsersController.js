@@ -852,7 +852,7 @@ class UsersController {
                   "dev_image",
                   "dev_install",
                   "dev_manual_gen_est",
-                  "dev_wpp_number"
+                  "dev_wpp_number",
                 ],
                 include: [
                   {
@@ -984,7 +984,7 @@ class UsersController {
               dev_email: device.dev_email,
               dev_deleted: device.dev_deleted,
               dev_long: device.dev_long,
-              dev_wpp_number:device.dev_wpp_number,
+              dev_wpp_number: device.dev_wpp_number,
               dev_install: device.dev_install,
               gen_estimated: device.dev_manual_gen_est,
               status: {
@@ -1031,15 +1031,13 @@ class UsersController {
                   .toFixed(2),
               },
               monthlySum: {
-                gen_real: Object.values(monthlySumsReal).reduce(
-                  (acc, value) => acc + value,
-                  0
-                ).toFixed(2),
+                gen_real: Object.values(monthlySumsReal)
+                  .reduce((acc, value) => acc + value, 0)
+                  .toFixed(2),
 
-                gen_estimated: Object.values(monthlySumsEstimated).reduce(
-                  (acc, value) => acc + value,
-                  0
-                ).toFixed(2),
+                gen_estimated: Object.values(monthlySumsEstimated)
+                  .reduce((acc, value) => acc + value, 0)
+                  .toFixed(2),
               },
             };
 
@@ -1047,10 +1045,14 @@ class UsersController {
           }
         }
       }
-
+      // const total_capacity = devicesData.reduce((accumulate, currente_value) => {
+      //   return accumulate + currente_value.dev_capacity;
+      // }, 0);
+      // const valor=(Math.floor(total_capacity*100)/100)/1000
       return res.status(200).json({
         devicesData,
         brand,
+       
       });
     } catch (error) {
       return res
@@ -2218,7 +2220,7 @@ class UsersController {
               dev_install: dev_install,
               dev_manual_gen_est: Number(gen_estimated),
               dev_address: ic_city + "-" + ic_states,
-              dev_wpp_number:whatsapp_number,
+              dev_wpp_number: whatsapp_number,
               dev_lat: irr
                 ? irr.ic_lat !== undefined
                   ? irr.ic_lat
