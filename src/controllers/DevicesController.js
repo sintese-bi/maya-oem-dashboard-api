@@ -1516,13 +1516,13 @@ class DevicesController {
             percentNew > 80
               ? `Parabéns, sua usina produziu o equivalente a ${percentNew}% do total esperado.`
               : `Infelizmente, sua usina produziu apenas ${percentNew}% em relação ao esperado.`;
-
+          
           // Create device element
           const dev_element = {
             dev_uuid: gens.dev_uuid,
-            capacity: gens.result.dev_capacity,
-            name: gens.result.dev_name,
-            email: gens.result.dev_email,
+            capacity: gens.result[0].dev_capacity,
+            name: gens.result[0].dev_name,
+            email: gens.result[0].dev_email,
             sumrealNew,
             sumestimatedNew,
             percentNew,

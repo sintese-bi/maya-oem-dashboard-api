@@ -16,13 +16,13 @@ const transporter = nodemailer.createTransport({
   port: 587,
   pool: true,
 
-  secure: true,
+  secure: false,
   auth: {
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
   tls: {
-    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
+    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
   },
 });
 
@@ -179,9 +179,9 @@ export async function massiveEmail(use_uuid, res, req) {
             // Create device element
             const dev_element = {
               dev_uuid: gens.dev_uuid,
-              capacity: gens.result.dev_capacity,
-              name: gens.result.dev_name,
-              email: gens.result.dev_email,
+              capacity: gens.result[0].dev_capacity,
+              name: gens.result[0].dev_name,
+              email: gens.result[0].dev_email,
               sumrealNew,
               sumestimatedNew,
               percentNew,
