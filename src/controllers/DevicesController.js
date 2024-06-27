@@ -1375,165 +1375,173 @@ class DevicesController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  // async teste1(req, res) {
-  //   try {
-  //     const { use_uuid } = req.body;
-  //     await Users.update(
-  //       {
-  //         use_massive_reports_status: "executing",
-  //       },
-  //       {
-  //         where: {
-  //           use_uuid: use_uuid,
-  //         },
-  //       }
-  //     );
+  async teste1(req, res) {
+    try {
+      const { use_uuid } = req.body;
+      await Users.update(
+        {
+          use_massive_reports_status: "executing",
+        },
+        {
+          where: {
+            use_uuid: use_uuid,
+          },
+        }
+      );
 
-  //     const currentDate = new Date();
-  //     const firstDayOfMonth = new Date(
-  //       currentDate.getFullYear(),
-  //       currentDate.getMonth(),
-  //       1
-  //     );
-  //     const lastDayOfMonth = new Date(
-  //       currentDate.getFullYear(),
-  //       currentDate.getMonth() + 1,
-  //       0
-  //     );
+      const currentDate = new Date();
+      const firstDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      const lastDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
 
-  //     const result = await Devices.findAll({
-  //       include: [
-  //         {
-  //           association: "brand_login",
-  //           attributes: [],
-  //           where: {
-  //             use_uuid: use_uuid,
-  //           },
-  //         },
-  //       ],
-  //       attributes: ["dev_uuid"],
-  //       where: {
-  //         dev_email: {
-  //           [Op.not]: null,
-  //         },
-  //         [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
-  //       },
-  //     });
+      const result = await Generation.findAll({
+        include: [
+          {
+            association: "devices",
+            attributes: [
+              "dev_capacity",
+              "dev_name",
+              "dev_email",
+              "dev_deleted",
+            ],
+            where: {
+              dev_email: {
+                [Op.not]: null,
+              },
+              [Op.or]: [
+                { dev_deleted: false },
+                { dev_deleted: { [Op.is]: null } },
+              ],
+            },
+            include: [
+              {
+                association: "brand_login",
+                attributes: [],
+                where: {
+                  use_uuid: use_uuid,
+                },
+              },
+            ],
+          },
+        ],
+        attributes: ["gen_real", "gen_estimated", "gen_date", "dev_uuid"],
+        where: {
+          gen_date: {
+            [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+          },
+          gen_updated_at: {
+            [Op.in]: Generation.sequelize.literal(`
+                        (SELECT MAX(gen_updated_at) 
+                        FROM generation 
+                        WHERE gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
+                        GROUP BY gen_date, dev_uuid)
+                      `),
+          },
+        },
+        replacements: { firstDayOfMonth, lastDayOfMonth },
+      });
+      const groupedResult = result.reduce((acc, generation) => {
+        const { dev_uuid, gen_real, gen_estimated, gen_date, devices } =
+          generation;
+        const { dev_capacity, dev_name, dev_email } = devices;
 
-  //     const dev_uuids = result.map((device) => device.dev_uuid);
+        if (!acc[dev_uuid]) {
+          acc[dev_uuid] = [];
+        }
 
-  //     const results = await Promise.all(
-  //       dev_uuids.map(async (devUuid) => {
-  //         //Verifica se já foi enviado no mês corrente
-  //         // const verify = Devices.findByPk(devUuid, {
-  //         //   attributes: ["dev_verify_email"],
-  //         // });
-  //         // if (verify.dev_verify_email == true) {
-  //         //   return;
-  //         // }
-  //         await Reports.create({
-  //           port_check: true,
-  //           dev_uuid: devUuid,
-  //           use_uuid: use_uuid,
-  //         });
-  //         const dev_uuid = devUuid;
-  //         const result = await Generation.findAll({
-  //           attributes: ["gen_real", "gen_estimated", "gen_date"],
-  //           where: {
-  //             dev_uuid: dev_uuid,
-  //             gen_date: {
-  //               [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-  //             },
-  //             gen_updated_at: {
-  //               [Op.in]: Generation.sequelize.literal(`
-  //                   (SELECT MAX(gen_updated_at) 
-  //                   FROM generation 
-  //                   WHERE dev_uuid = :dev_uuid 
-  //                   AND gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
-  //                   GROUP BY gen_date)
-  //                 `),
-  //             },
-  //           },
-  //           replacements: { dev_uuid, firstDayOfMonth, lastDayOfMonth },
-  //         });
+        acc[dev_uuid].push({
+          gen_real,
+          gen_estimated,
+          gen_date,
+          dev_capacity,
+          dev_name,
+          dev_email,
+        });
 
-  //         return { dev_uuid, result };
-  //       })
-  //     );
+        return acc;
+      }, {});
 
-  //     const sum_generation = await Promise.all(
-  //       results.map(async (gens) => {
-  //         // Real generation
-  //         const realGeneration = gens.result.map((element) => {
-  //           return { value: element.gen_real, date: element.gen_date };
-  //         });
+      // Formatar o resultado final
+      const formattedResult = Object.entries(groupedResult).map(
+        ([dev_uuid, resultArray]) => {
+          return { dev_uuid, result: resultArray };
+        }
+      );
 
-  //         // Estimated generation
-  //         const estimatedGeneration = gens.result.map(
-  //           (element) => element.gen_estimated
-  //         );
+      // return res.status(200).json({message:formattedResult})
 
-  //         // Get device capacity, name, and email
-  //         const cap = await Devices.findOne({
-  //           attributes: ["dev_capacity", "dev_name", "dev_email"],
-  //           where: { dev_uuid: gens.dev_uuid },
-  //         });
+      const sum_generation = await Promise.all(
+        formattedResult.map(async (gens) => {
+          // Real generation
+          const realGeneration = gens.result.map((element) => {
+            return { value: element.gen_real, date: element.gen_date };
+          });
 
-  //         // Sum real generation
-  //         const sumreal = gens.result.reduce(
-  //           (acc, atual) => acc + atual.gen_real,
-  //           0
-  //         );
-  //         const sumrealNew = sumreal.toFixed(2);
+          // Estimated generation
+          const estimatedGeneration = gens.result.map(
+            (element) => element.gen_estimated
+          );
 
-  //         // Sum estimated generation
-  //         const sumestimated = gens.result.reduce(
-  //           (acc, atual) => acc + atual.gen_estimated,
-  //           0
-  //         );
-  //         const sumestimatedNew = sumestimated.toFixed(2);
+          // Sum real generation
+          const sumreal = gens.result.reduce(
+            (acc, atual) => acc + atual.gen_real,
+            0
+          );
+          const sumrealNew = sumreal.toFixed(2);
 
-  //         // Calculate percentage
-  //         let percentNew;
-  //         if (sumreal === 0) {
-  //           percentNew = 0;
-  //         } else {
-  //           percentNew = ((sumestimated / sumreal) * 100).toFixed(2);
-  //         }
+          // Sum estimated generation
+          const sumestimated = gens.result.reduce(
+            (acc, atual) => acc + atual.gen_estimated,
+            0
+          );
+          const sumestimatedNew = sumestimated.toFixed(2);
 
-  //         // Determine situation
-  //         const situation =
-  //           percentNew > 80
-  //             ? `Parabéns, sua usina produziu o equivalente a ${percentNew}% do total esperado.`
-  //             : `Infelizmente, sua usina produziu apenas ${percentNew}% em relação ao esperado.`;
+          // Calculate percentage
+          let percentNew;
+          if (sumreal === 0) {
+            percentNew = 0;
+          } else {
+            percentNew = ((sumestimated / sumreal) * 100).toFixed(2);
+          }
 
-  //         // Create device element
-  //         const dev_element = {
-  //           dev_uuid: gens.dev_uuid,
-  //           capacity: cap.dev_capacity,
-  //           name: cap.dev_name,
-  //           email: cap.dev_email,
-  //           sumrealNew,
-  //           sumestimatedNew,
-  //           percentNew,
-  //           situation,
-  //           realGeneration,
-  //           estimatedGeneration,
-  //         };
+          // Determine situation
+          const situation =
+            percentNew > 80
+              ? `Parabéns, sua usina produziu o equivalente a ${percentNew}% do total esperado.`
+              : `Infelizmente, sua usina produziu apenas ${percentNew}% em relação ao esperado.`;
 
-  //         return JSON.stringify(dev_element);
-  //       })
-  //     );
+          // Create device element
+          const dev_element = {
+            dev_uuid: gens.dev_uuid,
+            capacity: gens.result.dev_capacity,
+            name: gens.result.dev_name,
+            email: gens.result.dev_email,
+            sumrealNew,
+            sumestimatedNew,
+            percentNew,
+            situation,
+            realGeneration,
+            estimatedGeneration,
+          };
 
-  //     // Process the results
-  //     sum_generation.forEach((result) => this.push(result));
-
-  //     return res.status(200).json({ message: sum_generation });
-  //   } catch (error) {
-  //     return res
-  //       .status(500)
-  //       .json({ message: `Erro ao retornar os dados. ${error}` });
-  //   }
-  // }
+          return JSON.stringify(dev_element);
+        })
+      );
+      return res.status(200).json({ message: sum_generation });
+      // Process the results
+      sum_generation.forEach((result) => this.push(result));
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
 }
 export default new DevicesController();

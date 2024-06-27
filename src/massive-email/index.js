@@ -57,73 +57,87 @@ export async function massiveEmail(use_uuid, res, req) {
     0
   );
 
-  const result = await Devices.findAll({
-    include: [
-      {
-        association: "brand_login",
-        attributes: [],
-        where: {
-          use_uuid: use_uuid,
-        },
-      },
-    ],
-    attributes: ["dev_uuid"],
-    where: {
-      dev_email: {
-        [Op.not]: null,
-      },
-      [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
-    },
-  });
-
-  const dev_uuids = result.map((device) => device.dev_uuid);
-
-  const quant = dev_uuids.length;
-
   const readableStream = Readable({
     async read() {
       try {
-        const results = await Promise.all(
-          dev_uuids.map(async (devUuid) => {
-            //Verifica se já foi enviado no mês corrente
-            // const verify = Devices.findByPk(devUuid, {
-            //   attributes: ["dev_verify_email"],
-            // });
-            // if (verify.dev_verify_email == true) {
-            //   return;
-            // }
-            await Reports.create({
-              port_check: true,
-              dev_uuid: devUuid,
-              use_uuid: use_uuid,
-            });
-            const dev_uuid = devUuid;
-            const result = await Generation.findAll({
-              attributes: ["gen_real", "gen_estimated", "gen_date"],
+        const result = await Generation.findAll({
+          include: [
+            {
+              association: "devices",
+              attributes: [
+                "dev_capacity",
+                "dev_name",
+                "dev_email",
+                "dev_deleted",
+              ],
               where: {
-                dev_uuid: dev_uuid,
-                gen_date: {
-                  [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+                dev_email: {
+                  [Op.not]: null,
                 },
-                gen_updated_at: {
-                  [Op.in]: Generation.sequelize.literal(`
-                      (SELECT MAX(gen_updated_at) 
-                      FROM generation 
-                      WHERE dev_uuid = :dev_uuid 
-                      AND gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
-                      GROUP BY gen_date)
-                    `),
-                },
+                [Op.or]: [
+                  { dev_deleted: false },
+                  { dev_deleted: { [Op.is]: null } },
+                ],
               },
-              replacements: { dev_uuid, firstDayOfMonth, lastDayOfMonth },
-            });
+              include: [
+                {
+                  association: "brand_login",
+                  attributes: [],
+                  where: {
+                    use_uuid: use_uuid,
+                  },
+                },
+              ],
+            },
+          ],
+          attributes: ["gen_real", "gen_estimated", "gen_date", "dev_uuid"],
+          where: {
+            gen_date: {
+              [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+            },
+            gen_updated_at: {
+              [Op.in]: Generation.sequelize.literal(`
+                          (SELECT MAX(gen_updated_at) 
+                          FROM generation 
+                          WHERE gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
+                          GROUP BY gen_date, dev_uuid)
+                        `),
+            },
+          },
+          replacements: { firstDayOfMonth, lastDayOfMonth },
+        });
+        const groupedResult = result.reduce((acc, generation) => {
+          const { dev_uuid, gen_real, gen_estimated, gen_date, devices } =
+            generation;
+          const { dev_capacity, dev_name, dev_email } = devices;
 
-            return { dev_uuid, result };
-          })
+          if (!acc[dev_uuid]) {
+            acc[dev_uuid] = [];
+          }
+
+          acc[dev_uuid].push({
+            gen_real,
+            gen_estimated,
+            gen_date,
+            dev_capacity,
+            dev_name,
+            dev_email,
+          });
+
+          return acc;
+        }, {});
+
+        // Formatar o resultado final
+        const formattedResult = Object.entries(groupedResult).map(
+          ([dev_uuid, resultArray]) => {
+            return { dev_uuid, result: resultArray };
+          }
         );
 
+        // return res.status(200).json({message:formattedResult})
+
         const sum_generation = await Promise.all(
-          results.map(async (gens) => {
+          formattedResult.map(async (gens) => {
             // Real generation
             const realGeneration = gens.result.map((element) => {
               return { value: element.gen_real, date: element.gen_date };
@@ -133,12 +147,6 @@ export async function massiveEmail(use_uuid, res, req) {
             const estimatedGeneration = gens.result.map(
               (element) => element.gen_estimated
             );
-
-            // Get device capacity, name, and email
-            const cap = await Devices.findOne({
-              attributes: ["dev_capacity", "dev_name", "dev_email"],
-              where: { dev_uuid: gens.dev_uuid },
-            });
 
             // Sum real generation
             const sumreal = gens.result.reduce(
@@ -171,9 +179,9 @@ export async function massiveEmail(use_uuid, res, req) {
             // Create device element
             const dev_element = {
               dev_uuid: gens.dev_uuid,
-              capacity: cap.dev_capacity,
-              name: cap.dev_name,
-              email: cap.dev_email,
+              capacity: gens.result.dev_capacity,
+              name: gens.result.dev_name,
+              email: gens.result.dev_email,
               sumrealNew,
               sumestimatedNew,
               percentNew,
@@ -286,8 +294,8 @@ export async function massiveEmail(use_uuid, res, req) {
       const mailOptions = {
         from: "noreplymayawatch@gmail.com",
         to: [
-          JSON.parse(chunk).dev_email,
-          "bisintese@gmail.com",
+          // JSON.parse(chunk).dev_email,
+          // "bisintese@gmail.com",
           "eloymun00@gmail.com",
         ],
         subject: "Relatório de dados de Geração",
