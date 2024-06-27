@@ -107,53 +107,70 @@ export async function massiveEmail(use_uuid, res, req) {
                 },
                 gen_updated_at: {
                   [Op.in]: Generation.sequelize.literal(`
-                        (SELECT MAX(gen_updated_at) 
-                        FROM generation 
-                        WHERE dev_uuid = :dev_uuid 
-                        AND gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
-                        GROUP BY gen_date)
-                      `),
+                      (SELECT MAX(gen_updated_at) 
+                      FROM generation 
+                      WHERE dev_uuid = :dev_uuid 
+                      AND gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
+                      GROUP BY gen_date)
+                    `),
                 },
               },
               replacements: { dev_uuid, firstDayOfMonth, lastDayOfMonth },
             });
-            //Realgeneration
-            const realGeneration = result.map((element) => {
+
+            return { dev_uuid, result };
+          })
+        );
+
+        const sum_generation = await Promise.all(
+          results.map(async (gens) => {
+            // Real generation
+            const realGeneration = gens.result.map((element) => {
               return { value: element.gen_real, date: element.gen_date };
             });
-            //Estimatedgeneration
-            const estimatedGeneration = result.map((element) => {
-              return element.gen_estimated;
-            });
+
+            // Estimated generation
+            const estimatedGeneration = gens.result.map(
+              (element) => element.gen_estimated
+            );
+
+            // Get device capacity, name, and email
             const cap = await Devices.findOne({
               attributes: ["dev_capacity", "dev_name", "dev_email"],
-              where: { dev_uuid: dev_uuid },
+              where: { dev_uuid: gens.dev_uuid },
             });
-            const sumreal = await result.reduce(
+
+            // Sum real generation
+            const sumreal = gens.result.reduce(
               (acc, atual) => acc + atual.gen_real,
               0
             );
             const sumrealNew = sumreal.toFixed(2);
-            const sumestimated = await result.reduce(
+
+            // Sum estimated generation
+            const sumestimated = gens.result.reduce(
               (acc, atual) => acc + atual.gen_estimated,
               0
             );
             const sumestimatedNew = sumestimated.toFixed(2);
-            const percent = (sumestimated / sumreal) * 100;
+
+            // Calculate percentage
             let percentNew;
-            if (sumreal == 0) {
+            if (sumreal === 0) {
               percentNew = 0;
             } else {
-              const percent = (sumestimated / sumreal) * 100;
-              percentNew = percent.toFixed(2);
+              percentNew = ((sumestimated / sumreal) * 100).toFixed(2);
             }
 
-            let situation =
+            // Determine situation
+            const situation =
               percentNew > 80
-                ? `Parábens, sua usina produziu o equivalente à ${percentNew} do total esperado.`
-                : `Infelizmente, sua usina produziu apenas ${percentNew} em relação ao esperado.`;
+                ? `Parabéns, sua usina produziu o equivalente a ${percentNew}% do total esperado.`
+                : `Infelizmente, sua usina produziu apenas ${percentNew}% em relação ao esperado.`;
+
+            // Create device element
             const dev_element = {
-              dev_uuid,
+              dev_uuid: gens.dev_uuid,
               capacity: cap.dev_capacity,
               name: cap.dev_name,
               email: cap.dev_email,
@@ -164,11 +181,13 @@ export async function massiveEmail(use_uuid, res, req) {
               realGeneration,
               estimatedGeneration,
             };
+
             return JSON.stringify(dev_element);
           })
         );
 
-        results.forEach((result) => this.push(result));
+        // Process the results
+        sum_generation.forEach((result) => this.push(result));
 
         this.push(null);
       } catch (error) {

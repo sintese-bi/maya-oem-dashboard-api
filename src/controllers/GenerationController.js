@@ -846,5 +846,5 @@ class GenerationController {
   }
 }
 const generationController = new GenerationController();
-generationController.agendarInputGeracao();
+// generationController.agendarInputGeracao();
 export default new GenerationController();
