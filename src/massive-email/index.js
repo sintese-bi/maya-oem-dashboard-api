@@ -312,7 +312,7 @@ export async function massiveEmail(use_uuid, res, req) {
       const mailOptions = {
         from: "noreplymayawatch@gmail.com",
         to: [
-          // JSON.parse(chunk).dev_email,
+          JSON.parse(chunk).email,
           "bisintese@gmail.com",
           "eloymun00@gmail.com",
         ],
