@@ -40,6 +40,7 @@ routes.get(`${apiVersion}/generationReport`, UsersController.generationReport);
 routes.get(`${apiVersion}/investment`, InvestmentController.index);
 routes.get(`${apiVersion}/kanban`, UsersController.kanban);
 routes.post(`${apiVersion}/devreturn`, UsersController.deviceReturn);
+// routes.post(`${apiVersion}/teste1`, DevicesController.teste1);
 routes.post(
   `${apiVersion}/deleteDevice`,
   checkToken,
