@@ -338,7 +338,6 @@ export async function massiveEmail(use_uuid, res, req) {
         await transporter.sendMail(mailOptions);
         await setTimeout(2000);
         sentEmailsAmount = sentEmailsAmount + 100 / resultDev.length;
-        console.log(sentEmailsAmount)
         res.write(`data: ${sentEmailsAmount}\n\n`);
 
         //console.log({
