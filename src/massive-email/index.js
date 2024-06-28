@@ -314,7 +314,7 @@ export async function massiveEmail(use_uuid, res, req) {
         to: [
           JSON.parse(chunk).email,
           // "bisintese@gmail.com",
-          // "eloymun00@gmail.com",
+          "eloymun00@gmail.com",
         ],
         subject: "Relatório de dados de Geração",
         text: "",
