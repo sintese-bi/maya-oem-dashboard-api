@@ -56,6 +56,24 @@ export async function massiveEmail(use_uuid, res, req) {
     currentDate.getMonth() + 1,
     0
   );
+  const resultDev = await Devices.findAll({
+    include: [
+      {
+        association: "brand_login",
+        attributes: [],
+        where: {
+          use_uuid: use_uuid,
+        },
+      },
+    ],
+    attributes: ["dev_uuid"],
+    where: {
+      dev_email: {
+        [Op.not]: null,
+      },
+      [Op.or]: [{ dev_deleted: false }, { dev_deleted: { [Op.is]: null } }],
+    },
+  });
 
   const readableStream = Readable({
     async read() {
@@ -295,7 +313,7 @@ export async function massiveEmail(use_uuid, res, req) {
         from: "noreplymayawatch@gmail.com",
         to: [
           // JSON.parse(chunk).dev_email,
-          // "bisintese@gmail.com",
+          "bisintese@gmail.com",
           "eloymun00@gmail.com",
         ],
         subject: "Relatório de dados de Geração",
@@ -318,7 +336,8 @@ export async function massiveEmail(use_uuid, res, req) {
       try {
         await transporter.sendMail(mailOptions);
         await setTimeout(2000);
-        sentEmailsAmount = sentEmailsAmount + 100 / result.length;
+        sentEmailsAmount = sentEmailsAmount + 100 / resultDev.length;
+        console.log(sentEmailsAmount)
         res.write(`data: ${sentEmailsAmount}\n\n`);
 
         //console.log({
