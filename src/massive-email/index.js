@@ -185,7 +185,7 @@ export async function massiveEmail(use_uuid, res, req) {
             if (sumreal === 0) {
               percentNew = 0;
             } else {
-              percentNew = ((sumestimated / sumreal) * 100).toFixed(2);
+              percentNew = ((sumreal / sumestimated) * 100).toFixed(2);
             }
 
             // Determine situation
