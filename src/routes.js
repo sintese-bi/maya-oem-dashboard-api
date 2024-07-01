@@ -46,13 +46,11 @@ routes.post(
   checkToken,
   UsersController.deleteDevice
 );
-routes.get(
-  `${apiVersion}/updateteste`,
+// routes.post(
+//   `${apiVersion}/updateteste`,
 
-  GenerationController.updadeTeste
-);
-
-
+//   GenerationController.updateTeste
+// );
 
 routes.get(
   `${apiVersion}/irrcoef/:devUuid/:ic_states/:ic_city`,
@@ -162,10 +160,10 @@ routes.get(
 );
 routes.get(`${apiVersion}/user/:uuid`, UsersController.show);
 //Apenas testes
-// routes.get(
-//   `${apiVersion}/inputgeneration`,
-//   GenerationController.generationRoutine
-// );
+routes.get(
+  `${apiVersion}/inputgeneration`,
+  GenerationController.generationRoutine
+);
 
 routes.post(
   `${apiVersion}/register`,
