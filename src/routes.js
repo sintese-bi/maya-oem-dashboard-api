@@ -47,6 +47,14 @@ routes.post(
   UsersController.deleteDevice
 );
 routes.get(
+  `${apiVersion}/updateteste`,
+
+  GenerationController.updadeTeste
+);
+
+
+
+routes.get(
   `${apiVersion}/irrcoef/:devUuid/:ic_states/:ic_city`,
   UsersController.irradiation
 );
