@@ -1,4 +1,4 @@
-import { Sequelize, Op, fn, col, literal } from "sequelize";
+import { Sequelize, Op, fn, col, literal, transaction } from "sequelize";
 import Devices from "../models/Devices";
 import Generation from "../models/Generation";
 import moment from "moment-timezone";
@@ -866,6 +866,9 @@ class GenerationController {
           "dev_capacity",
           "dev_address",
         ],
+        where: {
+          dev_deleted: { [Op.or]: [null, false] },
+        },
       });
 
       const manualGen = result.map((element) => {
@@ -897,22 +900,33 @@ class GenerationController {
 
         return {
           ...element.dataValues,
-          dev_manual_gen_est: element.dev_manual_gen_est,
+          dev_manual_gen_est:
+            Math.floor(element.dev_manual_gen_est * 100) / 100,
         };
       });
 
-      await Promise.all(
-        manualGen.map(async (element) => {
-          await Generation.update(
-            {
-              gen_estimated: Math.floor(element.dev_manual_gen_est * 100) / 100,
-            },
-            { where: { dev_uuid: element.dev_uuid, gen_date: `2024-07-01` } }
-          );
-        })
-      );
+      const batchSize = 5;
 
-      return res.status(200).json({ response: manualGen });
+      for (let i = 0; i < manualGen.length; i += batchSize) {
+        const batch = manualGen.slice(i, i + batchSize);
+        await Promise.all(
+          batch.map(async (element) => {
+            await Generation.update(
+              {
+                gen_estimated: element.dev_manual_gen_est,
+              },
+              {
+                where: {
+                  dev_uuid: element.dev_uuid,
+                  gen_date: { [Op.eq]: "2024-07-01" },
+                },
+              }
+            );
+          })
+        );
+      }
+
+      return res.status(200).json({ response: "Deu certo!" });
     } catch (error) {
       return res
         .status(500)
