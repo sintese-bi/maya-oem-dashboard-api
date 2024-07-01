@@ -818,6 +818,8 @@ class GenerationController {
             gen_estimated: Math.floor(element.dev_manual_gen_est * 100) / 100,
             gen_date: `${dateYearmonth}-01`,
             gen_real: 0,
+            gen_created_at: "2024-07-01 03:00:50.331 -0300",
+            gen_updated_at: "2024-07-01 03:00:50.331 -0300",
           });
         })
       );
@@ -830,8 +832,9 @@ class GenerationController {
     }
   }
 
-  async updadeTeste(req, res) {
+  async updateTeste(req, res) {
     try {
+      const { use_uuid } = req.body;
       const months = {
         "01": "ic_january",
         "02": "ic_february",
@@ -860,6 +863,15 @@ class GenerationController {
       const date = moment().format("MM");
       const dateYearmonth = moment().format("YYYY-MM");
       const result = await Devices.findAll({
+        include: [
+          {
+            association: "brand_login",
+            attributes: [],
+            where: {
+              use_uuid: use_uuid,
+            },
+          },
+        ],
         attributes: [
           "dev_uuid",
           "dev_manual_gen_est",
@@ -905,26 +917,21 @@ class GenerationController {
         };
       });
 
-      const batchSize = 5;
-
-      for (let i = 0; i < manualGen.length; i += batchSize) {
-        const batch = manualGen.slice(i, i + batchSize);
-        await Promise.all(
-          batch.map(async (element) => {
-            await Generation.update(
-              {
-                gen_estimated: element.dev_manual_gen_est,
+      await Promise.all(
+        manualGen.map(async (element) => {
+          await Generation.update(
+            {
+              gen_estimated: element.dev_manual_gen_est,
+            },
+            {
+              where: {
+                dev_uuid: element.dev_uuid,
+                gen_date: { [Op.eq]: "2024-07-01" },
               },
-              {
-                where: {
-                  dev_uuid: element.dev_uuid,
-                  gen_date: { [Op.eq]: "2024-07-01" },
-                },
-              }
-            );
-          })
-        );
-      }
+            }
+          );
+        })
+      );
 
       return res.status(200).json({ response: "Deu certo!" });
     } catch (error) {
