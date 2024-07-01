@@ -12,10 +12,10 @@ module.exports = {
     timestamps: true,
     underscored: true,
   },
-  pool: {
-    max: 100, // Número máximo de conexões no pool
-    min: 0, // Número mínimo de conexões no pool
-    acquire: 60000, // Tempo limite para adquirir uma conexão (em milissegundos)
-    idle: 10000, // Tempo máximo que uma conexão pode ficar ociosa antes de ser liberada (em milissegundos)
-  },
+  // pool: {
+  //   max: 10, // Número máximo de conexões no pool
+  //   min: 0, // Número mínimo de conexões no pool
+  //   acquire: 30000, // Tempo limite para adquirir uma conexão (em milissegundos)
+  //   idle: 10000, // Tempo máximo que uma conexão pode ficar ociosa antes de ser liberada (em milissegundos)
+  // },
 };

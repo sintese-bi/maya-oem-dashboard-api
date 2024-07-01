@@ -308,13 +308,13 @@ export async function massiveEmail(use_uuid, res, req) {
           <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
           https://mayax.com.br/
       `;
-
       const mailOptions = {
         from: "noreplymayawatch@gmail.com",
         to: [
-          JSON.parse(chunk).email,
-          // "bisintese@gmail.com",
+  // JSON.parse(chunk).email,
+          "bisintese@gmail.com",
           "eloymun00@gmail.com",
+          
         ],
         subject: "Relatório de dados de Geração",
         text: "",
@@ -337,7 +337,6 @@ export async function massiveEmail(use_uuid, res, req) {
         await transporter.sendMail(mailOptions);
         await setTimeout(2000);
         sentEmailsAmount = sentEmailsAmount + 100 / resultDev.length;
-        console.log(sentEmailsAmount)
         res.write(`data: ${sentEmailsAmount}\n\n`);
 
         //console.log({
