@@ -940,7 +940,180 @@ class GenerationController {
         .json({ message: `Erro ao atualizar os dados: ${error.message}` });
     }
   }
+  async excelGenerationAll(req, res) {
+    try {
+      const clientToken = req.headers.authorization;
+      const expectedToken = process.env.TOKEN;
+      if (clientToken == `Bearer ${expectedToken}`) {
+        const currentDate = new Date();
+        currentDate.setHours(currentDate.getHours() - 3);
+        const currentDateWithDelay = currentDate.toISOString();
+        console.log(currentDateWithDelay);
+        const dataAtual = moment(currentDateWithDelay);
+        const inicioUltimaSemana = dataAtual
+          .clone()
+          .subtract(1, "weeks")
+          .startOf("week");
+        const fimUltimaSemana = inicioUltimaSemana.clone().endOf("week");
+        const inicioFormatado = inicioUltimaSemana.toISOString();
+        const fimFormatado = fimUltimaSemana.toISOString();
+        const inicioMesCorrente = dataAtual.clone().startOf("month");
+        const fimMesCorrente = dataAtual.clone().endOf("month");
+        const inicioFormatadomes = inicioMesCorrente.toISOString();
+        const fimFormatadomes = fimMesCorrente.toISOString();
+        const startOfDay = new Date(currentDateWithDelay);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(currentDateWithDelay);
+        endOfDay.setHours(23, 59, 59, 999);
+        const consultUser = await Users.findAll({
+          attributes: [
+            "use_percentage",
+            "use_alert_email",
+            "use_date",
+            "use_name",
+            "use_wpp_number",
+            "use_uuid",
+          ],
+        });
 
+        const reports = await Promise.all(
+          consultUser.map(async (element) => {
+            if (
+              !element.use_date ||
+              !element.use_percentage ||
+              !element.use_wpp_number
+            ) {
+              return;
+            }
+            if (
+              !(
+                element.use_date === 2 &&
+                moment().isoWeekday() === 1 &&
+                moment().date() <= 7
+              ) &&
+              !(element.use_date === 3 && moment().date() === 1) &&
+              !(element.use_date === 1)
+            ) {
+              return;
+            }
+            let dateInterval;
+            //Intervalo diário, semanal e mensal
+            if (element.use_date == 1) {
+              dateInterval = currentDateWithDelay;
+            } else if (element.use_date == 2) {
+              dateInterval = {
+                [Op.between]: [inicioFormatado, fimFormatado],
+              };
+            } else if (element.use_date == 3) {
+              dateInterval = {
+                [Op.between]: [inicioFormatadomes, fimFormatadomes],
+              };
+            }
+
+            const result = await Generation.findAll({
+              include: [
+                {
+                  association: "devices",
+                  attributes: ["dev_uuid", "dev_name"],
+                  where: {
+                    [Op.or]: [
+                      { dev_deleted: false },
+                      { dev_deleted: { [Op.is]: null } },
+                    ],
+                  },
+                  include: [
+                    {
+                      association: "brand_login",
+                      attributes: ["bl_name"],
+                      where: {
+                        use_uuid: element.use_uuid,
+                      },
+                    },
+                  ],
+                },
+              ],
+              where: {
+                gen_date: dateInterval,
+              },
+              attributes: [
+                "gen_date",
+                "gen_real",
+                "gen_estimated",
+                "gen_updated_at",
+              ],
+              order: [["gen_updated_at", "DESC"]],
+            });
+
+            const filteredResult = {};
+            result.forEach((generation) => {
+              const { devices, gen_updated_at, gen_real, gen_estimated } =
+                generation;
+              const deviceUUID = devices.dev_uuid;
+              const deviceName = devices.dev_name;
+              const brandLogin = devices.brand_login;
+              const brandName = brandLogin ? brandLogin.bl_name : null;
+              const generationDate = gen_updated_at.toISOString().split("T")[0];
+
+              if (!filteredResult[generationDate]) {
+                filteredResult[generationDate] = {};
+              }
+
+              if (
+                !filteredResult[generationDate][deviceUUID] ||
+                gen_updated_at >
+                  filteredResult[generationDate][deviceUUID].gen_updated_at
+              ) {
+                filteredResult[generationDate][deviceUUID] = {
+                  gen_real,
+                  gen_estimated,
+                  dev_name: deviceName,
+                  bl_name: brandName,
+                };
+              }
+            });
+            const deviceSums = {};
+            Object.keys(filteredResult).forEach((date) => {
+              const devices = filteredResult[date];
+              Object.keys(devices).forEach((deviceUUID) => {
+                const generation = devices[deviceUUID];
+                const { gen_real, gen_estimated, dev_name, bl_name } =
+                  generation;
+                if (!deviceSums[deviceUUID]) {
+                  deviceSums[deviceUUID] = {
+                    gen_real: 0,
+                    gen_estimated: 0,
+                    dev_name,
+                    bl_name,
+                  };
+                }
+                deviceSums[deviceUUID].gen_real += gen_real;
+                deviceSums[deviceUUID].gen_estimated += gen_estimated;
+              });
+            });
+       
+
+  
+       
+            return object;
+          })
+        );
+
+        const validReports = reports.filter((report) => report !== undefined);
+
+        return res.status(200).json({
+          relatorios: validReports,
+        });
+      } else {
+        return res
+          .status(401)
+          .json({ message: "Falha na autenticação: Token inválido." });
+      }
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados: ${error.message}` });
+    }
+  }
   agendarInputGeracao() {
     cron.schedule(
       "0 0 1 * *",
