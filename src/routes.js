@@ -152,6 +152,12 @@ routes.post(
   checkToken,
   GenerationController.generalreportEmail
 );
+routes.get(
+  `${apiVersion}/excelgeneral`,
+  
+  GenerationController.excelGenerationAll
+);
+
 routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
 routes.get(
   `${apiVersion}/userBrands/:uuid`,

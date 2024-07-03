@@ -1090,10 +1090,47 @@ class GenerationController {
                 deviceSums[deviceUUID].gen_estimated += gen_estimated;
               });
             });
-       
 
-  
-       
+            const deviceUUIDs = Object.keys(deviceSums);
+
+            const sumPercentage = deviceUUIDs
+              .map((uuid) => {
+                const device = deviceSums[uuid];
+
+                if (device.gen_real) {
+                  return {
+                    Portal: device.bl_name,
+                    Cliente: device.dev_name,
+                    "Produção(KWh)": device.gen_real.toFixed(2),
+                    "Esperado(KWh)": device.gen_estimated.toFixed(2),
+                    "Desempenho(%)": (
+                      (device.gen_real.toFixed(2) /
+                        device.gen_estimated.toFixed(2)) *
+                      100
+                    ).toFixed(2),
+                  };
+                }
+                return null;
+              })
+              .filter((device) => device !== null);
+
+            let buffer;
+
+            let object;
+
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.json_to_sheet(sumPercentage);
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
+            buffer = XLSX.write(workbook, {
+              bookType: "xlsx",
+              type: "buffer",
+            });
+            object = {
+              telefone: element.use_wpp_number,
+              relatorio: buffer,
+              user_name: element.use_name,
+            };
+
             return object;
           })
         );
