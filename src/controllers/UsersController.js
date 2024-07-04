@@ -238,7 +238,6 @@ class UsersController {
     //API  para cliente logar na plataforma(Dashboard)
     try {
       const { use_email, use_password } = req.body;
-      console.log("req", req);
       const result = await Users.findOne({
         attributes: [
           "use_uuid",
@@ -272,16 +271,16 @@ class UsersController {
         ],
       });
 
-      const checkPassword = await bcrypt.compare(
-        use_password,
-        result.use_password
-      );
-      // if (use_password !== result.use_password) {
-      //   return res.status(404).json({ message: "Senha inválida" });
-      // }
-      if (!checkPassword) {
-        return res.status(401).json({ message: "Senha inválida" });
+      // const checkPassword = await bcrypt.compare(
+      //   use_password,
+      //   result.use_password
+      // );
+      if (use_password !== result.use_password) {
+        return res.status(404).json({ message: "Senha inválida" });
       }
+      // if (!checkPassword) {
+      //   return res.status(401).json({ message: "Senha inválida" });
+      // }
       const without_password = result.get({ plain: true });
       delete without_password.use_password;
       //Construindo o token que o cliente receberá

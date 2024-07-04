@@ -51,11 +51,13 @@ export async function massiveEmail(use_uuid, res, req) {
     currentDate.getMonth(),
     1
   );
+  
   const lastDayOfMonth = new Date(
     currentDate.getFullYear(),
     currentDate.getMonth() + 1,
     0
   );
+
   const resultDev = await Devices.findAll({
     include: [
       {
