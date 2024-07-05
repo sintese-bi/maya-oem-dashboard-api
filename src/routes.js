@@ -312,6 +312,19 @@ routes.post(
   DevicesController.administratorReportWhatsApp
 );
 
+
+routes.get(
+  `${apiVersion}/admreportwppall`,
+
+  DevicesController.administratorReportWhatsApptoAll
+);
+
+
+
+
+
+
+
 routes.post(
   `${apiVersion}/updateemaildevice`,
   checkToken,
