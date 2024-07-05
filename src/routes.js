@@ -313,11 +313,11 @@ routes.post(
 );
 
 
-// routes.get(
-//   `${apiVersion}/admreportwppall`,
+routes.get(
+  `${apiVersion}/admreportwppall`,
 
-//   DevicesController.administratorReportWhatsApptoAll
-// );
+  DevicesController.administratorReportWhatsApptoAll
+);
 
 
 
