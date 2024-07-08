@@ -244,6 +244,12 @@ routes.get(
 
   GenerationController.emailAlertSendWhatsApp
 );
+routes.post(
+  `${apiVersion}/useupdatewpp`,
+  checkToken,
+  UsersController.useWppTelephone
+);
+
 
 routes.get(
   `${apiVersion}/alertFrequency/:uuid`,
