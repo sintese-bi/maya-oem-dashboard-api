@@ -1569,9 +1569,13 @@ class DevicesController {
               "use_uuid",
               "use_wpp_number",
               "use_wpp_alert_preference",
+              "use_wpp_number_general_report"
             ],
             where: {
               use_wpp_alert_preference: true,
+              use_wpp_number_general_report: {
+                [Op.not]: null
+              }
             },
           });
           const resultData = await Promise.all(users.map(async (elementData) => {
@@ -1792,7 +1796,7 @@ class DevicesController {
 
             const quant_dev = devices.length;
             const user = await Users.findOne({
-              attributes: ["use_email", "use_name"],
+              attributes: ["use_email", "use_name","use_wpp_alert_preference","use_wpp_number_general_report"],
               where: { use_uuid: elementData.use_uuid },
             });
 
@@ -2010,7 +2014,9 @@ class DevicesController {
             const retorno = {
               user: user.use_name, //Usuário
 
-              wpp_number:elementData.use_wpp_number, //Número Wpp
+              wpp_number:user.use_wpp_number_general_report, //Números de Wpp
+
+              use_wpp_alert_preference:user.use_wpp_alert_preference, //Flag que diz se o usuário quer ou não que os alertas sejam enviados
 
               period: currentMonthYear, //Período
 
@@ -2055,7 +2061,7 @@ class DevicesController {
           const delay = 3000;
 
           setTimeout(function () {
-            return res.status(200).json({ message: resultData });
+            return res.status(200).json({ data: resultData });
           }, delay);
         } else {
           return res

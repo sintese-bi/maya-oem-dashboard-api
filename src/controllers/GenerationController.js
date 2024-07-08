@@ -7,6 +7,7 @@ import Brand from "../models/Brand";
 import XLSX from "xlsx";
 import Users from "../models/Users";
 import cron from "node-cron";
+import fs from "fs";
 import Temperature from "../models/Temperature";
 import IrradiationCoefficient from "../models/IrradiationCoefficient";
 const transporter = nodemailer.createTransport({
@@ -1112,7 +1113,8 @@ class GenerationController {
                 }
                 return null;
               })
-              .filter((device) => device !== null);
+              .filter((device) => device !== null)
+              .sort((a, b) => a["Produção(KWh)"] - b["Produção(KWh)"]);
 
             let buffer;
 
@@ -1125,6 +1127,7 @@ class GenerationController {
               bookType: "xlsx",
               type: "buffer",
             });
+
             object = {
               telefone: element.use_wpp_number,
               relatorio: buffer,
@@ -1136,7 +1139,12 @@ class GenerationController {
         );
 
         const validReports = reports.filter((report) => report !== undefined);
-
+        // validReports.forEach((element) => {
+        //   if ((element.user_name === "Federico Vinas")) {
+        //     fs.writeFileSync("outputFred.xlsx", element.relatorio);
+        //   }
+        //   fs.writeFileSync("output.xlsx", element.relatorio);
+        // });
         return res.status(200).json({
           relatorios: validReports,
         });
