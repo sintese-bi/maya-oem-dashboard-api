@@ -40,6 +40,7 @@ export async function massiveEmail(use_uuid, res, req) {
       },
     }
   );
+  res.write(`data: executing\n\n`);
 
   const { Readable, Writable, pipeline, Transform } = require("node:stream");
   const util = require("util");
@@ -79,95 +80,93 @@ export async function massiveEmail(use_uuid, res, req) {
   const dev_uuids = result.map((device) => device.dev_uuid);
 
   const quant = dev_uuids.length;
+  const results = await Promise.all(
+    dev_uuids.map(async (devUuid) => {
+      //Verifica se já foi enviado no mês corrente
+      // const verify = Devices.findByPk(devUuid, {
+      //   attributes: ["dev_verify_email"],
+      // });
+      // if (verify.dev_verify_email == true) {
+      //   return;
+      // }
+      await Reports.create({
+        port_check: true,
+        dev_uuid: devUuid,
+        use_uuid: use_uuid,
+      });
+      const dev_uuid = devUuid;
+      const result = await Generation.findAll({
+        attributes: ["gen_real", "gen_estimated", "gen_date"],
+        where: {
+          dev_uuid: dev_uuid,
+          gen_date: {
+            [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+          },
+          gen_updated_at: {
+            [Op.in]: Generation.sequelize.literal(`
+                  (SELECT MAX(gen_updated_at) 
+                  FROM generation 
+                  WHERE dev_uuid = :dev_uuid 
+                  AND gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
+                  GROUP BY gen_date)
+                `),
+          },
+        },
+        replacements: { dev_uuid, firstDayOfMonth, lastDayOfMonth },
+      });
+      //Realgeneration
+      const realGeneration = result.map((element) => {
+        return { value: element.gen_real, date: element.gen_date };
+      });
+      //Estimatedgeneration
+      const estimatedGeneration = result.map((element) => {
+        return element.gen_estimated;
+      });
+      const cap = await Devices.findOne({
+        attributes: ["dev_capacity", "dev_name", "dev_email"],
+        where: { dev_uuid: dev_uuid },
+      });
+      const sumreal = await result.reduce(
+        (acc, atual) => acc + atual.gen_real,
+        0
+      );
+      const sumrealNew = sumreal.toFixed(2);
+      const sumestimated = await result.reduce(
+        (acc, atual) => acc + atual.gen_estimated,
+        0
+      );
+      const sumestimatedNew = sumestimated.toFixed(2);
+      const percent = (sumestimated / sumreal) * 100;
+      let percentNew;
+      if (sumreal == 0) {
+        percentNew = 0;
+      } else {
+        const percent = (sumestimated / sumreal) * 100;
+        percentNew = percent.toFixed(2);
+      }
 
+      let situation =
+        percentNew > 80
+          ? `Parábens, sua usina produziu o equivalente à ${percentNew} do total esperado.`
+          : `Infelizmente, sua usina produziu apenas ${percentNew} em relação ao esperado.`;
+      const dev_element = {
+        dev_uuid,
+        capacity: cap.dev_capacity,
+        name: cap.dev_name,
+        email: cap.dev_email,
+        sumrealNew,
+        sumestimatedNew,
+        percentNew,
+        situation,
+        realGeneration,
+        estimatedGeneration,
+      };
+      return JSON.stringify(dev_element);
+    })
+  );
   const readableStream = Readable({
     async read() {
       try {
-        const results = await Promise.all(
-          dev_uuids.map(async (devUuid) => {
-            //Verifica se já foi enviado no mês corrente
-            // const verify = Devices.findByPk(devUuid, {
-            //   attributes: ["dev_verify_email"],
-            // });
-            // if (verify.dev_verify_email == true) {
-            //   return;
-            // }
-            await Reports.create({
-              port_check: true,
-              dev_uuid: devUuid,
-              use_uuid: use_uuid,
-            });
-            const dev_uuid = devUuid;
-            const result = await Generation.findAll({
-              attributes: ["gen_real", "gen_estimated", "gen_date"],
-              where: {
-                dev_uuid: dev_uuid,
-                gen_date: {
-                  [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-                },
-                gen_updated_at: {
-                  [Op.in]: Generation.sequelize.literal(`
-                        (SELECT MAX(gen_updated_at) 
-                        FROM generation 
-                        WHERE dev_uuid = :dev_uuid 
-                        AND gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
-                        GROUP BY gen_date)
-                      `),
-                },
-              },
-              replacements: { dev_uuid, firstDayOfMonth, lastDayOfMonth },
-            });
-            //Realgeneration
-            const realGeneration = result.map((element) => {
-              return { value: element.gen_real, date: element.gen_date };
-            });
-            //Estimatedgeneration
-            const estimatedGeneration = result.map((element) => {
-              return element.gen_estimated;
-            });
-            const cap = await Devices.findOne({
-              attributes: ["dev_capacity", "dev_name", "dev_email"],
-              where: { dev_uuid: dev_uuid },
-            });
-            const sumreal = await result.reduce(
-              (acc, atual) => acc + atual.gen_real,
-              0
-            );
-            const sumrealNew = sumreal.toFixed(2);
-            const sumestimated = await result.reduce(
-              (acc, atual) => acc + atual.gen_estimated,
-              0
-            );
-            const sumestimatedNew = sumestimated.toFixed(2);
-            const percent = (sumestimated / sumreal) * 100;
-            let percentNew;
-            if (sumreal == 0) {
-              percentNew = 0;
-            } else {
-              const percent = (sumestimated / sumreal) * 100;
-              percentNew = percent.toFixed(2);
-            }
-
-            let situation =
-              percentNew > 80
-                ? `Parábens, sua usina produziu o equivalente à ${percentNew} do total esperado.`
-                : `Infelizmente, sua usina produziu apenas ${percentNew} em relação ao esperado.`;
-            const dev_element = {
-              dev_uuid,
-              capacity: cap.dev_capacity,
-              name: cap.dev_name,
-              email: cap.dev_email,
-              sumrealNew,
-              sumestimatedNew,
-              percentNew,
-              situation,
-              realGeneration,
-              estimatedGeneration,
-            };
-            return JSON.stringify(dev_element);
-          })
-        );
-
         results.forEach((result) => this.push(result));
 
         this.push(null);
@@ -266,11 +265,7 @@ export async function massiveEmail(use_uuid, res, req) {
 
       const mailOptions = {
         from: "noreplymayawatch@gmail.com",
-        to: [
-          JSON.parse(chunk).dev_email,
-          "bisintese@gmail.com",
-          "eloymun00@gmail.com",
-        ],
+        to: ["felipegadelha2004@gmail.com"],
         subject: "Relatório de dados de Geração",
         text: "",
         html: emailBody,
@@ -289,8 +284,8 @@ export async function massiveEmail(use_uuid, res, req) {
       }
 
       try {
-        await transporter.sendMail(mailOptions);
-        await setTimeout(2000);
+        //await transporter.sendMail(mailOptions);
+        await setTimeout(1000);
         sentEmailsAmount = sentEmailsAmount + 100 / result.length;
         res.write(`data: ${sentEmailsAmount}\n\n`);
 
