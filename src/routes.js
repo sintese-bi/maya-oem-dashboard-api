@@ -40,11 +40,18 @@ routes.get(`${apiVersion}/generationReport`, UsersController.generationReport);
 routes.get(`${apiVersion}/investment`, InvestmentController.index);
 routes.get(`${apiVersion}/kanban`, UsersController.kanban);
 routes.post(`${apiVersion}/devreturn`, UsersController.deviceReturn);
+// routes.post(`${apiVersion}/teste1`, DevicesController.teste1);
 routes.post(
   `${apiVersion}/deleteDevice`,
   checkToken,
   UsersController.deleteDevice
 );
+// routes.post(
+//   `${apiVersion}/updateteste`,
+
+//   GenerationController.updateTeste
+// );
+
 routes.get(
   `${apiVersion}/irrcoef/:devUuid/:ic_states/:ic_city`,
   UsersController.irradiation
@@ -145,6 +152,12 @@ routes.post(
   checkToken,
   GenerationController.generalreportEmail
 );
+routes.get(
+  `${apiVersion}/excelgeneral`,
+  
+  GenerationController.excelGenerationAll
+);
+
 routes.get(`${apiVersion}/users`, checkToken, UsersController.users);
 routes.get(
   `${apiVersion}/userBrands/:uuid`,
@@ -152,6 +165,12 @@ routes.get(
   UsersController.userBrands
 );
 routes.get(`${apiVersion}/user/:uuid`, UsersController.show);
+//Apenas testes
+routes.get(
+  `${apiVersion}/inputgeneration`,
+  GenerationController.generationRoutine
+);
+
 routes.post(
   `${apiVersion}/register`,
 
@@ -287,11 +306,24 @@ routes.get(
 
   DevicesController.managerNamesAll
 );
-// routes.get(
-//   `${apiVersion}/admreportwpp`,
+routes.post(
+  `${apiVersion}/admreportwpp`,
 
-//   DevicesController.administratorReportWhatsApp
-// );
+  DevicesController.administratorReportWhatsApp
+);
+
+
+routes.get(
+  `${apiVersion}/admreportwppall`,
+
+  DevicesController.administratorReportWhatsApptoAll
+);
+
+
+
+
+
+
 
 routes.post(
   `${apiVersion}/updateemaildevice`,

@@ -803,11 +803,8 @@ class UsersController {
       const par = req.params.par;
       const today = moment.utc().subtract(3, "hours").format("YYYY-MM-DD");
 
-      const startOfMonth = moment
-        .utc()
-        .startOf("month")
-        .subtract(3, "hours")
-        .toDate();
+      const startOfMonth = moment.utc().startOf("month").toDate();
+      console.log(startOfMonth);
       const endOfMonth = moment
         .utc()
         .endOf("month")
@@ -855,6 +852,7 @@ class UsersController {
                   "dev_image",
                   "dev_install",
                   "dev_manual_gen_est",
+                  "dev_wpp_number",
                 ],
                 include: [
                   {
@@ -865,7 +863,10 @@ class UsersController {
                       "gen_date",
                       "gen_updated_at",
                     ],
-                    order: [["gen_updated_at", "DESC"]],
+                    order: [
+                      ["gen_updated_at", "DESC"],
+                      ["gen_real", "DESC"],
+                    ],
                     where: {
                       gen_date: {
                         [Op.between]: [startOfMonth, endOfMonth],
@@ -895,6 +896,7 @@ class UsersController {
         ],
       });
 
+      // return res.status(200).json({message:result})
       const devicesData = [];
 
       if (result) {
@@ -918,9 +920,7 @@ class UsersController {
 
                 if (
                   !dailySums[genDate] ||
-                  moment
-                    .utc(dailySums[genDate].gen_updated_at)
-                    .isSameOrBefore(moment.utc(gen.gen_updated_at))
+                  dailySums[genDate].gen_real <= gen.gen_real
                 ) {
                   dailySums[genDate] = {
                     gen_real: gen.gen_real,
@@ -984,6 +984,7 @@ class UsersController {
               dev_email: device.dev_email,
               dev_deleted: device.dev_deleted,
               dev_long: device.dev_long,
+              dev_wpp_number: device.dev_wpp_number,
               dev_install: device.dev_install,
               gen_estimated: device.dev_manual_gen_est,
               status: {
@@ -1033,6 +1034,7 @@ class UsersController {
                 gen_real: Object.values(monthlySumsReal)
                   .reduce((acc, value) => acc + value, 0)
                   .toFixed(2),
+
                 gen_estimated: Object.values(monthlySumsEstimated)
                   .reduce((acc, value) => acc + value, 0)
                   .toFixed(2),
@@ -1043,7 +1045,10 @@ class UsersController {
           }
         }
       }
-
+      // const total_capacity = devicesData.reduce((accumulate, currente_value) => {
+      //   return accumulate + currente_value.dev_capacity;
+      // }, 0);
+      // const valor=(Math.floor(total_capacity*100)/100)/1000
       return res.status(200).json({
         devicesData,
         brand,
@@ -2136,7 +2141,7 @@ class UsersController {
             ic_states,
             dev_install,
             gen_estimated,
-            dev_image,
+            whatsapp_number,
           } = devarray;
           if (gen_estimated) {
             const gen_new = Number(gen_estimated);
@@ -2215,6 +2220,7 @@ class UsersController {
               dev_install: dev_install,
               dev_manual_gen_est: Number(gen_estimated),
               dev_address: ic_city + "-" + ic_states,
+              dev_wpp_number: whatsapp_number,
               dev_lat: irr
                 ? irr.ic_lat !== undefined
                   ? irr.ic_lat

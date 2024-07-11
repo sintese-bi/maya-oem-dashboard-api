@@ -6,6 +6,7 @@ import { PDFDocument } from "pdf-lib";
 import { Op, literal, Sequelize } from "sequelize";
 import Users from "../models/Users";
 import nodemailer from "nodemailer";
+import Reports from "../models/Reports";
 const transporter = nodemailer.createTransport({
   service: "gmail",
   host: "smtp.gmail.com",
@@ -629,10 +630,15 @@ class DevicesController {
 
       if (clientToken == `Bearer ${expectedToken}`) {
         const result = await Devices.findAll({
-          attributes: ["dev_name", "dev_uuid", "dev_wpp_number"],
-          //ADICIONAR CONDICAO DEV_WPP_NUMBER=NULL
+          attributes: [
+            "dev_name",
+            "dev_uuid",
+            "dev_wpp_number",
+            "dev_capacity",
+          ],
+          //ADICIONAR CONDICAO DEV_DELETED=NULL
           where: {
-            dev_deleted: false,
+            dev_deleted: { [Op.or]: [null, false] },
             dev_wpp_number: {
               [Op.ne]: null,
             },
@@ -776,6 +782,7 @@ class DevicesController {
             return {
               device_name: element.dev_name, //Nome do device
               period: currentMonthYear, //Período
+              capacity: element.dev_capacity, //Potência Usina
               wpp_number: element.dev_wpp_number, //Número WhatsApp
               treesSaved: Math.round(tree_co2 * 0.000504 * 100) / 100, //Árvores salvas
               c02: Math.round(tree_co2 * 0.419 * 100) / 100, //Co2
@@ -872,34 +879,9 @@ class DevicesController {
         const lastday = parseInt(lastDayOfMonth);
         //Data corrente
         const primeiro_dia_mes = `${currentMonthYear}-01`;
-
+        const { use_uuid } = req.body;
         if (clientToken == `Bearer ${expectedToken}`) {
-          //Valores de geração estimada do mês escolhido
-          const gen = await Generation.findAll({
-            include: [
-              {
-                association: "devices",
-                attributes: ["dev_name"],
-                where: {
-                  dev_deleted: false,
-                },
-              },
-            ],
-            where: {
-              gen_date: `${currentMonthYear}-01`,
-            },
-            attributes: ["gen_estimated"],
-          });
-
-         
-          let generation_est;
-          if (gen) {
-            generation_est = gen.gen_estimated;
-          } else {
-            generation_est = 100;
-          }
-          return res.status(200).json({ message: gen });
-
+          //Fluxo que soma as gerações de cada dia do mês corrente
           const monthGeneration = await Generation.findAll({
             attributes: [
               [Sequelize.literal("DATE(gen_date)"), "day"],
@@ -915,14 +897,29 @@ class DevicesController {
                 Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
                 "latest_gen_estimated",
               ],
+              [Sequelize.col("devices.dev_name"), "dev_name"],
+              [Sequelize.col("devices.bl_uuid"), "bl_uuid"],
+              [Sequelize.col("devices.dev_uuid"), "dev_uuid"],
+              [Sequelize.col("devices.dev_deleted"), "dev_deleted"],
+              [Sequelize.col("devices->brand_login.bl_name"), "bl_name"],
             ],
             include: [
               {
                 association: "devices",
                 attributes: [],
+
                 where: {
-                  dev_uuid: element.dev_uuid,
+                  dev_deleted: { [Op.or]: [false, null] },
                 },
+                include: [
+                  {
+                    association: "brand_login",
+                    where: {
+                      use_uuid: use_uuid,
+                    },
+                    attributes: [],
+                  },
+                ],
               },
             ],
             where: {
@@ -930,9 +927,60 @@ class DevicesController {
                 [Op.between]: [primeiro_dia_mes, lastDayOfMonth],
               },
             },
-            group: [Sequelize.literal("day")],
+            group: [
+              Sequelize.literal("day"),
+              Sequelize.col("devices.dev_name"),
+              Sequelize.col("devices.bl_uuid"),
+              Sequelize.col("devices.dev_uuid"),
+              Sequelize.col("devices.dev_deleted"),
+              Sequelize.col("devices->brand_login.bl_name"),
+            ],
           });
 
+          // Contar dispositivos únicos
+          // const uniqueDevices = new Set();
+          // monthGeneration.forEach(gen => {
+          //   uniqueDevices.add(gen.dev_uuid);
+          // });
+
+          // const totalUniqueDevices = uniqueDevices.size;
+          // return res.status(200).json({ message: [monthGeneration,totalUniqueDevices] });
+
+          let sumMonth = {};
+          monthGeneration.forEach((element) => {
+            if (!sumMonth[element.dataValues.day]) {
+              sumMonth[element.dataValues.day] = {
+                latest_gen_real: 0,
+                latest_gen_estimated: 0,
+                day: element.dataValues.day,
+              };
+            } else {
+              sumMonth[element.dataValues.day].latest_gen_real +=
+                element.dataValues.latest_gen_real;
+              sumMonth[element.dataValues.day].latest_gen_estimated +=
+                element.dataValues.latest_gen_estimated;
+            }
+          });
+          const roundToTwoDecimalPlaces = (num) => {
+            return Math.round(num * 100) / 100;
+          };
+
+          Object.keys(sumMonth).forEach((day) => {
+            sumMonth[day].latest_gen_real = roundToTwoDecimalPlaces(
+              sumMonth[day].latest_gen_real
+            );
+            sumMonth[day].latest_gen_estimated = roundToTwoDecimalPlaces(
+              sumMonth[day].latest_gen_estimated
+            );
+          });
+
+          const keys = Object.keys(sumMonth);
+          //Array com cada geração do mês corrente
+          const sumMonthtotal = keys.map((key) => {
+            return sumMonth[key];
+          });
+          // return res.status(200).json({message:monthGeneration})
+          //Fluxo que soma as gerações de cada mês do ano corrente
           const yearGeneration = await Generation.findAll({
             attributes: [
               [Sequelize.literal("DATE(gen_date)"), "day"],
@@ -948,14 +996,24 @@ class DevicesController {
                 Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
                 "latest_gen_estimated",
               ],
+              [Sequelize.col("devices.dev_name"), "dev_name"],
             ],
             include: [
               {
                 association: "devices",
                 attributes: [],
                 where: {
-                  dev_uuid: element.dev_uuid,
+                  dev_deleted: { [Op.or]: [null, false] },
                 },
+                include: [
+                  {
+                    association: "brand_login",
+                    attributes: [],
+                    where: {
+                      use_uuid: use_uuid,
+                    },
+                  },
+                ],
               },
             ],
             where: {
@@ -963,59 +1021,1047 @@ class DevicesController {
                 [Op.between]: [`${currentYear}-01-01`, `${currentYear}-12-31`],
               },
             },
-            group: [Sequelize.literal("day")],
+            group: [
+              Sequelize.literal("day"),
+              Sequelize.col("devices.dev_name"),
+            ],
           });
 
-          const monthlySums = {};
-          yearGeneration.forEach((result) => {
-            const month = result.dataValues.day.split("-")[1];
+          let sumYear = {};
 
-            if (!monthlySums[month]) {
-              monthlySums[month] = {
+          for (let i = 1; i <= 12; i++) {
+            const month = i.toString().padStart(2, "0");
+            sumYear[month] = {
+              gen_real: 0,
+              gen_estimated: 0,
+              month: month,
+            };
+          }
+
+          yearGeneration.forEach((element) => {
+            const month = element.dataValues.day.split("-")[1];
+
+            if (sumYear[month]) {
+              if (element.dataValues.latest_gen_real) {
+                sumYear[month].gen_real += element.dataValues.latest_gen_real;
+              }
+              if (element.dataValues.latest_gen_estimated) {
+                sumYear[month].gen_estimated +=
+                  element.dataValues.latest_gen_estimated;
+              }
+            }
+          });
+
+          const keysYear = Object.keys(sumYear);
+          //Array com cada geração do ano corrente
+          const sumYearTotal = keysYear.map((sum) => {
+            return sumYear[sum];
+          });
+          sumYearTotal.forEach((element) => {
+            element.gen_real = Math.round(element.gen_real * 100) / 100;
+            element.gen_estimated =
+              Math.round(element.gen_estimated * 100) / 100;
+          });
+
+          const monthValue = sumMonthtotal.reduce(
+            (accumulator, currentValue) => {
+              accumulator.latest_gen_real += currentValue.latest_gen_real || 0;
+              accumulator.latest_gen_estimated +=
+                currentValue.latest_gen_estimated || 0;
+              return accumulator;
+            },
+            { latest_gen_real: 0, latest_gen_estimated: 0 }
+          );
+          const yearValue = sumYearTotal.reduce(
+            (accumulator, currentValue) => {
+              accumulator.gen_real += currentValue.gen_real || 0;
+              accumulator.gen_estimated += currentValue.gen_estimated || 0;
+              return accumulator;
+            },
+            { gen_real: 0, gen_estimated: 0 }
+          );
+          const devices = await Devices.findAll({
+            where: {
+              dev_deleted: { [Op.or]: [false, null] },
+            },
+            include: [
+              {
+                association: "brand_login",
+                where: {
+                  use_uuid: use_uuid,
+                },
+                attributes: [],
+              },
+            ],
+          });
+          const desempenho = (
+            (Math.round(monthValue.latest_gen_real * 100) /
+              100 /
+              (Math.round(monthValue.latest_gen_estimated * 100) / 100)) *
+            100
+          ).toLocaleString();
+
+          const quant_dev = devices.length;
+          const user = await Users.findOne({
+            attributes: ["use_email", "use_name"],
+            where: { use_uuid: use_uuid },
+          });
+
+          const startOfMonth = moment.utc().startOf("month").toDate();
+          const endOfMonth = moment
+            .utc()
+            .endOf("month")
+            .subtract(3, "hours")
+            .toDate();
+          console.log(startOfMonth, endOfMonth);
+          const use = use_uuid;
+          const brand = await Users.findByPk(use, {
+            include: [
+              {
+                association: "brand_login",
+                attributes: ["bl_name", "bl_uuid"],
+              },
+            ],
+          });
+
+          const result = await Users.findByPk(use, {
+            attributes: ["use_name"],
+            include: [
+              {
+                association: "brand_login",
+                attributes: ["bl_name", "bl_uuid"],
+                include: [
+                  {
+                    association: "devices",
+                    where: {
+                      [Op.or]: [
+                        { dev_deleted: false },
+                        { dev_deleted: { [Op.is]: null } },
+                      ],
+                    },
+                    attributes: [
+                      "dev_uuid",
+                      "dev_name",
+                      "dev_brand",
+                      "dev_deleted",
+                      "dev_capacity",
+                      "dev_address",
+                      "dev_lat",
+                      "dev_long",
+                      "dev_email",
+                      "dev_image",
+                      "dev_install",
+                      "dev_manual_gen_est",
+                    ],
+                    include: [
+                      {
+                        association: "generation",
+                        attributes: [
+                          "gen_real",
+                          "gen_estimated",
+                          "gen_date",
+                          "gen_updated_at",
+                        ],
+                        order: [
+                          ["gen_updated_at", "DESC"],
+                          ["gen_real", "DESC"],
+                        ],
+                        where: {
+                          gen_date: {
+                            [Op.between]: [startOfMonth, endOfMonth],
+                          },
+                        },
+                        separate: true,
+                        required: false,
+                      },
+                      {
+                        association: "alerts",
+                        attributes: ["al_alerts", "al_inv", "alert_created_at"],
+                        separate: true,
+                        where: {
+                          alert_created_at: {
+                            [Op.gte]: moment
+                              .utc()
+                              .subtract(4, "hours")
+                              .toDate(),
+                          },
+                        },
+                      },
+                      {
+                        association: "status",
+                        attributes: ["sta_code", "sta_name"],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          });
+
+          const devicesData = [];
+
+          if (result) {
+            const brandLogin = result.brand_login;
+
+            for (const brand of brandLogin) {
+              const devices = brand.devices;
+
+              for (const device of devices) {
+                const generations = device.generation;
+                const alerts = device.alerts || [];
+                const dailySums = {};
+                const weeklySumsReal = {};
+                const weeklySumsEstimated = {};
+                const monthlySumsReal = {};
+                const monthlySumsEstimated = {};
+
+                if (generations) {
+                  for (const gen of generations) {
+                    const genDate = moment
+                      .utc(gen.gen_date)
+                      .format("YYYY-MM-DD");
+
+                    if (
+                      !dailySums[genDate] ||
+                      dailySums[genDate].gen_real <= gen.gen_real
+                    ) {
+                      dailySums[genDate] = {
+                        gen_real: gen.gen_real,
+                        gen_estimated: gen.gen_estimated || 100,
+                        gen_date: gen.gen_date,
+                        gen_updated_at: gen.gen_updated_at,
+                      };
+                    }
+                  }
+
+                  Object.values(dailySums).forEach((gen) => {
+                    const genDate = moment
+                      .utc(gen.gen_updated_at)
+                      .format("YYYY-MM-DD");
+                    const weekStartDate = moment
+                      .utc()
+                      .startOf("isoWeek")
+                      .format("YYYY-MM-DD");
+                    const weekEndDate = moment
+                      .utc()
+                      .endOf("isoWeek")
+                      .format("YYYY-MM-DD");
+
+                    if (
+                      moment
+                        .utc(gen.gen_updated_at)
+                        .isSameOrAfter(weekStartDate) &&
+                      moment.utc(gen.gen_updated_at).isBefore(weekEndDate)
+                    ) {
+                      if (!weeklySumsReal[weekStartDate]) {
+                        weeklySumsReal[weekStartDate] = 0;
+                      }
+                      if (!weeklySumsEstimated[weekStartDate]) {
+                        weeklySumsEstimated[weekStartDate] = 0;
+                      }
+
+                      weeklySumsReal[weekStartDate] += gen.gen_real;
+                      weeklySumsEstimated[weekStartDate] += gen.gen_estimated;
+                    }
+
+                    const monthStartDate = moment
+                      .utc(gen.gen_updated_at)
+                      .startOf("month")
+                      .format("YYYY-MM-DD");
+
+                    if (!monthlySumsReal[monthStartDate]) {
+                      monthlySumsReal[monthStartDate] = 0;
+                    }
+                    if (!monthlySumsEstimated[monthStartDate]) {
+                      monthlySumsEstimated[monthStartDate] = 0;
+                    }
+
+                    monthlySumsReal[monthStartDate] += gen.gen_real;
+                    monthlySumsEstimated[monthStartDate] += gen.gen_estimated;
+                  });
+                }
+
+                const deviceData = {
+                  monthlySum: {
+                    gen_real: Object.values(monthlySumsReal).reduce(
+                      (acc, value) => acc + value,
+                      0
+                    ),
+
+                    gen_estimated: Object.values(monthlySumsEstimated).reduce(
+                      (acc, value) => acc + value,
+                      0
+                    ),
+                  },
+                };
+
+                devicesData.push(deviceData);
+              }
+            }
+          }
+          const soma = devicesData.reduce(
+            (accumulator, current_value) => {
+              return {
+                gen_real:
+                  current_value.monthlySum.gen_real + accumulator.gen_real,
+                gen_estimated:
+                  current_value.monthlySum.gen_estimated +
+                  accumulator.gen_estimated,
+              };
+            },
+            { gen_real: 0, gen_estimated: 0 }
+          );
+          sumYearTotal.sort((a, b) => {
+            return parseInt(a.month) - parseInt(b.month);
+          });
+          const retorno = {
+            user: user.use_name, //Usuário
+
+            period: currentMonthYear, //Período
+
+            current_date: current, //Data corrente
+
+            devices_quant: quant_dev, //Quantidade de usinas do usuário
+
+            performance: desempenho, //Perfomance
+
+            sum_generation_real_month: (
+              Math.round(soma.gen_real * 100) / 100
+            ).toLocaleString(), // Soma da geração real do mês corrente
+
+            sum_generation_estimated_month: (
+              Math.round(soma.gen_estimated * 100) / 100
+            ).toLocaleString(), // Soma da geração estimada do mês corrente
+
+            sum_generation_real_year: (
+              Math.round(yearValue.gen_real * 100) / 100
+            ).toLocaleString(), // Soma da geração real do ano corrente
+
+            sum_generation_estimated_year: (
+              Math.round(yearValue.gen_estimated * 100) / 100
+            ).toLocaleString(), // Soma da geração estimada do ano corrente
+
+            treesSaved: (
+              Math.round(soma.gen_real * 0.000504 * 100) / 100
+            ).toLocaleString(), //Árvores salvas ano
+
+            c02: (
+              Math.round(soma.gen_real * 0.419 * 100) / 100
+            ).toLocaleString(), //Co2 ano
+
+            generation_month: sumMonthtotal, //Gráfico geração mês
+
+            generation_year: sumYearTotal, //Gráfico geração anual
+          };
+
+          const delay = 3000;
+
+          setTimeout(function () {
+            return res.status(200).json({ message: retorno });
+          }, delay);
+        } else {
+          return res
+            .status(401)
+            .json({ message: "Falha na autenticação: Token inválido." });
+        }
+      } catch (error) {
+        return res
+          .status(500)
+          .json({ message: `Erro ao retornar os dados. ${error}` });
+      }
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+  async teste1(req, res) {
+    try {
+      const { use_uuid } = req.body;
+      await Users.update(
+        {
+          use_massive_reports_status: "executing",
+        },
+        {
+          where: {
+            use_uuid: use_uuid,
+          },
+        }
+      );
+
+      const currentDate = new Date();
+      const firstDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      const lastDayOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
+
+      const result = await Generation.findAll({
+        include: [
+          {
+            association: "devices",
+            attributes: [
+              "dev_capacity",
+              "dev_name",
+              "dev_email",
+              "dev_deleted",
+            ],
+            where: {
+              dev_email: {
+                [Op.not]: null,
+              },
+              [Op.or]: [
+                { dev_deleted: false },
+                { dev_deleted: { [Op.is]: null } },
+              ],
+            },
+            include: [
+              {
+                association: "brand_login",
+                attributes: [],
+                where: {
+                  use_uuid: use_uuid,
+                },
+              },
+            ],
+          },
+        ],
+        attributes: ["gen_real", "gen_estimated", "gen_date", "dev_uuid"],
+        where: {
+          gen_date: {
+            [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+          },
+          gen_updated_at: {
+            [Op.in]: Generation.sequelize.literal(`
+                        (SELECT MAX(gen_updated_at) 
+                        FROM generation 
+                        WHERE gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth 
+                        GROUP BY gen_date, dev_uuid)
+                      `),
+          },
+        },
+        replacements: { firstDayOfMonth, lastDayOfMonth },
+      });
+      const groupedResult = result.reduce((acc, generation) => {
+        const { dev_uuid, gen_real, gen_estimated, gen_date, devices } =
+          generation;
+        const { dev_capacity, dev_name, dev_email } = devices;
+
+        if (!acc[dev_uuid]) {
+          acc[dev_uuid] = [];
+        }
+
+        acc[dev_uuid].push({
+          gen_real,
+          gen_estimated,
+          gen_date,
+          dev_capacity,
+          dev_name,
+          dev_email,
+        });
+
+        return acc;
+      }, {});
+
+      // Formatar o resultado final
+      const formattedResult = Object.entries(groupedResult).map(
+        ([dev_uuid, resultArray]) => {
+          return { dev_uuid, result: resultArray };
+        }
+      );
+
+      // return res.status(200).json({message:formattedResult})
+
+      const sum_generation = await Promise.all(
+        formattedResult.map(async (gens) => {
+          // Real generation
+          const realGeneration = gens.result.map((element) => {
+            return { value: element.gen_real, date: element.gen_date };
+          });
+
+          // Estimated generation
+          const estimatedGeneration = gens.result.map(
+            (element) => element.gen_estimated
+          );
+
+          // Sum real generation
+          const sumreal = gens.result.reduce(
+            (acc, atual) => acc + atual.gen_real,
+            0
+          );
+          const sumrealNew = sumreal.toFixed(2);
+
+          // Sum estimated generation
+          const sumestimated = gens.result.reduce(
+            (acc, atual) => acc + atual.gen_estimated,
+            0
+          );
+          const sumestimatedNew = sumestimated.toFixed(2);
+
+          // Calculate percentage
+          let percentNew;
+          if (sumreal === 0) {
+            percentNew = 0;
+          } else {
+            percentNew = ((sumestimated / sumreal) * 100).toFixed(2);
+          }
+
+          // Determine situation
+          const situation =
+            percentNew > 80
+              ? `Parabéns, sua usina produziu o equivalente a ${percentNew}% do total esperado.`
+              : `Infelizmente, sua usina produziu apenas ${percentNew}% em relação ao esperado.`;
+
+          // Create device element
+          const dev_element = {
+            dev_uuid: gens.dev_uuid,
+            capacity: gens.result[0].dev_capacity,
+            name: gens.result[0].dev_name,
+            email: gens.result[0].dev_email,
+            sumrealNew,
+            sumestimatedNew,
+            percentNew,
+            situation,
+            realGeneration,
+            estimatedGeneration,
+          };
+
+          return JSON.stringify(dev_element);
+        })
+      );
+      return res.status(200).json({ message: sum_generation });
+      // Process the results
+      sum_generation.forEach((result) => this.push(result));
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+
+  async administratorReportWhatsApptoAll(req, res) {
+    try {
+      try {
+        //Data atual
+        const current = moment().format("YYYY-MM-DD");
+        const currentMonthYear = moment().format("YYYY-MM");
+        const currentYear = moment().format("YYYY");
+        //Dia corrente
+        const current_day_string = moment().format("DD");
+        let current_day_int = parseInt(current_day_string);
+        //MêS corrente
+        const current_month_string = moment().format("MM");
+        const clientToken = req.headers.authorization;
+        const expectedToken = process.env.TOKEN;
+        //Ultimo dia do mes
+        const lastDayOfMonth = moment().endOf("month").format("YYYY-MM-DD");
+        const lastday = parseInt(lastDayOfMonth);
+        //Data corrente
+        const primeiro_dia_mes = `${currentMonthYear}-01`;
+        if (clientToken == `Bearer ${expectedToken}`) {
+          const users = await Users.findAll({
+            attributes: [
+              "use_uuid",
+              "use_wpp_number",
+              "use_wpp_alert_preference",
+              "use_wpp_number_general_report"
+            ],
+            where: {
+              use_wpp_alert_preference: true,
+              use_wpp_number_general_report: {
+                [Op.not]: null
+              }
+            },
+          });
+          const resultData = await Promise.all(users.map(async (elementData) => {
+            //Fluxo que soma as gerações de cada dia do mês corrente
+            const monthGeneration = await Generation.findAll({
+              attributes: [
+                [Sequelize.literal("DATE(gen_date)"), "day"],
+                [
+                  Sequelize.fn("MAX", Sequelize.col("gen_date")),
+                  "latest_gen_date",
+                ],
+                [
+                  Sequelize.fn("MAX", Sequelize.col("gen_real")),
+                  "latest_gen_real",
+                ],
+                [
+                  Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+                  "latest_gen_estimated",
+                ],
+                [Sequelize.col("devices.dev_name"), "dev_name"],
+                [Sequelize.col("devices.bl_uuid"), "bl_uuid"],
+                [Sequelize.col("devices.dev_uuid"), "dev_uuid"],
+                [Sequelize.col("devices.dev_deleted"), "dev_deleted"],
+                [Sequelize.col("devices->brand_login.bl_name"), "bl_name"],
+              ],
+              include: [
+                {
+                  association: "devices",
+                  attributes: [],
+
+                  where: {
+                    dev_deleted: { [Op.or]: [false, null] },
+                  },
+                  include: [
+                    {
+                      association: "brand_login",
+                      where: {
+                        use_uuid: elementData.use_uuid,
+                      },
+                      attributes: [],
+                    },
+                  ],
+                },
+              ],
+              where: {
+                gen_date: {
+                  [Op.between]: [primeiro_dia_mes, lastDayOfMonth],
+                },
+              },
+              group: [
+                Sequelize.literal("day"),
+                Sequelize.col("devices.dev_name"),
+                Sequelize.col("devices.bl_uuid"),
+                Sequelize.col("devices.dev_uuid"),
+                Sequelize.col("devices.dev_deleted"),
+                Sequelize.col("devices->brand_login.bl_name"),
+              ],
+            });
+            
+            let sumMonth = {};
+            monthGeneration.forEach((element) => {
+              if (!sumMonth[element.dataValues.day]) {
+                sumMonth[element.dataValues.day] = {
+                  latest_gen_real: 0,
+                  latest_gen_estimated: 0,
+                  day: element.dataValues.day,
+                };
+              } else {
+                sumMonth[element.dataValues.day].latest_gen_real +=
+                  element.dataValues.latest_gen_real;
+                sumMonth[element.dataValues.day].latest_gen_estimated +=
+                  element.dataValues.latest_gen_estimated;
+              }
+            });
+            const roundToTwoDecimalPlaces = (num) => {
+              return Math.round(num * 100) / 100;
+            };
+
+            Object.keys(sumMonth).forEach((day) => {
+              sumMonth[day].latest_gen_real = roundToTwoDecimalPlaces(
+                sumMonth[day].latest_gen_real
+              );
+              sumMonth[day].latest_gen_estimated = roundToTwoDecimalPlaces(
+                sumMonth[day].latest_gen_estimated
+              );
+            });
+
+            const keys = Object.keys(sumMonth);
+            //Array com cada geração do mês corrente
+            const sumMonthtotal = keys.map((key) => {
+              return sumMonth[key];
+            });
+            // return res.status(200).json({message:monthGeneration})
+            //Fluxo que soma as gerações de cada mês do ano corrente
+            const yearGeneration = await Generation.findAll({
+              attributes: [
+                [Sequelize.literal("DATE(gen_date)"), "day"],
+                [
+                  Sequelize.fn("MAX", Sequelize.col("gen_date")),
+                  "latest_gen_date",
+                ],
+                [
+                  Sequelize.fn("MAX", Sequelize.col("gen_real")),
+                  "latest_gen_real",
+                ],
+                [
+                  Sequelize.fn("MAX", Sequelize.col("gen_estimated")),
+                  "latest_gen_estimated",
+                ],
+                [Sequelize.col("devices.dev_name"), "dev_name"],
+              ],
+              include: [
+                {
+                  association: "devices",
+                  attributes: [],
+                  where: {
+                    dev_deleted: { [Op.or]: [null, false] },
+                  },
+                  include: [
+                    {
+                      association: "brand_login",
+                      attributes: [],
+                      where: {
+                        use_uuid: elementData.use_uuid,
+                      },
+                    },
+                  ],
+                },
+              ],
+              where: {
+                gen_date: {
+                  [Op.between]: [
+                    `${currentYear}-01-01`,
+                    `${currentYear}-12-31`,
+                  ],
+                },
+              },
+              group: [
+                Sequelize.literal("day"),
+                Sequelize.col("devices.dev_name"),
+              ],
+            });
+
+            let sumYear = {};
+
+            for (let i = 1; i <= 12; i++) {
+              const month = i.toString().padStart(2, "0");
+              sumYear[month] = {
                 gen_real: 0,
                 gen_estimated: 0,
+                month: month,
               };
             }
 
-            monthlySums[month].gen_real += Math.round(
-              result.dataValues.latest_gen_real
-            );
-            monthlySums[month].gen_estimated += Math.round(
-              result.dataValues.latest_gen_estimated
-            );
-          });
-          //Cálculo Co2 e árvores salvas
-          let tree_co2;
-          if (monthlySums[current_month_string]) {
-            tree_co2 = monthlySums[current_month_string].gen_real;
-          } else {
-            tree_co2 = 0;
-          }
-          const mapping = monthGeneration.map((element) => {
-            return element.dataValues.latest_gen_real;
-          });
+            yearGeneration.forEach((element) => {
+              const month = element.dataValues.day.split("-")[1];
 
-          const realgenSum = mapping.reduce(
-            (accumulator, currentValue) => accumulator + currentValue,
-            0
-          );
-          return {
-            device_name: element.dev_name, //Nome do device
-            period: currentMonthYear, //Período
-            wpp_number: element.dev_wpp_number, //Número WhatsApp
-            treesSaved: Math.round(tree_co2 * 0.000504 * 100) / 100, //Árvores salvas
-            c02: Math.round(tree_co2 * 0.419 * 100) / 100, //Co2
-            gen_estimated_total:
-              Math.round(generation_est * lastday * 100) / 100, //Soma gen_estimada do mês
-            gen_real_total: Math.round(realgenSum * 100) / 100, //Soma gen_real do mês
-            generation_month: monthGeneration, //Gráfico geração mês
-            generation_year: monthlySums, //Gráfico geração anual
-          };
+              if (sumYear[month]) {
+                if (element.dataValues.latest_gen_real) {
+                  sumYear[month].gen_real += element.dataValues.latest_gen_real;
+                }
+                if (element.dataValues.latest_gen_estimated) {
+                  sumYear[month].gen_estimated +=
+                    element.dataValues.latest_gen_estimated;
+                }
+              }
+            });
 
-          const delay = 5000;
+            const keysYear = Object.keys(sumYear);
+            //Array com cada geração do ano corrente
+            const sumYearTotal = keysYear.map((sum) => {
+              return sumYear[sum];
+            });
+            sumYearTotal.forEach((element) => {
+              element.gen_real = Math.round(element.gen_real * 100) / 100;
+              element.gen_estimated =
+                Math.round(element.gen_estimated * 100) / 100;
+            });
+
+            const monthValue = sumMonthtotal.reduce(
+              (accumulator, currentValue) => {
+                accumulator.latest_gen_real +=
+                  currentValue.latest_gen_real || 0;
+                accumulator.latest_gen_estimated +=
+                  currentValue.latest_gen_estimated || 0;
+                return accumulator;
+              },
+              { latest_gen_real: 0, latest_gen_estimated: 0 }
+            );
+            const yearValue = sumYearTotal.reduce(
+              (accumulator, currentValue) => {
+                accumulator.gen_real += currentValue.gen_real || 0;
+                accumulator.gen_estimated += currentValue.gen_estimated || 0;
+                return accumulator;
+              },
+              { gen_real: 0, gen_estimated: 0 }
+            );
+            const devices = await Devices.findAll({
+              where: {
+                dev_deleted: { [Op.or]: [false, null] },
+              },
+              include: [
+                {
+                  association: "brand_login",
+                  where: {
+                    use_uuid: elementData.use_uuid,
+                  },
+                  attributes: [],
+                },
+              ],
+            });
+            const desempenho = (
+              (Math.round(monthValue.latest_gen_real * 100) /
+                100 /
+                (Math.round(monthValue.latest_gen_estimated * 100) / 100)) *
+              100
+            ).toLocaleString();
+
+            const quant_dev = devices.length;
+            const user = await Users.findOne({
+              attributes: ["use_email", "use_name","use_wpp_alert_preference","use_wpp_number_general_report"],
+              where: { use_uuid: elementData.use_uuid },
+            });
+
+            const startOfMonth = moment.utc().startOf("month").toDate();
+            const endOfMonth = moment
+              .utc()
+              .endOf("month")
+              .subtract(3, "hours")
+              .toDate();
+            console.log(startOfMonth, endOfMonth);
+            const use = elementData.use_uuid;
+            const brand = await Users.findByPk(use, {
+              include: [
+                {
+                  association: "brand_login",
+                  attributes: ["bl_name", "bl_uuid"],
+                },
+              ],
+            });
+
+            const result = await Users.findByPk(use, {
+              attributes: ["use_name"],
+              include: [
+                {
+                  association: "brand_login",
+                  attributes: ["bl_name", "bl_uuid"],
+                  include: [
+                    {
+                      association: "devices",
+                      where: {
+                        [Op.or]: [
+                          { dev_deleted: false },
+                          { dev_deleted: { [Op.is]: null } },
+                        ],
+                      },
+                      attributes: [
+                        "dev_uuid",
+                        "dev_name",
+                        "dev_brand",
+                        "dev_deleted",
+                        "dev_capacity",
+                        "dev_address",
+                        "dev_lat",
+                        "dev_long",
+                        "dev_email",
+                        "dev_image",
+                        "dev_install",
+                        "dev_manual_gen_est",
+                      ],
+                      include: [
+                        {
+                          association: "generation",
+                          attributes: [
+                            "gen_real",
+                            "gen_estimated",
+                            "gen_date",
+                            "gen_updated_at",
+                          ],
+                          order: [
+                            ["gen_updated_at", "DESC"],
+                            ["gen_real", "DESC"],
+                          ],
+                          where: {
+                            gen_date: {
+                              [Op.between]: [startOfMonth, endOfMonth],
+                            },
+                          },
+                          separate: true,
+                          required: false,
+                        },
+                        {
+                          association: "alerts",
+                          attributes: [
+                            "al_alerts",
+                            "al_inv",
+                            "alert_created_at",
+                          ],
+                          separate: true,
+                          where: {
+                            alert_created_at: {
+                              [Op.gte]: moment
+                                .utc()
+                                .subtract(4, "hours")
+                                .toDate(),
+                            },
+                          },
+                        },
+                        {
+                          association: "status",
+                          attributes: ["sta_code", "sta_name"],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            });
+
+            const devicesData = [];
+
+            if (result) {
+              const brandLogin = result.brand_login;
+
+              for (const brand of brandLogin) {
+                const devices = brand.devices;
+
+                for (const device of devices) {
+                  const generations = device.generation;
+                  const alerts = device.alerts || [];
+                  const dailySums = {};
+                  const weeklySumsReal = {};
+                  const weeklySumsEstimated = {};
+                  const monthlySumsReal = {};
+                  const monthlySumsEstimated = {};
+
+                  if (generations) {
+                    for (const gen of generations) {
+                      const genDate = moment
+                        .utc(gen.gen_date)
+                        .format("YYYY-MM-DD");
+
+                      if (
+                        !dailySums[genDate] ||
+                        dailySums[genDate].gen_real <= gen.gen_real
+                      ) {
+                        dailySums[genDate] = {
+                          gen_real: gen.gen_real,
+                          gen_estimated: gen.gen_estimated || 100,
+                          gen_date: gen.gen_date,
+                          gen_updated_at: gen.gen_updated_at,
+                        };
+                      }
+                    }
+
+                    Object.values(dailySums).forEach((gen) => {
+                      const genDate = moment
+                        .utc(gen.gen_updated_at)
+                        .format("YYYY-MM-DD");
+                      const weekStartDate = moment
+                        .utc()
+                        .startOf("isoWeek")
+                        .format("YYYY-MM-DD");
+                      const weekEndDate = moment
+                        .utc()
+                        .endOf("isoWeek")
+                        .format("YYYY-MM-DD");
+
+                      if (
+                        moment
+                          .utc(gen.gen_updated_at)
+                          .isSameOrAfter(weekStartDate) &&
+                        moment.utc(gen.gen_updated_at).isBefore(weekEndDate)
+                      ) {
+                        if (!weeklySumsReal[weekStartDate]) {
+                          weeklySumsReal[weekStartDate] = 0;
+                        }
+                        if (!weeklySumsEstimated[weekStartDate]) {
+                          weeklySumsEstimated[weekStartDate] = 0;
+                        }
+
+                        weeklySumsReal[weekStartDate] += gen.gen_real;
+                        weeklySumsEstimated[weekStartDate] += gen.gen_estimated;
+                      }
+
+                      const monthStartDate = moment
+                        .utc(gen.gen_updated_at)
+                        .startOf("month")
+                        .format("YYYY-MM-DD");
+
+                      if (!monthlySumsReal[monthStartDate]) {
+                        monthlySumsReal[monthStartDate] = 0;
+                      }
+                      if (!monthlySumsEstimated[monthStartDate]) {
+                        monthlySumsEstimated[monthStartDate] = 0;
+                      }
+
+                      monthlySumsReal[monthStartDate] += gen.gen_real;
+                      monthlySumsEstimated[monthStartDate] += gen.gen_estimated;
+                    });
+                  }
+
+                  const deviceData = {
+                    monthlySum: {
+                      gen_real: Object.values(monthlySumsReal).reduce(
+                        (acc, value) => acc + value,
+                        0
+                      ),
+
+                      gen_estimated: Object.values(monthlySumsEstimated).reduce(
+                        (acc, value) => acc + value,
+                        0
+                      ),
+                    },
+                  };
+
+                  devicesData.push(deviceData);
+                }
+              }
+            }
+            const soma = devicesData.reduce(
+              (accumulator, current_value) => {
+                return {
+                  gen_real:
+                    current_value.monthlySum.gen_real + accumulator.gen_real,
+                  gen_estimated:
+                    current_value.monthlySum.gen_estimated +
+                    accumulator.gen_estimated,
+                };
+              },
+              { gen_real: 0, gen_estimated: 0 }
+            );
+            sumYearTotal.sort((a, b) => {
+              return parseInt(a.month) - parseInt(b.month);
+            });
+            const retorno = {
+              user: user.use_name, //Usuário
+
+              wpp_number:user.use_wpp_number_general_report, //Números de Wpp
+
+              use_wpp_alert_preference:user.use_wpp_alert_preference, //Flag que diz se o usuário quer ou não que os alertas sejam enviados
+
+              period: currentMonthYear, //Período
+
+              current_date: current, //Data corrente
+
+              devices_quant: quant_dev, //Quantidade de usinas do usuário
+
+              performance: desempenho, //Perfomance
+
+              sum_generation_real_month: (
+                Math.round(soma.gen_real * 100) / 100
+              ).toLocaleString(), // Soma da geração real do mês corrente
+
+              sum_generation_estimated_month: (
+                Math.round(soma.gen_estimated * 100) / 100
+              ).toLocaleString(), // Soma da geração estimada do mês corrente
+
+              sum_generation_real_year: (
+                Math.round(yearValue.gen_real * 100) / 100
+              ).toLocaleString(), // Soma da geração real do ano corrente
+
+              sum_generation_estimated_year: (
+                Math.round(yearValue.gen_estimated * 100) / 100
+              ).toLocaleString(), // Soma da geração estimada do ano corrente
+
+              treesSaved: (
+                Math.round(soma.gen_real * 0.000504 * 100) / 100
+              ).toLocaleString(), //Árvores salvas ano
+
+              c02: (
+                Math.round(soma.gen_real * 0.419 * 100) / 100
+              ).toLocaleString(), //Co2 ano
+
+              generation_month: sumMonthtotal, //Gráfico geração mês
+
+              generation_year: sumYearTotal, //Gráfico geração anual
+            };
+            
+            return retorno
+          }));
+
+          const delay = 3000;
 
           setTimeout(function () {
-            return res.status(200).json({ message: generationAll });
+            return res.status(200).json({ data: resultData });
           }, delay);
         } else {
           return res

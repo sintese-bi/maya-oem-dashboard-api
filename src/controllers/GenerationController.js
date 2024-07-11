@@ -1,4 +1,4 @@
-import { Sequelize, Op, fn, col, literal } from "sequelize";
+import { Sequelize, Op, fn, col, literal, transaction } from "sequelize";
 import Devices from "../models/Devices";
 import Generation from "../models/Generation";
 import moment from "moment-timezone";
@@ -6,7 +6,10 @@ import nodemailer from "nodemailer";
 import Brand from "../models/Brand";
 import XLSX from "xlsx";
 import Users from "../models/Users";
+import cron from "node-cron";
+import fs from "fs";
 import Temperature from "../models/Temperature";
+import IrradiationCoefficient from "../models/IrradiationCoefficient";
 const transporter = nodemailer.createTransport({
   service: "gmail",
   host: "smtp.gmail.com",
@@ -738,6 +741,440 @@ class GenerationController {
         .json({ message: `Erro ao retornar os dados: ${error.message}` });
     }
   }
-}
+  async generationRoutine(req, res) {
+    try {
+      const months = {
+        "01": "ic_january",
+        "02": "ic_february",
+        "03": "ic_march",
+        "04": "ic_april",
+        "05": "ic_may",
+        "06": "ic_june",
+        "07": "ic_july",
+        "08": "ic_august",
+        "09": "ic_september",
+        10: "ic_october",
+        11: "ic_november",
+        12: "ic_december",
+      };
+      const radiation = await IrradiationCoefficient.findAll({
+        attributes: {
+          exclude: [
+            "ic_uuid",
+            "ic_lat",
+            "ic_lon",
+            "ic_created_at",
+            "ic_updated_at",
+          ],
+        },
+      });
+      const date = moment().format("MM");
+      const dateYearmonth = moment().format("YYYY-MM");
+      const result = await Devices.findAll({
+        attributes: [
+          "dev_uuid",
+          "dev_manual_gen_est",
+          "dev_capacity",
+          "dev_address",
+        ],
+      });
 
+      const manualGen = result.map((element) => {
+        if (element.dev_manual_gen_est == 0 || !element.dev_manual_gen_est) {
+          if (
+            !element.dev_capacity ||
+            !element.dev_address ||
+            element.dev_address == "undefined-undefined" ||
+            !element.dev_address.split("-")[0] ||
+            !element.dev_address.split("-")[1]
+          ) {
+            element.dev_manual_gen_est = 100;
+          } else {
+            const currentMonth = months[date];
+            const city = element.dev_address.split("-")[0];
+            const state = element.dev_address.split("-")[1];
+
+            const object = radiation.find((element) => {
+              return element.ic_city == city && element.ic_states == state;
+            });
+            if (!object) {
+              element.dev_manual_gen_est = 100;
+            } else {
+              element.dev_manual_gen_est =
+                element.dev_capacity * object[currentMonth] * 0.81;
+            }
+          }
+        }
+
+        return {
+          ...element.dataValues,
+          dev_manual_gen_est: element.dev_manual_gen_est,
+        };
+      });
+
+      await Promise.all(
+        manualGen.map(async (element) => {
+          await Generation.create({
+            dev_uuid: element.dev_uuid,
+            gen_estimated: Math.floor(element.dev_manual_gen_est * 100) / 100,
+            gen_date: `${dateYearmonth}-01`,
+            gen_real: 0,
+            gen_created_at: "2024-07-01 03:00:50.331 -0300",
+            gen_updated_at: "2024-07-01 03:00:50.331 -0300",
+          });
+        })
+      );
+
+      return res.status(200).json({ data: manualGen });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao atualizar os dados: ${error.message}` });
+    }
+  }
+
+  async updateTeste(req, res) {
+    try {
+      const { use_uuid } = req.body;
+      const months = {
+        "01": "ic_january",
+        "02": "ic_february",
+        "03": "ic_march",
+        "04": "ic_april",
+        "05": "ic_may",
+        "06": "ic_june",
+        "07": "ic_july",
+        "08": "ic_august",
+        "09": "ic_september",
+        10: "ic_october",
+        11: "ic_november",
+        12: "ic_december",
+      };
+      const radiation = await IrradiationCoefficient.findAll({
+        attributes: {
+          exclude: [
+            "ic_uuid",
+            "ic_lat",
+            "ic_lon",
+            "ic_created_at",
+            "ic_updated_at",
+          ],
+        },
+      });
+      const date = moment().format("MM");
+      const dateYearmonth = moment().format("YYYY-MM");
+      const result = await Devices.findAll({
+        include: [
+          {
+            association: "brand_login",
+            attributes: [],
+            where: {
+              use_uuid: use_uuid,
+            },
+          },
+        ],
+        attributes: [
+          "dev_uuid",
+          "dev_manual_gen_est",
+          "dev_capacity",
+          "dev_address",
+        ],
+        where: {
+          dev_deleted: { [Op.or]: [null, false] },
+        },
+      });
+
+      const manualGen = result.map((element) => {
+        if (element.dev_manual_gen_est == 0 || !element.dev_manual_gen_est) {
+          if (
+            !element.dev_capacity ||
+            !element.dev_address ||
+            element.dev_address == "undefined-undefined" ||
+            !element.dev_address.split("-")[0] ||
+            !element.dev_address.split("-")[1]
+          ) {
+            element.dev_manual_gen_est = 100;
+          } else {
+            const currentMonth = months[date];
+            const city = element.dev_address.split("-")[0];
+            const state = element.dev_address.split("-")[1];
+
+            const object = radiation.find((element) => {
+              return element.ic_city == city && element.ic_states == state;
+            });
+            if (!object) {
+              element.dev_manual_gen_est = 100;
+            } else {
+              element.dev_manual_gen_est =
+                element.dev_capacity * object[currentMonth] * 0.81;
+            }
+          }
+        }
+
+        return {
+          ...element.dataValues,
+          dev_manual_gen_est:
+            Math.floor(element.dev_manual_gen_est * 100) / 100,
+        };
+      });
+
+      await Promise.all(
+        manualGen.map(async (element) => {
+          await Generation.update(
+            {
+              gen_estimated: element.dev_manual_gen_est,
+            },
+            {
+              where: {
+                dev_uuid: element.dev_uuid,
+                gen_date: { [Op.eq]: "2024-07-01" },
+              },
+            }
+          );
+        })
+      );
+
+      return res.status(200).json({ response: "Deu certo!" });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao atualizar os dados: ${error.message}` });
+    }
+  }
+  async excelGenerationAll(req, res) {
+    try {
+      const clientToken = req.headers.authorization;
+      const expectedToken = process.env.TOKEN;
+      if (clientToken == `Bearer ${expectedToken}`) {
+        const currentDate = new Date();
+        currentDate.setHours(currentDate.getHours() - 3);
+        const currentDateWithDelay = currentDate.toISOString();
+        console.log(currentDateWithDelay);
+        const dataAtual = moment(currentDateWithDelay);
+        const inicioUltimaSemana = dataAtual
+          .clone()
+          .subtract(1, "weeks")
+          .startOf("week");
+        const fimUltimaSemana = inicioUltimaSemana.clone().endOf("week");
+        const inicioFormatado = inicioUltimaSemana.toISOString();
+        const fimFormatado = fimUltimaSemana.toISOString();
+        const inicioMesCorrente = dataAtual.clone().startOf("month");
+        const fimMesCorrente = dataAtual.clone().endOf("month");
+        const inicioFormatadomes = inicioMesCorrente.toISOString();
+        const fimFormatadomes = fimMesCorrente.toISOString();
+        const startOfDay = new Date(currentDateWithDelay);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(currentDateWithDelay);
+        endOfDay.setHours(23, 59, 59, 999);
+        const consultUser = await Users.findAll({
+          attributes: [
+            "use_percentage",
+            "use_alert_email",
+            "use_date",
+            "use_name",
+            "use_wpp_number",
+            "use_uuid",
+          ],
+        });
+
+        const reports = await Promise.all(
+          consultUser.map(async (element) => {
+            if (
+              !element.use_date ||
+              !element.use_percentage ||
+              !element.use_wpp_number
+            ) {
+              return;
+            }
+            if (
+              !(
+                element.use_date === 2 &&
+                moment().isoWeekday() === 1 &&
+                moment().date() <= 7
+              ) &&
+              !(element.use_date === 3 && moment().date() === 1) &&
+              !(element.use_date === 1)
+            ) {
+              return;
+            }
+            let dateInterval;
+            //Intervalo diário, semanal e mensal
+            if (element.use_date == 1) {
+              dateInterval = currentDateWithDelay;
+            } else if (element.use_date == 2) {
+              dateInterval = {
+                [Op.between]: [inicioFormatado, fimFormatado],
+              };
+            } else if (element.use_date == 3) {
+              dateInterval = {
+                [Op.between]: [inicioFormatadomes, fimFormatadomes],
+              };
+            }
+
+            const result = await Generation.findAll({
+              include: [
+                {
+                  association: "devices",
+                  attributes: ["dev_uuid", "dev_name"],
+                  where: {
+                    [Op.or]: [
+                      { dev_deleted: false },
+                      { dev_deleted: { [Op.is]: null } },
+                    ],
+                  },
+                  include: [
+                    {
+                      association: "brand_login",
+                      attributes: ["bl_name"],
+                      where: {
+                        use_uuid: element.use_uuid,
+                      },
+                    },
+                  ],
+                },
+              ],
+              where: {
+                gen_date: dateInterval,
+              },
+              attributes: [
+                "gen_date",
+                "gen_real",
+                "gen_estimated",
+                "gen_updated_at",
+              ],
+              order: [["gen_updated_at", "DESC"]],
+            });
+
+            const filteredResult = {};
+            result.forEach((generation) => {
+              const { devices, gen_updated_at, gen_real, gen_estimated } =
+                generation;
+              const deviceUUID = devices.dev_uuid;
+              const deviceName = devices.dev_name;
+              const brandLogin = devices.brand_login;
+              const brandName = brandLogin ? brandLogin.bl_name : null;
+              const generationDate = gen_updated_at.toISOString().split("T")[0];
+
+              if (!filteredResult[generationDate]) {
+                filteredResult[generationDate] = {};
+              }
+
+              if (
+                !filteredResult[generationDate][deviceUUID] ||
+                gen_updated_at >
+                  filteredResult[generationDate][deviceUUID].gen_updated_at
+              ) {
+                filteredResult[generationDate][deviceUUID] = {
+                  gen_real,
+                  gen_estimated,
+                  dev_name: deviceName,
+                  bl_name: brandName,
+                };
+              }
+            });
+            const deviceSums = {};
+            Object.keys(filteredResult).forEach((date) => {
+              const devices = filteredResult[date];
+              Object.keys(devices).forEach((deviceUUID) => {
+                const generation = devices[deviceUUID];
+                const { gen_real, gen_estimated, dev_name, bl_name } =
+                  generation;
+                if (!deviceSums[deviceUUID]) {
+                  deviceSums[deviceUUID] = {
+                    gen_real: 0,
+                    gen_estimated: 0,
+                    dev_name,
+                    bl_name,
+                  };
+                }
+                deviceSums[deviceUUID].gen_real += gen_real;
+                deviceSums[deviceUUID].gen_estimated += gen_estimated;
+              });
+            });
+
+            const deviceUUIDs = Object.keys(deviceSums);
+
+            const sumPercentage = deviceUUIDs
+              .map((uuid) => {
+                const device = deviceSums[uuid];
+
+                if (device.gen_real) {
+                  return {
+                    Portal: device.bl_name,
+                    Cliente: device.dev_name,
+                    "Produção(KWh)": device.gen_real.toFixed(2),
+                    "Esperado(KWh)": device.gen_estimated.toFixed(2),
+                    "Desempenho(%)": (
+                      (device.gen_real.toFixed(2) /
+                        device.gen_estimated.toFixed(2)) *
+                      100
+                    ).toFixed(2),
+                  };
+                }
+                return null;
+              })
+              .filter((device) => device !== null)
+              .sort((a, b) => a["Produção(KWh)"] - b["Produção(KWh)"]);
+
+            let buffer;
+
+            let object;
+
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.json_to_sheet(sumPercentage);
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet 1");
+            buffer = XLSX.write(workbook, {
+              bookType: "xlsx",
+              type: "buffer",
+            });
+
+            object = {
+              telefone: element.use_wpp_number,
+              relatorio: buffer,
+              user_name: element.use_name,
+            };
+
+            return object;
+          })
+        );
+
+        const validReports = reports.filter((report) => report !== undefined);
+        // validReports.forEach((element) => {
+        //   if ((element.user_name === "Federico Vinas")) {
+        //     fs.writeFileSync("outputFred.xlsx", element.relatorio);
+        //   }
+        //   fs.writeFileSync("output.xlsx", element.relatorio);
+        // });
+        return res.status(200).json({
+          relatorios: validReports,
+        });
+      } else {
+        return res
+          .status(401)
+          .json({ message: "Falha na autenticação: Token inválido." });
+      }
+    } catch (error) {
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados: ${error.message}` });
+    }
+  }
+  agendarInputGeracao() {
+    cron.schedule(
+      "0 0 1 * *",
+      async () => {
+        try {
+          await this().generationRoutine();
+        } catch (error) {
+          console.error("Erro durante a inserção das gerações:", error);
+        }
+      },
+      {
+        timezone: "America/Sao_Paulo",
+      }
+    );
+  }
+}
+const generationController = new GenerationController();
+// generationController.agendarInputGeracao();
 export default new GenerationController();
