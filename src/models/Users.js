@@ -54,10 +54,10 @@ class Users extends Model {
         use_date_report: {
           type: DataTypes.STRING,
         },
-        // use_wpp_alert_preference: { type: DataTypes.BOOLEAN },
-        // use_wpp_number_general_report: {
-        //   type: DataTypes.ARRAY(DataTypes.STRING)
-        // },
+        use_wpp_alert_preference: { type: DataTypes.BOOLEAN },
+        use_wpp_number_general_report: {
+          type: DataTypes.ARRAY(DataTypes.STRING)
+        },
         use_set_report: { type: DataTypes.BOOLEAN },
         use_massive_reports_status: { type: DataTypes.STRING },
         use_massive_reports_status_updated_at: {

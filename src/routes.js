@@ -244,6 +244,12 @@ routes.get(
 
   GenerationController.emailAlertSendWhatsApp
 );
+routes.post(
+  `${apiVersion}/useupdatewpp`,
+  checkToken,
+  UsersController.useWppTelephone
+);
+
 
 routes.get(
   `${apiVersion}/alertFrequency/:uuid`,
@@ -279,6 +285,7 @@ routes.post(
 routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
 
 routes.get(`${apiVersion}/testeSSE/:use_uuid`, UsersController.testSSE);
+// routes.post(`${apiVersion}/massivo`, DevicesControlle.massiveemailTester);
 
 // routes.get(
 //   `${apiVersion}/automaticmassemail`,

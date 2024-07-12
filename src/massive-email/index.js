@@ -214,7 +214,7 @@ export async function massiveEmail(use_uuid, res, req) {
 
         // Process the results
         sum_generation.forEach((result) => this.push(result));
-
+      
         this.push(null);
       } catch (error) {
         this.emit("error", error);
