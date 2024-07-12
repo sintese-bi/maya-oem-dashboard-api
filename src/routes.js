@@ -285,6 +285,7 @@ routes.post(
 routes.post(`${apiVersion}/massemail`, checkToken, UsersController.massEmail);
 
 routes.get(`${apiVersion}/testeSSE/:use_uuid`, UsersController.testSSE);
+// routes.post(`${apiVersion}/massivo`, DevicesControlle.massiveemailTester);
 
 // routes.get(
 //   `${apiVersion}/automaticmassemail`,

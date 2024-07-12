@@ -1114,7 +1114,7 @@ class GenerationController {
                 return null;
               })
               .filter((device) => device !== null)
-              .sort((a, b) => a["Produção(KWh)"] - b["Produção(KWh)"]);
+              .sort((a, b) => a["Desempenho(%)"] - b["Desempenho(%)"]);;
 
             let buffer;
 
