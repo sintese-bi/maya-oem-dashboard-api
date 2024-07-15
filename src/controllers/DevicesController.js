@@ -2088,68 +2088,32 @@ class DevicesController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
-  async massiveemailTester(req, res) {
+  async massiveemailData(req, res) {
     try {
       const { use_uuid } = req.body;
       const currentDate = new Date();
+
+      // Ajustar as datas para UTC
       const firstDayOfMonth = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        1
+        Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), 1)
       );
       const lastDayOfMonth = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1,
-        0
+        Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth() + 1, 0)
       );
-      const firstDayOfYear = new Date(currentDate.getFullYear(), 0, 1);
-      console.log(firstDayOfYear)
-      const resultMonth = await Generation.findAll({
-        include: [
-          {
-            association: "devices",
-            attributes: [
-              "dev_capacity",
-              "dev_name",
-              "dev_email",
-              "dev_deleted",
-            ],
-            where: {
-              dev_email: {
-                [Op.not]: null,
-              },
-              [Op.or]: [
-                { dev_deleted: false },
-                { dev_deleted: { [Op.is]: null } },
-              ],
-            },
-            include: [
-              {
-                association: "brand_login",
-                attributes: [],
-                where: {
-                  use_uuid: use_uuid,
-                },
-              },
-            ],
-          },
-        ],
-        attributes: ["gen_real", "gen_estimated", "gen_date", "dev_uuid"],
-        where: {
-          gen_date: {
-            [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-          },
-          gen_updated_at: {
-            [Op.in]: Generation.sequelize.literal(`
-                        (SELECT MAX(gen_updated_at)
-                        FROM generation
-                        WHERE gen_date BETWEEN :firstDayOfMonth AND :lastDayOfMonth
-                        GROUP BY gen_date, dev_uuid)
-                      `),
-          },
-        },
-        replacements: { firstDayOfMonth, lastDayOfMonth },
-      });
+      const firstDayOfYear = new Date(
+        Date.UTC(currentDate.getUTCFullYear(), 0, 1)
+      );
+      const lastDayOfMonthEnd = new Date(
+        Date.UTC(
+          currentDate.getUTCFullYear(),
+          currentDate.getUTCMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999
+        )
+      );
 
       const resultYear = await Generation.findAll({
         include: [
@@ -2162,9 +2126,7 @@ class DevicesController {
               "dev_deleted",
             ],
             where: {
-              dev_email: {
-                [Op.not]: null,
-              },
+              dev_email: { [Op.not]: null },
               [Op.or]: [
                 { dev_deleted: false },
                 { dev_deleted: { [Op.is]: null } },
@@ -2174,25 +2136,21 @@ class DevicesController {
               {
                 association: "brand_login",
                 attributes: [],
-                where: {
-                  use_uuid: use_uuid,
-                },
+                where: { use_uuid: use_uuid },
               },
             ],
           },
         ],
         attributes: ["gen_real", "gen_estimated", "gen_date", "dev_uuid"],
         where: {
-          gen_date: {
-            [Op.between]: [firstDayOfYear, lastDayOfMonth],
-          },
+          gen_date: { [Op.between]: [firstDayOfYear, lastDayOfMonthEnd] },
           gen_updated_at: {
             [Op.in]: Generation.sequelize.literal(`
-                        (SELECT MAX(gen_updated_at) 
-                        FROM generation 
-                        WHERE gen_date BETWEEN :firstDayOfYear AND :lastDayOfMonth 
-                        GROUP BY gen_date, dev_uuid)
-                      `),
+              (SELECT MAX(gen_updated_at)
+              FROM generation
+              WHERE gen_date BETWEEN :firstDayOfYear AND :lastDayOfMonth
+              GROUP BY gen_date, dev_uuid)
+            `),
           },
         },
         replacements: { firstDayOfYear, lastDayOfMonth },
@@ -2202,11 +2160,11 @@ class DevicesController {
 
       resultYear.forEach((element) => {
         const date = new Date(element.gen_date);
-        const month = date.getMonth() + 1; 
-        const year = date.getFullYear();
-        const monthKey = `${year}-${month.toString().padStart(2, "0")}`; 
-        const currentMonth = new Date().getMonth() + 1; 
-        const currentYear = new Date().getFullYear();
+        const month = date.getUTCMonth() + 1;
+        const year = date.getUTCFullYear();
+        const monthKey = `${year}-${month.toString().padStart(2, "0")}`;
+        const currentMonth = new Date().getUTCMonth() + 1;
+        const currentYear = new Date().getUTCFullYear();
 
         if (!allDevices[element.dev_uuid]) {
           allDevices[element.dev_uuid] = {
@@ -2225,7 +2183,6 @@ class DevicesController {
             gen_estimated_sum: 0,
           };
         }
-
 
         allDevices[element.dev_uuid].generationData[monthKey].gen_real_sum =
           Math.round(
@@ -2253,96 +2210,48 @@ class DevicesController {
         }
       });
 
-      
+      const formattedArray = Object.keys(allDevices).map((dev_uuid) => {
+        const currentMonthData = allDevices[dev_uuid].currentMonthData;
+        const currentMonthRealSum =
+          Math.round(
+            currentMonthData.reduce((acc, curr) => acc + curr.gen_real, 0) * 100
+          ) / 100;
+        const currentMonthEstimatedSum =
+          Math.round(
+            currentMonthData.reduce(
+              (acc, curr) => acc + curr.gen_estimated,
+              0
+            ) * 100
+          ) / 100;
+        const performance =
+          Math.round(
+            (currentMonthRealSum / currentMonthEstimatedSum) * 100 * 100
+          ) / 100;
+        const monthEconomyTotal = currentMonthRealSum * 0.96;
+        const treesSavedTotal =
+          Math.round(currentMonthRealSum * 0.000504 * 100) / 100;
+        const CO2 = Math.round(currentMonthRealSum * 0.419 * 100) / 100;
+        const period = moment().format("YYYY-MM");
+        return {
+          dev_uuid,
+          dev_name: allDevices[dev_uuid].dev_name,
+          dev_email: allDevices[dev_uuid].dev_email,
+          dev_deleted: allDevices[dev_uuid].dev_deleted,
+          dev_capacity: allDevices[dev_uuid].dev_capacity,
+          performance,
+          CO2,
+          period,
+          treesSavedTotal,
+          currentMonthRealSum,
+          currentMonthEstimatedSum,
+          generationData: allDevices[dev_uuid].generationData,
+          currentMonthData: allDevices[dev_uuid].currentMonthData,
+        };
+      });
 
-      const groupedResult = resultMonth.reduce((acc, generation) => {
-        const { dev_uuid, gen_real, gen_estimated, gen_date, devices } =
-          generation;
-        const { dev_capacity, dev_name, dev_email } = devices;
+   
 
-        if (!acc[dev_uuid]) {
-          acc[dev_uuid] = [];
-        }
-
-        acc[dev_uuid].push({
-          gen_real,
-          gen_estimated,
-          gen_date,
-          dev_capacity,
-          dev_name,
-          dev_email,
-        });
-
-        return acc;
-      }, {});
-
-      // Formatar o resultado final
-      const formattedResult = Object.entries(groupedResult).map(
-        ([dev_uuid, resultArray]) => {
-          return { dev_uuid, result: resultArray };
-        }
-      );
-
-      // return res.status(200).json({message:formattedResult})
-
-      const sum_generation = await Promise.all(
-        formattedResult.map(async (gens) => {
-          // Real generation
-          const realGeneration = gens.result.map((element) => {
-            return { value: element.gen_real, date: element.gen_date };
-          });
-
-          // Estimated generation
-          const estimatedGeneration = gens.result.map(
-            (element) => element.gen_estimated
-          );
-
-          // Sum real generation
-          const sumreal = gens.result.reduce(
-            (acc, atual) => acc + atual.gen_real,
-            0
-          );
-          const sumrealNew = sumreal.toFixed(2);
-
-          // Sum estimated generation
-          const sumestimated = gens.result.reduce(
-            (acc, atual) => acc + atual.gen_estimated,
-            0
-          );
-          const sumestimatedNew = sumestimated.toFixed(2);
-
-          // Calculate percentage
-          let percentNew;
-          if (sumreal === 0) {
-            percentNew = 0;
-          } else {
-            percentNew = ((sumreal / sumestimated) * 100).toFixed(2);
-          }
-
-          // Determine situation
-          const situation =
-            percentNew > 80
-              ? `Parabéns, sua usina produziu o equivalente a ${percentNew}% do total esperado.`
-              : `Infelizmente, sua usina produziu apenas ${percentNew}% em relação ao esperado.`;
-
-          // Create device element
-          const dev_element = {
-            dev_uuid: gens.dev_uuid,
-            capacity: gens.result[0].dev_capacity,
-            name: gens.result[0].dev_name,
-            email: gens.result[0].dev_email,
-            sumrealNew,
-            sumestimatedNew,
-            percentNew,
-            situation,
-            realGeneration,
-            estimatedGeneration,
-          };
-          return dev_element;
-        })
-      );
-
-      return res.status(200).json({ message: [sum_generation,allDevices] });
+      return res.status(200).json({ data: formattedArray });
     } catch (error) {
       return res
         .status(500)
