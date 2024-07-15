@@ -163,7 +163,6 @@ export const generateFile = async ({ params }) => {
     `,
     {
       color: rgb(1, 1, 1),
-
       x: 226,
       y: height / 2 + 26,
       size: 19,
@@ -215,7 +214,6 @@ export const generateFile = async ({ params }) => {
 
   firstPage.drawText("POWERED BY: MAYA TECH S.A", {
     color: rgb(0, 0, 0),
-
     x: width / 3 + 34,
     y: height - (height - 120),
     size: 10,

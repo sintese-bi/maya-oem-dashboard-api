@@ -1831,7 +1831,6 @@ class UsersController {
   async massEmail(req, res) {
     try {
       const { use_uuid } = req.body;
-
       const user = await Users.findOne({
         attributes: ["use_massive_reports_status"],
         where: {
@@ -1893,11 +1892,6 @@ class UsersController {
   async testSSE(req, res) {
     try {
       const { use_uuid } = req.params;
-      res.setHeader("Content-Type", "text/event-stream");
-      res.setHeader("Cache-Control", "no-cache");
-      res.setHeader("Connection", "keep-alive");
-      res.write("data: connected\n\n");
-
       const user = await Users.findOne({
         attributes: ["use_massive_reports_status"],
         where: {
@@ -1916,7 +1910,9 @@ class UsersController {
             },
           }
         );
-        return res.write(`data: completed\n\n`);
+        return res.status(200).json({
+          message: "Envio cancelado",
+        });
       }
 
       const users_massive_reports_status = await Users.findAll({
@@ -1939,11 +1935,15 @@ class UsersController {
             },
           }
         );
-        return res.write(`data: waiting\n\n`);
+        return res.status(200).json({
+          message: "Sua solicitação de envio relatório está em andamento",
+        });
       }
       await massiveEmail(use_uuid, res, req);
+      res.status(200).json({
+        message: "Envio de relatório massivo em andamento",
+      });
     } catch (error) {
-      console.log(error);
       res.status(500).json({ message: "Erro ao retornar os dados!" });
     }
   }
