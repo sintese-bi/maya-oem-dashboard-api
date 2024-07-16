@@ -48,5 +48,20 @@ export async function getGroupedGeneration(generation) {
       });
     }
   });
+
+  Object.keys(allDevices).forEach((dev_uuid) => {
+    const sortedGenerationData = {};
+    Object.keys(allDevices[dev_uuid].generationData)
+      .sort()
+      .forEach((key) => {
+        sortedGenerationData[key] = allDevices[dev_uuid].generationData[key];
+      });
+    allDevices[dev_uuid].generationData = sortedGenerationData;
+
+    allDevices[dev_uuid].currentMonthData.sort(
+      (a, b) => new Date(a.gen_date) - new Date(b.gen_date)
+    );
+  });
+
   return allDevices;
 }
