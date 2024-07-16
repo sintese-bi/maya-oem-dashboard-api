@@ -12,7 +12,6 @@ module.exports = {
     timestamps: true,
     underscored: true,
   },
-
   pool: {
     max: 10, // Número máximo de conexões no pool
     min: 0, // Número mínimo de conexões no pool
