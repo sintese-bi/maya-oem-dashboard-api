@@ -1,21 +1,52 @@
 export async function getGroupedGeneration(generation) {
-  return generation.reduce((acc, generation) => {
-    const { dev_uuid, gen_real, gen_estimated, gen_date, devices } = generation;
-    const { dev_capacity, dev_name, dev_email } = devices;
+  const allDevices = {};
+  generation.forEach((element) => {
+    const date = new Date(element.gen_date);
+    const month = date.getUTCMonth() + 1;
+    const year = date.getUTCFullYear();
+    const monthKey = `${year}-${month.toString().padStart(2, "0")}`;
+    const currentMonth = new Date().getUTCMonth() + 1;
+    const currentYear = new Date().getUTCFullYear();
 
-    if (!acc[dev_uuid]) {
-      acc[dev_uuid] = [];
+    if (!allDevices[element.dev_uuid]) {
+      allDevices[element.dev_uuid] = {
+        dev_name: element.devices.dev_name,
+        dev_email: element.devices.dev_email,
+        dev_deleted: element.devices.dev_deleted,
+        dev_capacity: element.devices.dev_capacity,
+        generationData: {},
+        currentMonthData: [],
+      };
     }
 
-    acc[dev_uuid].push({
-      gen_real,
-      gen_estimated,
-      gen_date,
-      dev_capacity,
-      dev_name,
-      dev_email,
-    });
+    if (!allDevices[element.dev_uuid].generationData[monthKey]) {
+      allDevices[element.dev_uuid].generationData[monthKey] = {
+        gen_real_sum: 0,
+        gen_estimated_sum: 0,
+      };
+    }
 
-    return acc;
-  }, {});
+    allDevices[element.dev_uuid].generationData[monthKey].gen_real_sum =
+      Math.round(
+        (allDevices[element.dev_uuid].generationData[monthKey].gen_real_sum +
+          element.gen_real) *
+          100
+      ) / 100;
+    allDevices[element.dev_uuid].generationData[monthKey].gen_estimated_sum =
+      Math.round(
+        (allDevices[element.dev_uuid].generationData[monthKey]
+          .gen_estimated_sum +
+          element.gen_estimated) *
+          100
+      ) / 100;
+
+    if (month === currentMonth && year === currentYear) {
+      allDevices[element.dev_uuid].currentMonthData.push({
+        gen_real: Math.round(element.gen_real * 100) / 100,
+        gen_estimated: Math.round(element.gen_estimated * 100) / 100,
+        gen_date: element.gen_date,
+      });
+    }
+  });
+  return allDevices;
 }

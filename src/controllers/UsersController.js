@@ -1879,10 +1879,7 @@ class UsersController {
         });
       }
 
-      await massiveEmail(use_uuid);
-      res.status(200).json({
-        message: "Envio de relatório massivo em andamento",
-      });
+      await massiveEmail(use_uuid, res);
     } catch (error) {
       console.log(error);
       res.status(500).json({ message: "Erro ao retornar os dados!" });
@@ -2622,6 +2619,34 @@ class UsersController {
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  //Api para atualizar telefones e permissão para envio relatório geral administrador wpp
+  async useWppTelephone(req, res) {
+    try {
+      const {
+        use_uuid,
+        use_wpp_alert_preference,
+        use_wpp_number_general_report,
+      } = req.body;
+
+      await Users.update(
+        {
+          use_wpp_alert_preference: use_wpp_alert_preference,
+          use_wpp_number_general_report: use_wpp_number_general_report,
+        },
+
+        { where: { use_uuid: use_uuid } }
+      );
+
+      return res
+        .status(200)
+        .json({ message: "Dados atualizados com sucesso!" });
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
+    }
+  }
+
   async xlsxPortal(req, res) {
     try {
       const { use_uuid } = req.body;

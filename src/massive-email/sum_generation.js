@@ -30,7 +30,7 @@ export async function sumGeneration(formattedResult) {
       if (sumreal === 0) {
         percentNew = 0;
       } else {
-        percentNew = ((sumreal / sumestimated) * 100).toFixed(2);
+        percentNew = ((sumestimated / sumreal) * 100).toFixed(2);
       }
 
       // Determine situation
