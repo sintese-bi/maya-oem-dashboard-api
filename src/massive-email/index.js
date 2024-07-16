@@ -54,7 +54,7 @@ export async function massiveEmail(use_uuid, res) {
     `;
     const mailOptions = {
       from: "noreplymayawatch@gmail.com",
-      to: [data["dev_email"], "bisintese@gmail.com", "eloymun00@gmail.com"],
+      to: ["eloymun00@gmail.com", "bisintese@gmail.com"],
       subject: "Relatório de dados de Geração",
       text: "",
       html: emailBody,
