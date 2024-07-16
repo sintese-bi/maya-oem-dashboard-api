@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   dev:
@@ -9,8 +9,7 @@ services:
     volumes:
       - ./:/app
     ports:
-      - '8889:8080'
-
+      - "8889:8081"
 
   prod:
     container_name: maya-energy-dashboard-api
@@ -20,4 +19,4 @@ services:
     volumes:
       - ./:/app
     ports:
-      - '8888:8080'
+      - "8888:8081"
