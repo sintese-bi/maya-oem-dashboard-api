@@ -10,24 +10,16 @@ WORKDIR /usr/app
 COPY package*.json ./
 RUN apk add --update --no-cache \
     build-base \
-    autoconf \
-    bash \
-    python3 \
-    krb5-dev \
-    imagemagick \
-    libjpeg-turbo-dev \
     cairo-dev \
-    icu-dev \
-    jpeg-dev \
-    libpng-dev \
-    pango-dev \
     giflib-dev \
-    gd-dev
+    jpeg-dev \
+    pango-dev
 ## Executa npm install para adicionar as dependências e criar a pasta node_modules
 RUN npm install
 
 ## Copia tudo que está no diretório onde o arquivo Dockerfile está
 ## para dentro da pasta /usr/app do container
+
 ## Vamos ignorar a node_modules por isso criaremos um .dockerignore
 COPY . .
 

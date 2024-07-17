@@ -19,4 +19,4 @@ services:
     volumes:
       - ./:/app
     ports:
-      - "8888:8081"
+      - "8888:8888"

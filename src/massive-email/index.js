@@ -52,9 +52,10 @@ export async function massiveEmail(use_uuid, res) {
       <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
       https://mayax.com.br/
     `;
+    //data["dev_email"], 
     const mailOptions = {
       from: "noreplymayawatch@gmail.com",
-      to: ["eloymun00@gmail.com", "bisintese@gmail.com"],
+      to: ["bisintese@gmail.com", "eloymun00@gmail.com"],
       subject: "Relatório de dados de Geração",
       text: "",
       html: emailBody,
