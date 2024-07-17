@@ -10,13 +10,13 @@ const transporter = nodemailer.createTransport({
   port: 587,
   pool: true,
 
-  secure: false,
+  secure: true,
   auth: {
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
   tls: {
-    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
+    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
   },
 });
 export async function massiveEmail(use_uuid, res) {
