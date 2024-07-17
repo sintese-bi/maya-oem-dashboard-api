@@ -10,13 +10,13 @@ const transporter = nodemailer.createTransport({
   port: 587,
   pool: true,
 
-  secure: true,
+  secure: false,
   auth: {
     user: "noreplymayawatch@gmail.com",
     pass: "xbox ejjd wokp ystv",
   },
   tls: {
-    rejectUnauthorized: true, //Usar "false" para ambiente de desenvolvimento
+    rejectUnauthorized: false, //Usar "false" para ambiente de desenvolvimento
   },
 });
 export async function massiveEmail(use_uuid, res) {
@@ -55,7 +55,7 @@ export async function massiveEmail(use_uuid, res) {
     //data["dev_email"], 
     const mailOptions = {
       from: "noreplymayawatch@gmail.com",
-      to: ["bisintese@gmail.com", "eloymun00@gmail.com"],
+      to: ["bisintese@gmail.com","eloymun00@gmail.com"],
       subject: "Relatório de dados de Geração",
       text: "",
       html: emailBody,
