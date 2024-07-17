@@ -13,7 +13,12 @@ RUN apk add --update --no-cache \
     cairo-dev \
     giflib-dev \
     jpeg-dev \
-    pango-dev
+    pango-dev \
+    fontconfig \
+    ttf-dejavu \
+    ttf-droid \
+    ttf-freefont \
+    ttf-liberation
 ## Executa npm install para adicionar as dependências e criar a pasta node_modules
 RUN npm install
 
