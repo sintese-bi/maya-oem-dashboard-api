@@ -20,9 +20,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 export async function massiveEmail(use_uuid, res) {
-  res.status(200).json({
-    message: "Envio de relatório massivo em andamento",
-  });
   await Users.update(
     {
       use_massive_reports_status: "executing",
@@ -33,6 +30,9 @@ export async function massiveEmail(use_uuid, res) {
       },
     }
   );
+  res.status(200).json({
+    message: "Envio de relatório massivo em andamento",
+  });
   const result = await getGeneration(use_uuid);
   const grouped_result = await getGroupedGeneration(result);
   const formatted_result = await formattedResult(grouped_result);
@@ -52,10 +52,10 @@ export async function massiveEmail(use_uuid, res) {
       <p>Atenciosamente,<br>Equipe MAYA WATCH</p>
       https://mayax.com.br/
     `;
-    //data["dev_email"], 
+    //data["dev_email"],
     const mailOptions = {
       from: "noreplymayawatch@gmail.com",
-      to: ["bisintese@gmail.com","eloymun00@gmail.com"],
+      to: ["bisintese@gmail.com", "eloymun00@gmail.com"],
       subject: "Relatório de dados de Geração",
       text: "",
       html: emailBody,
