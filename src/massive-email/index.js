@@ -20,9 +20,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 export async function massiveEmail(use_uuid, res) {
-  res.status(200).json({
-    message: "Envio de relatório massivo em andamento",
-  });
   await Users.update(
     {
       use_massive_reports_status: "executing",
@@ -33,6 +30,9 @@ export async function massiveEmail(use_uuid, res) {
       },
     }
   );
+  res.status(200).json({
+    message: "Envio de relatório massivo em andamento",
+  });
   const result = await getGeneration(use_uuid);
   const grouped_result = await getGroupedGeneration(result);
   const formatted_result = await formattedResult(grouped_result);
