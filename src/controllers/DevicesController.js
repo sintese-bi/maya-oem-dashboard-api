@@ -27,42 +27,43 @@ class DevicesController {
   //Ela inclui a ordenação por data e trata casos onde a geração atual não está disponível, utilizando dados da geração anterior.
   async index(req, res) {
     const blUuid = req.params.bl_uuid;
-    const pl_name = req.params;
     const date = new Date();
     const currentDate = moment(date).format("YYYY-MM-DD");
     const previousDate = moment(date).subtract(1, "days").format("YYYY-MM-DD");
 
     try {
       const data = await Devices.findAll({
-        include: { association: "generation", order: ["gen_date"] },
+        include: {
+          association: "generation",
+          where: {
+            [Op.or]: [{ gen_date: currentDate }, { gen_date: previousDate }],
+          },
+          required: false,
+        },
         where: { bl_uuid: blUuid },
-
-        order: ["dev_name"],
-      }).then(async (result) => {
-        result.forEach((r) => {
-          const generation = r.dataValues.generation.find(
-            (gen) => gen.gen_date === currentDate
-          );
-          const previousGeneration = r.dataValues.generation.find(
-            (gen) => gen.gen_date === previousDate
-          );
-
-          const gen_estimated = r.dataValues.generation[0]?.gen_estimated;
-
-          r.dataValues.generation = generation;
-
-          if (!generation) {
-            r.dataValues.generation = {
-              gen_estimated: gen_estimated ? gen_estimated : 0,
-              gen_real: previousGeneration ? previousGeneration.gen_real : 0,
-            };
-          }
-        });
-
-        return result;
+        order: [["dev_name", "ASC"]],
       });
 
-      return res.json(data);
+      // Processa os dados retornados
+      const processedData = data.map((device) => {
+        const currentGen = device.generation.find(
+          (gen) => gen.gen_date === currentDate
+        );
+        const previousGen = device.generation.find(
+          (gen) => gen.gen_date === previousDate
+        );
+        const gen_estimated = device.generation[0]?.gen_estimated;
+
+        return {
+          ...device.dataValues,
+          generation: currentGen || {
+            gen_estimated: gen_estimated ? gen_estimated : 0,
+            gen_real: previousGen ? previousGen.gen_real : 0,
+          },
+        };
+      });
+
+      return res.json(processedData);
     } catch (error) {
       return res
         .status(400)
@@ -2214,12 +2215,14 @@ class DevicesController {
         Object.keys(allDevices[dev_uuid].generationData)
           .sort()
           .forEach((key) => {
-            sortedGenerationData[key] = allDevices[dev_uuid].generationData[key];
+            sortedGenerationData[key] =
+              allDevices[dev_uuid].generationData[key];
           });
         allDevices[dev_uuid].generationData = sortedGenerationData;
-      
-     
-        allDevices[dev_uuid].currentMonthData.sort((a, b) => new Date(a.gen_date) - new Date(b.gen_date));
+
+        allDevices[dev_uuid].currentMonthData.sort(
+          (a, b) => new Date(a.gen_date) - new Date(b.gen_date)
+        );
       });
       const formattedArray = Object.keys(allDevices).map((dev_uuid) => {
         const currentMonthData = allDevices[dev_uuid].currentMonthData;
@@ -2259,8 +2262,6 @@ class DevicesController {
           currentMonthData: allDevices[dev_uuid].currentMonthData,
         };
       });
-
-   
 
       return res.status(200).json({ data: formattedArray });
     } catch (error) {
