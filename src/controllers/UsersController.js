@@ -2523,10 +2523,11 @@ class UsersController {
   async brandInformation(req, res) {
     const startOfDay = moment().startOf("day").toDate();
     const endOfDay = moment().endOf("day").toDate();
-
+  
     try {
       const { use_uuid } = req.body;
-
+  
+      // Obtém informações da marca criada no dia atual
       const infoBrand = await Brand.findAll({
         attributes: ["bl_name", "bl_login", "bl_password", "bl_check"],
         where: {
@@ -2536,40 +2537,60 @@ class UsersController {
           use_uuid: use_uuid,
         },
       });
+  
+      // Obtém todas as informações da marca
       const infoBrandall = await Brand.findAll({
         attributes: ["bl_name", "bl_login", "bl_password", "bl_check"],
         where: {
           use_uuid: use_uuid,
         },
       });
+  
+      // Obtém as informações da marca para as URLs
       const result = await Brand_Info.findAll({
         attributes: ["bl_name", "bl_url"],
         group: ["bl_name", "bl_url"],
       });
+  
+      // Conjunto para armazenar nomes de marcas únicos
       const brandNamesSet = new Set();
       const brandinfo = [];
-
+  
+      // Adiciona todos os nomes de marcas de infoBrandall ao conjunto
       for (const info of infoBrandall) {
         brandNamesSet.add(info.bl_name);
       }
-
+  
+      // Adiciona informações da marca para URLs, mas apenas se o nome da marca estiver no conjunto
       for (const element of result) {
         if (brandNamesSet.has(element.bl_name)) {
           brandinfo.push({
             bl_name: element.bl_name,
             bl_url: element.bl_url,
           });
-          brandNamesSet.delete(element.bl_name);
+          brandNamesSet.delete(element.bl_name); // Remove para evitar duplicatas
         }
       }
-
-      return res.status(200).json({ message: [result, infoBrand] });
+  
+      // Remove duplicatas baseadas em bl_name
+      const uniqueBrandinfo = [];
+      const uniqueNames = new Set();
+  
+      for (const item of brandinfo) {
+        if (!uniqueNames.has(item.bl_name)) {
+          uniqueNames.add(item.bl_name);
+          uniqueBrandinfo.push(item);
+        }
+      }
+  
+      return res.status(200).json({ message: [uniqueBrandinfo, infoBrand] });
     } catch (error) {
       return res
         .status(400)
         .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
+  
   //Api de teste para criação de brands
   async brandCreationUpdate(req, res) {
     try {
