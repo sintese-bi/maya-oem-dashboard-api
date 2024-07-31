@@ -741,7 +741,7 @@ class GenerationController {
         .json({ message: `Erro ao retornar os dados: ${error.message}` });
     }
   }
-  async generationRoutine(req, res) {
+  async generationRoutine() {
     try {
       const months = {
         "01": "ic_january",
@@ -757,6 +757,7 @@ class GenerationController {
         11: "ic_november",
         12: "ic_december",
       };
+
       const radiation = await IrradiationCoefficient.findAll({
         attributes: {
           exclude: [
@@ -768,8 +769,11 @@ class GenerationController {
           ],
         },
       });
+
       const date = moment().format("MM");
       const dateYearmonth = moment().format("YYYY-MM");
+      const dateYearMonthDay = moment().format("YYYY-MM-DD");
+
       const result = await Devices.findAll({
         attributes: [
           "dev_uuid",
@@ -784,7 +788,7 @@ class GenerationController {
           if (
             !element.dev_capacity ||
             !element.dev_address ||
-            element.dev_address == "undefined-undefined" ||
+            element.dev_address === "undefined-undefined" ||
             !element.dev_address.split("-")[0] ||
             !element.dev_address.split("-")[1]
           ) {
@@ -795,8 +799,9 @@ class GenerationController {
             const state = element.dev_address.split("-")[1];
 
             const object = radiation.find((element) => {
-              return element.ic_city == city && element.ic_states == state;
+              return element.ic_city === city && element.ic_states === state;
             });
+
             if (!object) {
               element.dev_manual_gen_est = 100;
             } else {
@@ -819,17 +824,15 @@ class GenerationController {
             gen_estimated: Math.floor(element.dev_manual_gen_est * 100) / 100,
             gen_date: `${dateYearmonth}-01`,
             gen_real: 0,
-            gen_created_at: "2024-07-01 03:00:50.331 -0300",
-            gen_updated_at: "2024-07-01 03:00:50.331 -0300",
+            gen_created_at: dateYearMonthDay + " 03:00:50.331 -0300",
+            gen_updated_at: dateYearMonthDay + " 03:00:50.331 -0300",
           });
         })
       );
 
-      return res.status(200).json({ data: manualGen });
+      console.log("Rotina de geração concluída com sucesso.");
     } catch (error) {
-      return res
-        .status(500)
-        .json({ message: `Erro ao atualizar os dados: ${error.message}` });
+      console.error("Erro durante a inserção das gerações:", error);
     }
   }
 
@@ -1114,7 +1117,7 @@ class GenerationController {
                 return null;
               })
               .filter((device) => device !== null)
-              .sort((a, b) => a["Desempenho(%)"] - b["Desempenho(%)"]);;
+              .sort((a, b) => a["Desempenho(%)"] - b["Desempenho(%)"]);
 
             let buffer;
 
@@ -1164,7 +1167,7 @@ class GenerationController {
       "0 0 1 * *",
       async () => {
         try {
-          await this().generationRoutine();
+          await this.generationRoutine();
         } catch (error) {
           console.error("Erro durante a inserção das gerações:", error);
         }
@@ -1176,5 +1179,5 @@ class GenerationController {
   }
 }
 const generationController = new GenerationController();
-// generationController.agendarInputGeracao();
+generationController.agendarInputGeracao();
 export default new GenerationController();
