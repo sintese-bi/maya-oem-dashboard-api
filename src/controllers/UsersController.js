@@ -3272,7 +3272,7 @@ class UsersController {
       "0 0 1 * *",
       async () => {
         try {
-          await this().restartdevVerifyColumn();
+          await this.restartdevVerifyColumn();
         } catch (error) {
           console.error("Erro durante a verificação de alertas:", error);
         }
