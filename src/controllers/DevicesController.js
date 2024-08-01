@@ -874,18 +874,18 @@ class DevicesController {
     try {
       try {
         //Data atual
-        const current = moment().format("YYYY-MM-DD");
-        const currentMonthYear = moment().format("YYYY-MM");
-        const currentYear = moment().format("YYYY");
+        const current = moment().tz("America/Sao_Paulo").format("YYYY-MM-DD");
+        const currentMonthYear = moment().tz("America/Sao_Paulo").format("YYYY-MM");
+        const currentYear = moment().tz("America/Sao_Paulo").format("YYYY");
         //Dia corrente
-        const current_day_string = moment().format("DD");
+        const current_day_string = moment().tz("America/Sao_Paulo").format("DD");
         let current_day_int = parseInt(current_day_string);
         //MêS corrente
-        const current_month_string = moment().format("MM");
+        const current_month_string = moment().tz("America/Sao_Paulo").format("MM");
         const clientToken = req.headers.authorization;
         const expectedToken = process.env.TOKEN;
         //Ultimo dia do mes
-        const lastDayOfMonth = moment().endOf("month").format("YYYY-MM-DD");
+        const lastDayOfMonth = moment().tz("America/Sao_Paulo").endOf("month").format("YYYY-MM-DD");
         const lastday = parseInt(lastDayOfMonth);
         //Data corrente
         const primeiro_dia_mes = `${currentMonthYear}-01`;
