@@ -25,53 +25,55 @@ const transporter = nodemailer.createTransport({
 class DevicesController {
   //Esta função index processa dados de dispositivos, recuperando informações de gerações associadas a eles.
   //Ela inclui a ordenação por data e trata casos onde a geração atual não está disponível, utilizando dados da geração anterior.
-  async  index(req, res) {
+  async index(req, res) {
     const blUuid = req.params.bl_uuid;
     const date = new Date();
     const currentDate = moment(date).format("YYYY-MM-DD");
     const previousDate = moment(date).subtract(1, "days").format("YYYY-MM-DD");
-  
+
     try {
-   
       const data = await Devices.findAll({
         include: {
           association: "generation",
           where: {
-            [Op.or]: [
-              { gen_date: currentDate },
-              { gen_date: previousDate }
-            ]
+            [Op.or]: [{ gen_date: currentDate }, { gen_date: previousDate }],
           },
-          required: false, 
+          required: false,
         },
         where: { bl_uuid: blUuid },
-        order: [["dev_name", "ASC"]]
+        order: [["dev_name", "ASC"]],
       });
-  
+
       // Processa os dados retornados
-      const processedData = data.map(device => {
+      const processedData = data.map((device) => {
         const currentGen = device.generation
-          .filter(gen => gen.gen_date === currentDate)
-          .sort((a, b) => new Date(b.gen_created_at) - new Date(a.gen_created_at))[0];
-        
+          .filter((gen) => gen.gen_date === currentDate)
+          .sort(
+            (a, b) => new Date(b.gen_created_at) - new Date(a.gen_created_at)
+          )[0];
+
         const previousGen = device.generation
-          .filter(gen => gen.gen_date === previousDate)
-          .sort((a, b) => new Date(b.gen_created_at) - new Date(a.gen_created_at))[0];
-  
+          .filter((gen) => gen.gen_date === previousDate)
+          .sort(
+            (a, b) => new Date(b.gen_created_at) - new Date(a.gen_created_at)
+          )[0];
+
         const gen_estimated = device.generation[0]?.gen_estimated;
-  
+
         return {
           ...device.dataValues,
           generation: currentGen || {
             gen_estimated: gen_estimated ? gen_estimated : 0,
-            gen_real: previousGen ? previousGen.gen_real : 0
-          }
+            gen_real: previousGen ? previousGen.gen_real : 0,
+          },
         };
       });
-  
+
       return res.json(processedData);
     } catch (error) {
-      return res.status(400).json({ message: `Erro ao retornar os dados. ${error}` });
+      return res
+        .status(400)
+        .json({ message: `Erro ao retornar os dados. ${error}` });
     }
   }
   //Esta função calcula a soma da geração real e estimada em um intervalo de datas especificado.
@@ -80,15 +82,18 @@ class DevicesController {
     try {
       const { use_uuid } = req.body;
       //Ajuste data
-      const currentDate = new Date();
-      const currentYear = currentDate.getUTCFullYear();
-      const currentMonth = currentDate.getUTCMonth();
+      const currentDate = moment().tz("America/Sao_Paulo").toISOString();
+      
 
-      const firstDayOfMonth = new Date(Date.UTC(currentYear, currentMonth, 1));
-      const lastDayOfMonth = new Date(
-        Date.UTC(currentYear, currentMonth + 1, 0)
-      );
-
+      const firstDayOfMonth = moment()
+        .tz("America/Sao_Paulo")
+        .startOf("month")
+        .toISOString();
+      const lastDayOfMonth = moment()
+        .tz("America/Sao_Paulo")
+        .endOf("month")
+        .toISOString();
+     
       const result = await Generation.findAll({
         include: [
           {
