@@ -83,7 +83,7 @@ class DevicesController {
       const { use_uuid } = req.body;
       //Ajuste data
       const currentDate = moment().tz("America/Sao_Paulo").toISOString();
-      
+
 
       const firstDayOfMonth = moment()
         .tz("America/Sao_Paulo")

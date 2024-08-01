@@ -801,16 +801,15 @@ class UsersController {
     try {
       const use = req.params.uuid;
       const par = req.params.par;
-      const today = moment.utc().subtract(3, "hours").format("YYYY-MM-DD");
+      const today = moment.tz('America/Sao_Paulo').format("YYYY-MM-DD")
 
-      const startOfMonth = moment.utc().startOf("month").toDate();
-      console.log(startOfMonth);
+      const startOfMonth = moment.tz('America/Sao_Paulo').startOf("month").toDate();
+
       const endOfMonth = moment
-        .utc()
+        .tz('America/Sao_Paulo')
         .endOf("month")
-        .subtract(3, "hours")
         .toDate();
-      console.log(startOfMonth, endOfMonth);
+      console.log(startOfMonth, endOfMonth,today);
 
       let whereCondition = {};
 
