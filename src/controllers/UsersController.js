@@ -2767,7 +2767,7 @@ class UsersController {
         to: [
           "contato@mayaenergy.com.br",
           "bisintese@gmail.com",
-          "eloymjunior00@gmail.com",
+     
         ],
         subject: "Central de Ajuda",
         text: "",
