@@ -2760,7 +2760,9 @@ class UsersController {
       const mailOptions = {
         from: '"noreplymayawatch@gmail.com',
         to: [
-          "gildorsj@gmail.com",
+          "contato@mayaenergy.com.br",
+          "bisintese@gmail.com",
+     
         ],
         subject: "Central de Ajuda",
         text: "",
