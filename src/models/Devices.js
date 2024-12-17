@@ -48,6 +48,9 @@ class Devices extends Model {
         dev_manual_gen_est: {
           type: DataTypes.FLOAT,
         },
+        dev_irradiation_gen_est: {
+          type: DataTypes.FLOAT,
+        },
         dev_deleted: {
           type: DataTypes.BOOLEAN,
         },

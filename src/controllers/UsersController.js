@@ -845,6 +845,7 @@ class UsersController {
                   "dev_deleted",
                   "dev_capacity",
                   "dev_address",
+                  "dev_irradiation_gen_est",
                   "dev_lat",
                   "dev_long",
                   "dev_email",
@@ -986,6 +987,7 @@ class UsersController {
               dev_wpp_number: device.dev_wpp_number,
               dev_install: device.dev_install,
               gen_estimated: device.dev_manual_gen_est,
+              dev_irradiation_gen_est : device.dev_irradiation_gen_est,
               status: {
                 sta_name: device.status ? device.status.sta_name : null,
                 sta_code: device.status ? device.status.sta_code : null,
@@ -2122,10 +2124,55 @@ class UsersController {
         currentDate.getMonth() + 1,
         0
       );
-
+  
       const arrayplants = req.body.arrayplants.filter(
         (data) => data.uuid !== undefined
       );
+
+      const updateGeneration = async (uuid, gen_new) => {
+        await Generation.update(
+          { gen_estimated: gen_new },
+          {
+            where: {
+              dev_uuid: uuid,
+              gen_date: {
+                [Op.between]: [firstDayOfMonth, lastDayOfMonth],
+              },
+            },
+          }
+        );
+      };
+  
+      const calculateGenEstimated = (capacity, ic_month = 5.04) => {
+        return capacity * ic_month * 0.81;
+      };
+  
+      const getPvwattsData = async (system_capacity, address) => {
+        const apiKey = 'teqDHMcUqzEtPTzEJdoSmPkf4wcn1tGz9I1YCsA4';
+        const apiUrl = 'https://developer.nrel.gov/api/pvwatts/v8.json';
+      
+        const params = {
+          azimuth: 180,
+          system_capacity: system_capacity || 0,
+          losses: 20,
+          array_type: 1,
+          module_type: 1,
+          tilt: 10,
+          address,
+          api_key: apiKey
+        };
+      
+        try {
+          const response = await axios.get(apiUrl, { params });
+          if(response?.data?.errors?.length == 0)
+            return response.data
+          else{
+            console.error('Erro na requisição:', response?.data?.errors);  
+          }
+        } catch (error) {
+          console.error('Erro na requisição:', error);
+        }
+      }
 
       await Promise.all(
         arrayplants.map(async (devarray) => {
@@ -2133,124 +2180,72 @@ class UsersController {
             uuid,
             capacity,
             email,
-            ic_city,
-            ic_states,
+            address,
+            dev_image,
             dev_install,
             gen_estimated,
             whatsapp_number,
           } = devarray;
-          if (gen_estimated) {
-            const gen_new = Number(gen_estimated);
+  
+          let dev_long = null;
+          let dev_lat = null;
+          let solrad = null;
+          let irradiation_gen_est = null;
 
-            await Generation.update(
-              { gen_estimated: gen_new },
-              {
-                where: {
-                  dev_uuid: uuid,
-                  gen_date: {
-                    [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-                  },
-                },
-              }
-            );
-          } else if (ic_city && ic_states && capacity) {
-            var irr = await IrradiationCoefficient.findOne({
-              where: { ic_city, ic_states },
-              attributes: ["ic_yearly", "ic_lat", "ic_lon"],
-            });
-            const result = await Devices.findOne({
-              attributes: ["dev_name"],
-              where: { dev_uuid: uuid },
-            });
+          if(address){
+            const response = await getPvwattsData(capacity, address);
 
-            if (irr) {
-              const ic_year = irr.dataValues.ic_yearly;
-              const gen_new = capacity * ic_year * 0.81;
-              await Generation.update(
-                {
-                  gen_estimated: 100,
-                },
-                {
-                  where: {
-                    dev_uuid: uuid,
-                    gen_date: {
-                      [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-                    },
-                  },
-                }
-              );
-            } else {
-              const ic_year = 5.04;
-              const gen_new = capacity * ic_year * 0.81;
-              await Generation.update(
-                { gen_estimated: gen_new },
-                {
-                  where: {
-                    dev_uuid: uuid,
-                    gen_date: {
-                      [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-                    },
-                  },
-                }
-              );
+            if(response?.station_info){
+              dev_long = response.station_info.lon;
+              dev_lat = response.station_info.lat;
             }
-          } else {
-            const gen_new = 101;
-            await Generation.update(
-              { gen_estimated: gen_new },
-              {
-                where: {
-                  dev_uuid: uuid,
-                  gen_date: {
-                    [Op.between]: [firstDayOfMonth, lastDayOfMonth],
-                  },
-                },
-              }
-            );
+
+            if(response?.outputs?.solrad_monthly)
+              solrad = response.outputs?.solrad_monthly[currentDate.getMonth()];
+
+            if(solrad && capacity){
+              irradiation_gen_est = calculateGenEstimated(capacity, solrad);
+              await updateGeneration(uuid, Number(irradiation_gen_est));
+            }
           }
+          
           await Devices.update(
             {
               dev_capacity: Number(capacity),
               dev_email: email,
               dev_image: dev_image,
               dev_install: dev_install,
-              dev_manual_gen_est: Number(gen_estimated),
-              dev_address: ic_city + "-" + ic_states,
+              dev_manual_gen_est: Number(gen_estimated) || null,
+              dev_irradiation_gen_est: Number(irradiation_gen_est) || null,
+              dev_address: address,
               dev_wpp_number: whatsapp_number,
-              dev_lat: irr
-                ? irr.ic_lat !== undefined
-                  ? irr.ic_lat
-                  : null
-                : null,
-              dev_long: irr
-                ? irr.ic_lon !== undefined
-                  ? irr.ic_lon
-                  : null
-                : null,
+              dev_lat,
+              dev_long,
             },
             { where: { dev_uuid: uuid } }
           );
         })
       );
-
+  
       return res
         .status(200)
         .json({ message: "Dados atualizados com sucesso!" });
     } catch (error) {
       console.error(error);
-
+  
       if (error.name === "SequelizeValidationError") {
         return res.status(400).json({
           message: "Erro de validação do Sequelize.",
           error: error.errors,
         });
       }
-
+  
       return res
         .status(500)
         .json({ message: `Erro interno do servidor: ${error.message}` });
     }
   }
+  
   // async deleteUser(req, res) {
   //   try {
   //     const { use_uuid } = req.body;
@@ -2907,8 +2902,7 @@ class UsersController {
                   from: '"noreplymayawatch@gmail.com"',
                   to: [
                     userEmail,
-                    "contato@mayax.com.br",
-                    "eloymun00@gmail.com",
+                    "gildorsj@gmail.com",
                   ],
                   subject: "Alertas dos dispositivos de geração",
                   text: "Lista de alertas",
